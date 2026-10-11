@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:busster/game/depot_game.dart';
+import 'package:busster/game/game_progress.dart';
 import 'package:busster/main.dart' as app;
 import 'package:busster/game/progress_store.dart';
 import 'package:flame/game.dart';
@@ -97,5 +98,6 @@ void main() {
     final savedProgress = await store.load();
     expect(savedProgress?.currentLevelId, 'depot-01');
     expect(savedProgress?.dispatches, ['blue']);
+    expect(savedProgress?.earnedHints, GameProgress.initialHintCredits);
   });
 }

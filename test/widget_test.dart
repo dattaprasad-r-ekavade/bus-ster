@@ -59,6 +59,59 @@ void main() {
     expect(find.byTooltip('Pause game'), findsOneWidget);
   });
 
+  testWidgets(
+    'depot picker exposes unlocked depots and keeps locked ones shut',
+    (tester) async {
+      tester.view.physicalSize = const Size(430, 932);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      await tester.pumpWidget(
+        BussterApp(
+          levelList: levels,
+          initialProgress: GameProgress(
+            currentLevelId: 'depot-02',
+            dispatches: ['coral'],
+            completedLevelIds: ['depot-01'],
+            earnedHints: 4,
+          ),
+        ),
+      );
+      await tester.pump(const Duration(milliseconds: 100));
+
+      expect(find.textContaining('ROUTE TIP · 4'), findsOneWidget);
+      await tester.tap(find.byTooltip('Select depot'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(find.text('SELECT DEPOT'), findsOneWidget);
+      expect(find.textContaining('DEPOT 03 · Queue order'), findsOneWidget);
+
+      await tester.tap(find.textContaining('DEPOT 03 · Queue order'));
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(find.text('SELECT DEPOT'), findsOneWidget);
+
+      await tester.tap(find.textContaining('DEPOT 01 · One clear route'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 250));
+      expect(find.text('Leave this depot?'), findsOneWidget);
+      await tester.tap(find.text('CANCEL'));
+      await tester.pump(const Duration(milliseconds: 150));
+      expect(find.textContaining('DEPOT 02'), findsOneWidget);
+
+      await tester.tap(find.byTooltip('Select depot'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 150));
+      await tester.tap(find.textContaining('DEPOT 01 · One clear route'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 150));
+      await tester.tap(find.text('SWITCH DEPOT'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 250));
+      expect(find.textContaining('DEPOT 01'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   testWidgets('keeps gameplay controls visible on a compact phone viewport', (
     tester,
   ) async {
@@ -72,7 +125,7 @@ void main() {
     expect(find.text('BUS-STER'), findsOneWidget);
     expect(find.byTooltip('Pause game'), findsOneWidget);
     expect(find.text('UNDO'), findsOneWidget);
-    expect(find.text('ROUTE TIP'), findsOneWidget);
+    expect(find.text('HINT 3'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -88,7 +141,7 @@ void main() {
     expect(find.textContaining('DEPOT 01'), findsOneWidget);
     expect(find.text('NEXT RIDERS'), findsOneWidget);
     expect(find.text('FIFO QUEUE'), findsOneWidget);
-    expect(find.text('ROUTE TIP'), findsOneWidget);
+    expect(find.textContaining('ROUTE TIP · 3'), findsOneWidget);
     expect(find.textContaining('Tap a bus with a clear road'), findsOneWidget);
 
     await tester.tap(find.byTooltip('How to play'));

@@ -192,6 +192,49 @@ class _DepotScreenState extends State<DepotScreen> with WidgetsBindingObserver {
     _game.resumeEngine();
   }
 
+  Future<void> _showDepotPicker() async {
+    final selectedIndex = await showModalBottomSheet<int>(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) => _DepotPicker(
+        levels: widget.levelList,
+        currentIndex: _session.levelIndex,
+        completedLevelIds: _session.progress.completedLevelIds.toSet(),
+        isUnlocked: _session.isLevelUnlocked,
+      ),
+    );
+    if (!mounted ||
+        selectedIndex == null ||
+        selectedIndex == _session.levelIndex) {
+      return;
+    }
+
+    if (_session.hasUncommittedMoves) {
+      final discard = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Leave this depot?'),
+          content: const Text(
+            'Switching depots will restart your current attempt.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('CANCEL'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text('SWITCH DEPOT'),
+            ),
+          ],
+        ),
+      );
+      if (!mounted || discard != true) return;
+    }
+
+    _session.selectLevel(selectedIndex, discardCurrentProgress: true);
+  }
+
   void _showHowToPlay() {
     showDialog<void>(
       context: context,
@@ -298,6 +341,7 @@ class _DepotScreenState extends State<DepotScreen> with WidgetsBindingObserver {
                             moveCount: state.moveCount,
                             compact: compact,
                             onPause: _pauseGame,
+                            onSelectDepot: _showDepotPicker,
                             showDebug: kDebugMode,
                             onDebug: _showDebugOverlay,
                             onHelp: _showHowToPlay,
@@ -385,6 +429,7 @@ class _DepotScreenState extends State<DepotScreen> with WidgetsBindingObserver {
                           _ActionBar(
                             compact: compact,
                             canUndo: _session.canUndo,
+                            earnedHints: _session.earnedHints,
                             isWon: state.status == GameStatus.won,
                             isStuck: state.status == GameStatus.stuck,
                             onUndo: _session.undo,
@@ -485,12 +530,108 @@ class _PauseOverlay extends StatelessWidget {
   }
 }
 
+class _DepotPicker extends StatelessWidget {
+  const _DepotPicker({
+    required this.levels,
+    required this.currentIndex,
+    required this.completedLevelIds,
+    required this.isUnlocked,
+  });
+
+  final List<LevelSpec> levels;
+  final int currentIndex;
+  final Set<String> completedLevelIds;
+  final bool Function(int index) isUnlocked;
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.sizeOf(context).height * 0.72,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'SELECT DEPOT',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: const Color(0xFFFFC857),
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1,
+                ),
+              ),
+              const SizedBox(height: 4),
+              const Text('Clear a depot to unlock the next one.'),
+              const SizedBox(height: 12),
+              Flexible(
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  itemCount: levels.length,
+                  separatorBuilder: (context, index) =>
+                      const Divider(height: 1),
+                  itemBuilder: (context, index) {
+                    final level = levels[index];
+                    final unlocked = isUnlocked(index);
+                    final completed = completedLevelIds.contains(level.id);
+                    final current = index == currentIndex;
+                    return ListTile(
+                      enabled: unlocked,
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 4),
+                      leading: CircleAvatar(
+                        backgroundColor: unlocked
+                            ? const Color(0xFF334762)
+                            : const Color(0xFF26354A),
+                        child: Text(
+                          '${index + 1}',
+                          style: const TextStyle(fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                      title: Text(
+                        'DEPOT ${(index + 1).toString().padLeft(2, '0')} · ${level.title}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      subtitle: Text(
+                        level.mechanicTags.join(' · '),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      trailing: Icon(
+                        current
+                            ? Icons.play_circle_fill_rounded
+                            : completed
+                            ? Icons.check_circle_rounded
+                            : unlocked
+                            ? Icons.play_circle_outline_rounded
+                            : Icons.lock_outline_rounded,
+                        color: unlocked ? const Color(0xFFFFC857) : null,
+                      ),
+                      onTap: unlocked
+                          ? () => Navigator.of(context).pop(index)
+                          : null,
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _TopBar extends StatelessWidget {
   const _TopBar({
     required this.levelNumber,
     required this.moveCount,
     required this.compact,
     required this.onPause,
+    required this.onSelectDepot,
     required this.showDebug,
     required this.onDebug,
     required this.onHelp,
@@ -501,6 +642,7 @@ class _TopBar extends StatelessWidget {
   final int moveCount;
   final bool compact;
   final VoidCallback onPause;
+  final VoidCallback onSelectDepot;
   final bool showDebug;
   final VoidCallback onDebug;
   final VoidCallback onHelp;
@@ -576,6 +718,16 @@ class _TopBar extends StatelessWidget {
           padding: compact ? EdgeInsets.zero : null,
           iconSize: compact ? 20 : null,
           icon: const Icon(Icons.help_outline_rounded),
+        ),
+        IconButton(
+          onPressed: onSelectDepot,
+          tooltip: 'Select depot',
+          constraints: compact
+              ? const BoxConstraints.tightFor(width: 40, height: 40)
+              : null,
+          padding: compact ? EdgeInsets.zero : null,
+          iconSize: compact ? 20 : null,
+          icon: const Icon(Icons.grid_view_rounded),
         ),
         if (showDebug)
           IconButton(
@@ -857,6 +1009,7 @@ class _ActionBar extends StatelessWidget {
   const _ActionBar({
     required this.compact,
     required this.canUndo,
+    required this.earnedHints,
     required this.isWon,
     required this.isStuck,
     required this.onUndo,
@@ -867,6 +1020,7 @@ class _ActionBar extends StatelessWidget {
 
   final bool compact;
   final bool canUndo;
+  final int earnedHints;
   final bool isWon;
   final bool isStuck;
   final VoidCallback onUndo;
@@ -917,7 +1071,9 @@ class _ActionBar extends StatelessWidget {
           child: FilledButton.icon(
             onPressed: onHint,
             icon: const Icon(Icons.lightbulb_outline_rounded, size: 19),
-            label: const Text('ROUTE TIP'),
+            label: Text(
+              compact ? 'HINT $earnedHints' : 'ROUTE TIP · $earnedHints',
+            ),
             style: FilledButton.styleFrom(
               backgroundColor: const Color(0xFF243A59),
               foregroundColor: const Color(0xFFFFD36F),

@@ -88,9 +88,10 @@ class ProgressFileStore {
       throw const FormatException('Progress file must contain a JSON object.');
     }
     final json = decoded.cast<String, Object?>();
+    final version = json['schemaVersion'];
     return _DecodedProgress(
       progress: GameProgress.fromJson(json),
-      wasLegacy: json['schemaVersion'] == 0,
+      wasLegacy: version is int && version < GameProgress.schemaVersion,
     );
   }
 

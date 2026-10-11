@@ -25,6 +25,7 @@ void main() {
       currentLevelId: 'depot-03',
       dispatches: ['coral', 'blue'],
       completedLevelIds: ['depot-01', 'depot-02'],
+      earnedHints: 2,
     );
 
     await store.save(saved);
@@ -33,29 +34,27 @@ void main() {
     expect(loaded?.toJson(), saved.toJson());
   });
 
-  test(
-    'migrates the version zero field names and writes version one',
-    () async {
-      await store.file.parent.create(recursive: true);
-      await store.file.writeAsString(
-        jsonEncode({
-          'schemaVersion': 0,
-          'levelId': 'depot-02',
-          'moves': ['coral'],
-          'completed': ['depot-01'],
-        }),
-      );
+  test('migrates version zero fields and writes the current schema', () async {
+    await store.file.parent.create(recursive: true);
+    await store.file.writeAsString(
+      jsonEncode({
+        'schemaVersion': 0,
+        'levelId': 'depot-02',
+        'moves': ['coral'],
+        'completed': ['depot-01'],
+      }),
+    );
 
-      final loaded = await store.load();
-      final onDisk = jsonDecode(await store.file.readAsString()) as Map;
+    final loaded = await store.load();
+    final onDisk = jsonDecode(await store.file.readAsString()) as Map;
 
-      expect(loaded?.currentLevelId, 'depot-02');
-      expect(loaded?.dispatches, ['coral']);
-      expect(loaded?.completedLevelIds, ['depot-01']);
-      expect(onDisk['schemaVersion'], GameProgress.schemaVersion);
-      expect(onDisk['currentLevelId'], 'depot-02');
-    },
-  );
+    expect(loaded?.currentLevelId, 'depot-02');
+    expect(loaded?.dispatches, ['coral']);
+    expect(loaded?.completedLevelIds, ['depot-01']);
+    expect(loaded?.earnedHints, GameProgress.initialHintCredits);
+    expect(onDisk['schemaVersion'], GameProgress.schemaVersion);
+    expect(onDisk['currentLevelId'], 'depot-02');
+  });
 
   test('uses the last-good backup when the current file is damaged', () async {
     final lastGood = GameProgress(
@@ -78,6 +77,30 @@ void main() {
     expect(loaded?.toJson(), lastGood.toJson());
     expect(store.loadWarning, contains('last-good backup'));
   });
+
+  test(
+    'migrates version one progress and adds the starter hint allowance',
+    () async {
+      await store.file.parent.create(recursive: true);
+      await store.file.writeAsString(
+        jsonEncode({
+          'schemaVersion': 1,
+          'currentLevelId': 'depot-03',
+          'dispatches': ['blue'],
+          'completedLevelIds': ['depot-01', 'depot-02'],
+        }),
+      );
+
+      final loaded = await store.load();
+      final onDisk = jsonDecode(await store.file.readAsString()) as Map;
+
+      expect(loaded?.currentLevelId, 'depot-03');
+      expect(loaded?.dispatches, ['blue']);
+      expect(loaded?.earnedHints, GameProgress.initialHintCredits);
+      expect(onDisk['schemaVersion'], GameProgress.schemaVersion);
+      expect(onDisk['earnedHints'], GameProgress.initialHintCredits);
+    },
+  );
 
   test('preserves a damaged file before saving a fresh snapshot', () async {
     await store.file.parent.create(recursive: true);

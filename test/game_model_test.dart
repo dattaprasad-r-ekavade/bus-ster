@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:busster/game/game_model.dart';
+import 'package:busster/game/game_progress.dart';
 import 'package:busster/game/level_bundle.dart';
 import 'package:busster/game/game_replay.dart';
 import 'package:busster/game/game_session.dart';
@@ -94,6 +95,59 @@ void main() {
       restored.dispose();
     });
 
+    test('route tips spend credits once and empty balance stays optional', () {
+      final session = GameSession(levelList: levels);
+      expect(session.earnedHints, GameProgress.initialHintCredits);
+
+      session.showHint();
+      expect(session.earnedHints, 2);
+      session.showHint();
+      expect(session.earnedHints, 2);
+
+      session
+        ..dispatch('blue')
+        ..showHint()
+        ..dispatch('coral')
+        ..showHint()
+        ..dispatch('mint');
+      expect(session.state.status, GameStatus.won);
+      expect(session.earnedHints, 1);
+
+      session.restart();
+      session
+        ..dispatch('blue')
+        ..dispatch('coral')
+        ..dispatch('mint');
+      expect(session.earnedHints, 1);
+      session.dispose();
+    });
+
+    test(
+      'level selection unlocks in order and confirms losing partial progress',
+      () {
+        final session = GameSession(levelList: levels);
+        expect(session.isLevelUnlocked(0), isTrue);
+        expect(session.isLevelUnlocked(1), isFalse);
+
+        session
+          ..dispatch('blue')
+          ..dispatch('coral')
+          ..dispatch('mint');
+        expect(session.isLevelUnlocked(1), isTrue);
+        session.nextLevel();
+        expect(session.level.id, 'depot-02');
+
+        session.selectLevel(0);
+        session.dispatch('blue');
+        expect(session.selectLevel(1), isFalse);
+        expect(session.selectLevel(1, discardCurrentProgress: true), isTrue);
+        expect(session.level.id, 'depot-02');
+        expect(session.state.moveCount, 0);
+        expect(session.progress.completedLevelIds, contains('depot-01'));
+        session.dispose();
+      },
+    );
+
     test('restored win retains completion and advances to the next depot', () {
       final original = GameSession(levelList: levels)
         ..dispatch('blue')
@@ -104,6 +158,7 @@ void main() {
 
       expect(restored.state.status, GameStatus.won);
       expect(restored.progress.completedLevelIds, contains('depot-01'));
+      expect(restored.earnedHints, GameProgress.initialHintCredits + 1);
       restored.nextLevel();
       expect(restored.level.id, 'depot-02');
       expect(restored.progress.dispatches, isEmpty);

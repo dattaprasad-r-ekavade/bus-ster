@@ -28,22 +28,27 @@ class GameSession extends ChangeNotifier {
   DispatchAnimation? _lastDispatchAnimation;
   int _animationSerial = 0;
   bool _isPaused = false;
+  int _earnedHints = GameProgress.initialHintCredits;
 
   LevelSpec get level => _levels[_levelIndex];
   BoardState get state => _state;
   int get levelIndex => _levelIndex;
+  int get earnedHints => _earnedHints;
   String get message => _message;
   bool get canUndo => _history.isNotEmpty;
   String? get hintedBusId => _hintedBusId;
   DispatchAnimation? get lastDispatchAnimation => _lastDispatchAnimation;
   int get animationSerial => _animationSerial;
   bool get isPaused => _isPaused;
+  bool get hasUncommittedMoves =>
+      _dispatchLog.isNotEmpty && _state.status != GameStatus.won;
   GameReplayRecord get replayRecord =>
       GameReplayRecord(levelId: level.id, dispatches: _dispatchLog);
   GameProgress get progress => GameProgress(
     currentLevelId: level.id,
     dispatches: _dispatchLog,
     completedLevelIds: _completedLevelIds,
+    earnedHints: _earnedHints,
   );
   String get _levelStartMessage {
     final prompt = level.tutorialPrompt.trim();
@@ -77,20 +82,32 @@ class GameSession extends ChangeNotifier {
       _state = _state.copyWith(status: GameStatus.stuck);
       _message = 'No clear route remains. Undo a dispatch or retry the depot.';
     }
-    if (_state.status == GameStatus.won) _completedLevelIds.add(level.id);
+    if (_state.status == GameStatus.won && _completedLevelIds.add(level.id)) {
+      _earnedHints = (_earnedHints + 1)
+          .clamp(0, GameProgress.maxHintCredits)
+          .toInt();
+    }
     notifyListeners();
   }
 
   void showHint() {
     if (_isPaused || _state.status != GameStatus.playing) return;
+    if (_hintedBusId != null) return;
+    if (_earnedHints == 0) {
+      _message = 'No route tips left. Clear a depot to earn one.';
+      notifyListeners();
+      return;
+    }
     final solution = LevelSolver.findSolution(level, start: _state);
     if (solution == null || solution.isEmpty) {
       _message = 'No route found. Undo a dispatch or retry the depot.';
     } else {
       final bus = level.busById(solution.first);
+      _earnedHints--;
       _hintedBusId = bus.id;
       _message =
-          'Route tip: dispatch the ${bus.route.label} bus (${bus.route.symbol}).';
+          'Route tip ($_earnedHints left): dispatch the '
+          '${bus.route.label} bus (${bus.route.symbol}).';
     }
     notifyListeners();
   }
@@ -153,6 +170,10 @@ class GameSession extends ChangeNotifier {
     _completedLevelIds
       ..clear()
       ..addAll(progress.completedLevelIds.where(knownLevelIds.contains));
+    for (var previous = 0; previous < levelIndex; previous++) {
+      _completedLevelIds.add(_levels[previous].id);
+    }
+    _earnedHints = progress.earnedHints;
     if (_state.status == GameStatus.won) _completedLevelIds.add(level.id);
     _hintedBusId = null;
     _lastDispatchAnimation = null;
@@ -224,6 +245,34 @@ class GameSession extends ChangeNotifier {
       return;
     }
     notifyListeners();
+  }
+
+  bool isLevelUnlocked(int index) {
+    if (index < 0 || index >= _levels.length) return false;
+    var furthestUnlocked = 0;
+    for (var previous = 0; previous < _levels.length - 1; previous++) {
+      if (!_completedLevelIds.contains(_levels[previous].id)) break;
+      furthestUnlocked = previous + 1;
+    }
+    return index <= furthestUnlocked;
+  }
+
+  bool selectLevel(int index, {bool discardCurrentProgress = false}) {
+    if (!isLevelUnlocked(index)) return false;
+    if (hasUncommittedMoves && !discardCurrentProgress) return false;
+    if (index == _levelIndex) return true;
+
+    _levelIndex = index;
+    _state = BoardState.initial(level);
+    _history.clear();
+    _dispatchLog.clear();
+    _hintedBusId = null;
+    _lastDispatchAnimation = null;
+    _animationSerial++;
+    _isPaused = false;
+    _message = _levelStartMessage;
+    notifyListeners();
+    return true;
   }
 }
 
