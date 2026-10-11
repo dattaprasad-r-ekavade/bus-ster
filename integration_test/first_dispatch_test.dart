@@ -1,10 +1,11 @@
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:busster/game/depot_game.dart';
 import 'package:busster/main.dart' as app;
 import 'package:busster/game/progress_store.dart';
 import 'package:flame/game.dart';
-import 'package:flutter/widgets.dart' show AppLifecycleState;
+import 'package:flutter/widgets.dart' show AppLifecycleState, Offset;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:path_provider/path_provider.dart';
@@ -64,11 +65,28 @@ void main() {
     await tester.pump();
     expect(game.paused, isFalse);
 
-    await tester.tapAt(tester.getRect(board).center);
+    final boardRect = tester.getRect(board);
+    final component = game.firstChild<DepotBoard>()!;
+    final level = game.session.level;
+    final cellSize = math.min(
+      (component.size.x - 28) / level.width,
+      (component.size.y - 56) / level.height,
+    );
+    final bluePosition = level.busById('blue').position;
+    final target = Offset(
+      boardRect.left +
+          (component.size.x - cellSize * level.width) / 2 +
+          (bluePosition.x + 0.5) * cellSize,
+      boardRect.top +
+          (component.size.y - cellSize * level.height) / 2 +
+          12 +
+          (bluePosition.y + 0.5) * cellSize,
+    );
+    await tester.tapAt(target);
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 500));
 
-    expect(find.textContaining('1 MOVES'), findsOneWidget);
+    expect(game.session.state.moveCount, 1);
     expect(find.textContaining('Blue sent'), findsOneWidget);
     expect(find.textContaining('No riders matched'), findsOneWidget);
     expect(find.text('0/2'), findsOneWidget);

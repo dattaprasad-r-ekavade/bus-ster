@@ -1,0 +1,1033 @@
+{
+  "schemaVersion": 1,
+  "levels": [
+    {
+      "id": "depot-01",
+      "title": "One clear route",
+      "width": 5,
+      "height": 5,
+      "exit": {
+        "x": 2,
+        "y": 0
+      },
+      "roads": [
+        {
+          "x": 2,
+          "y": 0
+        },
+        {
+          "x": 2,
+          "y": 1
+        },
+        {
+          "x": 0,
+          "y": 2
+        },
+        {
+          "x": 1,
+          "y": 2
+        },
+        {
+          "x": 2,
+          "y": 2
+        },
+        {
+          "x": 3,
+          "y": 2
+        },
+        {
+          "x": 4,
+          "y": 2
+        },
+        {
+          "x": 2,
+          "y": 3
+        },
+        {
+          "x": 2,
+          "y": 4
+        }
+      ],
+      "bayCount": 3,
+      "buses": [
+        {
+          "id": "blue",
+          "route": "blue",
+          "position": {
+            "x": 2,
+            "y": 2
+          },
+          "capacity": 2
+        },
+        {
+          "id": "coral",
+          "route": "coral",
+          "position": {
+            "x": 0,
+            "y": 2
+          },
+          "capacity": 2
+        },
+        {
+          "id": "mint",
+          "route": "mint",
+          "position": {
+            "x": 4,
+            "y": 2
+          },
+          "capacity": 2
+        }
+      ],
+      "passengerQueue": [
+        "coral",
+        "coral",
+        "blue",
+        "blue",
+        "mint",
+        "mint"
+      ],
+      "tutorialPrompt": "Tap a bus with a clear road to the EXIT.",
+      "mechanicTags": [
+        "clear-path"
+      ],
+      "difficultyBand": "tutorial",
+      "seed": null
+    },
+    {
+      "id": "depot-02",
+      "title": "Two branches",
+      "width": 5,
+      "height": 5,
+      "exit": {
+        "x": 2,
+        "y": 0
+      },
+      "roads": [
+        {
+          "x": 2,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 1
+        },
+        {
+          "x": 1,
+          "y": 1
+        },
+        {
+          "x": 2,
+          "y": 1
+        },
+        {
+          "x": 2,
+          "y": 2
+        },
+        {
+          "x": 3,
+          "y": 2
+        },
+        {
+          "x": 4,
+          "y": 2
+        },
+        {
+          "x": 2,
+          "y": 3
+        },
+        {
+          "x": 2,
+          "y": 4
+        }
+      ],
+      "bayCount": 3,
+      "buses": [
+        {
+          "id": "gold",
+          "route": "gold",
+          "position": {
+            "x": 2,
+            "y": 2
+          },
+          "capacity": 2
+        },
+        {
+          "id": "coral",
+          "route": "coral",
+          "position": {
+            "x": 0,
+            "y": 1
+          },
+          "capacity": 2
+        },
+        {
+          "id": "blue",
+          "route": "blue",
+          "position": {
+            "x": 4,
+            "y": 2
+          },
+          "capacity": 2
+        },
+        {
+          "id": "mint",
+          "route": "mint",
+          "position": {
+            "x": 2,
+            "y": 4
+          },
+          "capacity": 2
+        }
+      ],
+      "passengerQueue": [
+        "coral",
+        "coral",
+        "blue",
+        "blue",
+        "gold",
+        "gold",
+        "mint",
+        "mint"
+      ],
+      "tutorialPrompt": "The first rider in the visible queue boards first.",
+      "mechanicTags": [
+        "branch",
+        "fifo-queue"
+      ],
+      "difficultyBand": "tutorial",
+      "seed": null
+    },
+    {
+      "id": "depot-03",
+      "title": "Queue order",
+      "width": 5,
+      "height": 5,
+      "exit": {
+        "x": 2,
+        "y": 0
+      },
+      "roads": [
+        {
+          "x": 2,
+          "y": 0
+        },
+        {
+          "x": 2,
+          "y": 1
+        },
+        {
+          "x": 0,
+          "y": 2
+        },
+        {
+          "x": 1,
+          "y": 2
+        },
+        {
+          "x": 2,
+          "y": 2
+        },
+        {
+          "x": 3,
+          "y": 2
+        },
+        {
+          "x": 4,
+          "y": 2
+        },
+        {
+          "x": 2,
+          "y": 3
+        },
+        {
+          "x": 2,
+          "y": 4
+        }
+      ],
+      "bayCount": 2,
+      "buses": [
+        {
+          "id": "gold",
+          "route": "gold",
+          "position": {
+            "x": 2,
+            "y": 3
+          },
+          "capacity": 2
+        },
+        {
+          "id": "coral",
+          "route": "coral",
+          "position": {
+            "x": 0,
+            "y": 2
+          },
+          "capacity": 2
+        },
+        {
+          "id": "blue",
+          "route": "blue",
+          "position": {
+            "x": 4,
+            "y": 2
+          },
+          "capacity": 2
+        },
+        {
+          "id": "mint",
+          "route": "mint",
+          "position": {
+            "x": 2,
+            "y": 4
+          },
+          "capacity": 2
+        }
+      ],
+      "passengerQueue": [
+        "blue",
+        "blue",
+        "coral",
+        "coral",
+        "mint",
+        "mint",
+        "gold",
+        "gold"
+      ],
+      "tutorialPrompt": "A mismatched bus can wait in a bay while you serve the next rider.",
+      "mechanicTags": [
+        "fifo-queue",
+        "limited-bays"
+      ],
+      "difficultyBand": "tutorial",
+      "seed": null
+    },
+    {
+      "id": "depot-04",
+      "title": "The center stop",
+      "width": 5,
+      "height": 5,
+      "exit": {
+        "x": 2,
+        "y": 0
+      },
+      "roads": [
+        {
+          "x": 2,
+          "y": 0
+        },
+        {
+          "x": 2,
+          "y": 1
+        },
+        {
+          "x": 2,
+          "y": 2
+        },
+        {
+          "x": 0,
+          "y": 3
+        },
+        {
+          "x": 1,
+          "y": 3
+        },
+        {
+          "x": 2,
+          "y": 3
+        },
+        {
+          "x": 3,
+          "y": 3
+        },
+        {
+          "x": 4,
+          "y": 3
+        },
+        {
+          "x": 2,
+          "y": 4
+        }
+      ],
+      "bayCount": 2,
+      "buses": [
+        {
+          "id": "gold",
+          "route": "gold",
+          "position": {
+            "x": 2,
+            "y": 3
+          },
+          "capacity": 2
+        },
+        {
+          "id": "coral",
+          "route": "coral",
+          "position": {
+            "x": 0,
+            "y": 3
+          },
+          "capacity": 2
+        },
+        {
+          "id": "blue",
+          "route": "blue",
+          "position": {
+            "x": 4,
+            "y": 3
+          },
+          "capacity": 2
+        },
+        {
+          "id": "mint",
+          "route": "mint",
+          "position": {
+            "x": 2,
+            "y": 4
+          },
+          "capacity": 2
+        }
+      ],
+      "passengerQueue": [
+        "gold",
+        "gold",
+        "coral",
+        "coral",
+        "blue",
+        "blue",
+        "mint",
+        "mint"
+      ],
+      "tutorialPrompt": "A bus on the road blocks every route through its tile.",
+      "mechanicTags": [
+        "bus-blocking",
+        "shared-exit"
+      ],
+      "difficultyBand": "easy",
+      "seed": null
+    },
+    {
+      "id": "depot-05",
+      "title": "Hold the right bus",
+      "width": 5,
+      "height": 5,
+      "exit": {
+        "x": 2,
+        "y": 0
+      },
+      "roads": [
+        {
+          "x": 2,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 1
+        },
+        {
+          "x": 1,
+          "y": 1
+        },
+        {
+          "x": 2,
+          "y": 1
+        },
+        {
+          "x": 3,
+          "y": 1
+        },
+        {
+          "x": 4,
+          "y": 1
+        },
+        {
+          "x": 2,
+          "y": 2
+        },
+        {
+          "x": 2,
+          "y": 3
+        },
+        {
+          "x": 2,
+          "y": 4
+        }
+      ],
+      "bayCount": 2,
+      "buses": [
+        {
+          "id": "coral",
+          "route": "coral",
+          "position": {
+            "x": 2,
+            "y": 1
+          },
+          "capacity": 2
+        },
+        {
+          "id": "gold",
+          "route": "gold",
+          "position": {
+            "x": 0,
+            "y": 1
+          },
+          "capacity": 2
+        },
+        {
+          "id": "blue",
+          "route": "blue",
+          "position": {
+            "x": 4,
+            "y": 1
+          },
+          "capacity": 2
+        },
+        {
+          "id": "mint",
+          "route": "mint",
+          "position": {
+            "x": 2,
+            "y": 4
+          },
+          "capacity": 2
+        }
+      ],
+      "passengerQueue": [
+        "gold",
+        "gold",
+        "blue",
+        "blue",
+        "coral",
+        "coral",
+        "mint",
+        "mint"
+      ],
+      "tutorialPrompt": "Queue order and road access both shape a good dispatch order.",
+      "mechanicTags": [
+        "bus-blocking",
+        "dispatch-order"
+      ],
+      "difficultyBand": "easy",
+      "seed": null
+    },
+    {
+      "id": "depot-06",
+      "title": "Open the junction",
+      "width": 5,
+      "height": 5,
+      "exit": {
+        "x": 2,
+        "y": 0
+      },
+      "roads": [
+        {
+          "x": 2,
+          "y": 0
+        },
+        {
+          "x": 2,
+          "y": 1
+        },
+        {
+          "x": 0,
+          "y": 2
+        },
+        {
+          "x": 1,
+          "y": 2
+        },
+        {
+          "x": 2,
+          "y": 2
+        },
+        {
+          "x": 3,
+          "y": 2
+        },
+        {
+          "x": 4,
+          "y": 2
+        },
+        {
+          "x": 2,
+          "y": 3
+        },
+        {
+          "x": 2,
+          "y": 4
+        }
+      ],
+      "bayCount": 2,
+      "buses": [
+        {
+          "id": "blue",
+          "route": "blue",
+          "position": {
+            "x": 2,
+            "y": 2
+          },
+          "capacity": 2
+        },
+        {
+          "id": "coral",
+          "route": "coral",
+          "position": {
+            "x": 0,
+            "y": 2
+          },
+          "capacity": 2
+        },
+        {
+          "id": "gold",
+          "route": "gold",
+          "position": {
+            "x": 4,
+            "y": 2
+          },
+          "capacity": 2
+        },
+        {
+          "id": "mint",
+          "route": "mint",
+          "position": {
+            "x": 2,
+            "y": 4
+          },
+          "capacity": 2
+        }
+      ],
+      "passengerQueue": [
+        "blue",
+        "blue",
+        "gold",
+        "gold",
+        "mint",
+        "mint",
+        "coral",
+        "coral"
+      ],
+      "tutorialPrompt": "A full bus leaves and opens a bay for the next bus.",
+      "mechanicTags": [
+        "bay-turnover",
+        "dispatch-order"
+      ],
+      "difficultyBand": "easy",
+      "seed": null
+    },
+    {
+      "id": "depot-07",
+      "title": "Clear the upper lane",
+      "width": 5,
+      "height": 5,
+      "exit": {
+        "x": 2,
+        "y": 0
+      },
+      "roads": [
+        {
+          "x": 2,
+          "y": 0
+        },
+        {
+          "x": 2,
+          "y": 1
+        },
+        {
+          "x": 2,
+          "y": 2
+        },
+        {
+          "x": 0,
+          "y": 3
+        },
+        {
+          "x": 1,
+          "y": 3
+        },
+        {
+          "x": 2,
+          "y": 3
+        },
+        {
+          "x": 3,
+          "y": 3
+        },
+        {
+          "x": 4,
+          "y": 3
+        },
+        {
+          "x": 2,
+          "y": 4
+        }
+      ],
+      "bayCount": 2,
+      "buses": [
+        {
+          "id": "gold",
+          "route": "gold",
+          "position": {
+            "x": 2,
+            "y": 3
+          },
+          "capacity": 2
+        },
+        {
+          "id": "coral",
+          "route": "coral",
+          "position": {
+            "x": 0,
+            "y": 3
+          },
+          "capacity": 2
+        },
+        {
+          "id": "blue",
+          "route": "blue",
+          "position": {
+            "x": 4,
+            "y": 3
+          },
+          "capacity": 2
+        },
+        {
+          "id": "mint",
+          "route": "mint",
+          "position": {
+            "x": 2,
+            "y": 1
+          },
+          "capacity": 2
+        }
+      ],
+      "passengerQueue": [
+        "mint",
+        "mint",
+        "gold",
+        "gold",
+        "coral",
+        "coral",
+        "blue",
+        "blue"
+      ],
+      "tutorialPrompt": "Branches rejoin the shared road leading to the EXIT.",
+      "mechanicTags": [
+        "branch",
+        "shared-road"
+      ],
+      "difficultyBand": "easy",
+      "seed": null
+    },
+    {
+      "id": "depot-08",
+      "title": "A bus in reserve",
+      "width": 5,
+      "height": 5,
+      "exit": {
+        "x": 2,
+        "y": 0
+      },
+      "roads": [
+        {
+          "x": 2,
+          "y": 0
+        },
+        {
+          "x": 0,
+          "y": 1
+        },
+        {
+          "x": 1,
+          "y": 1
+        },
+        {
+          "x": 2,
+          "y": 1
+        },
+        {
+          "x": 3,
+          "y": 1
+        },
+        {
+          "x": 4,
+          "y": 1
+        },
+        {
+          "x": 2,
+          "y": 2
+        },
+        {
+          "x": 2,
+          "y": 3
+        },
+        {
+          "x": 2,
+          "y": 4
+        }
+      ],
+      "bayCount": 2,
+      "buses": [
+        {
+          "id": "gold",
+          "route": "gold",
+          "position": {
+            "x": 2,
+            "y": 1
+          },
+          "capacity": 2
+        },
+        {
+          "id": "coral",
+          "route": "coral",
+          "position": {
+            "x": 0,
+            "y": 1
+          },
+          "capacity": 2
+        },
+        {
+          "id": "mint",
+          "route": "mint",
+          "position": {
+            "x": 4,
+            "y": 1
+          },
+          "capacity": 2
+        },
+        {
+          "id": "blue",
+          "route": "blue",
+          "position": {
+            "x": 2,
+            "y": 3
+          },
+          "capacity": 2
+        }
+      ],
+      "passengerQueue": [
+        "coral",
+        "coral",
+        "blue",
+        "blue",
+        "gold",
+        "gold",
+        "mint",
+        "mint"
+      ],
+      "tutorialPrompt": "Think ahead: sending a bus opens road tiles but may fill a bay.",
+      "mechanicTags": [
+        "bay-pressure",
+        "route-planning"
+      ],
+      "difficultyBand": "medium",
+      "seed": null
+    },
+    {
+      "id": "depot-09",
+      "title": "Two free bays",
+      "width": 5,
+      "height": 5,
+      "exit": {
+        "x": 2,
+        "y": 0
+      },
+      "roads": [
+        {
+          "x": 2,
+          "y": 0
+        },
+        {
+          "x": 2,
+          "y": 1
+        },
+        {
+          "x": 0,
+          "y": 2
+        },
+        {
+          "x": 1,
+          "y": 2
+        },
+        {
+          "x": 2,
+          "y": 2
+        },
+        {
+          "x": 3,
+          "y": 2
+        },
+        {
+          "x": 4,
+          "y": 2
+        },
+        {
+          "x": 2,
+          "y": 3
+        },
+        {
+          "x": 2,
+          "y": 4
+        }
+      ],
+      "bayCount": 2,
+      "buses": [
+        {
+          "id": "coral",
+          "route": "coral",
+          "position": {
+            "x": 2,
+            "y": 2
+          },
+          "capacity": 2
+        },
+        {
+          "id": "gold",
+          "route": "gold",
+          "position": {
+            "x": 0,
+            "y": 2
+          },
+          "capacity": 2
+        },
+        {
+          "id": "mint",
+          "route": "mint",
+          "position": {
+            "x": 4,
+            "y": 2
+          },
+          "capacity": 2
+        },
+        {
+          "id": "blue",
+          "route": "blue",
+          "position": {
+            "x": 2,
+            "y": 4
+          },
+          "capacity": 2
+        }
+      ],
+      "passengerQueue": [
+        "gold",
+        "gold",
+        "mint",
+        "mint",
+        "coral",
+        "coral",
+        "blue",
+        "blue"
+      ],
+      "tutorialPrompt": "Use the bays to stage buses while following the queue.",
+      "mechanicTags": [
+        "fifo-queue",
+        "staging"
+      ],
+      "difficultyBand": "medium",
+      "seed": null
+    },
+    {
+      "id": "depot-10",
+      "title": "Depot master",
+      "width": 5,
+      "height": 5,
+      "exit": {
+        "x": 2,
+        "y": 0
+      },
+      "roads": [
+        {
+          "x": 2,
+          "y": 0
+        },
+        {
+          "x": 2,
+          "y": 1
+        },
+        {
+          "x": 2,
+          "y": 2
+        },
+        {
+          "x": 0,
+          "y": 3
+        },
+        {
+          "x": 1,
+          "y": 3
+        },
+        {
+          "x": 2,
+          "y": 3
+        },
+        {
+          "x": 3,
+          "y": 3
+        },
+        {
+          "x": 4,
+          "y": 3
+        },
+        {
+          "x": 2,
+          "y": 4
+        }
+      ],
+      "bayCount": 2,
+      "buses": [
+        {
+          "id": "mint",
+          "route": "mint",
+          "position": {
+            "x": 2,
+            "y": 3
+          },
+          "capacity": 2
+        },
+        {
+          "id": "coral",
+          "route": "coral",
+          "position": {
+            "x": 0,
+            "y": 3
+          },
+          "capacity": 2
+        },
+        {
+          "id": "gold",
+          "route": "gold",
+          "position": {
+            "x": 4,
+            "y": 3
+          },
+          "capacity": 2
+        },
+        {
+          "id": "blue",
+          "route": "blue",
+          "position": {
+            "x": 2,
+            "y": 1
+          },
+          "capacity": 2
+        }
+      ],
+      "passengerQueue": [
+        "blue",
+        "blue",
+        "gold",
+        "gold",
+        "mint",
+        "mint",
+        "coral",
+        "coral"
+      ],
+      "tutorialPrompt": "Depot review: check the road, the next rider, and open bays each move.",
+      "mechanicTags": [
+        "mixed-rules",
+        "review"
+      ],
+      "difficultyBand": "medium",
+      "seed": null
+    }
+  ]
+}

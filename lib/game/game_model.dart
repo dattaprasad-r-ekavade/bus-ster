@@ -77,9 +77,13 @@ class LevelSpec {
     required Iterable<RouteKind> passengers,
     this.tutorialPrompt = '',
     this.bayCount = 3,
+    Iterable<String> mechanicTags = const [],
+    this.difficultyBand = 'unrated',
+    this.seed,
   }) : roads = UnmodifiableSetView(roads.toSet()),
        buses = List.unmodifiable(buses),
-       passengers = List.unmodifiable(passengers) {
+       passengers = List.unmodifiable(passengers),
+       mechanicTags = List.unmodifiable(mechanicTags.toSet().toList()..sort()) {
     if (!this.roads.contains(exit)) {
       throw ArgumentError('The exit must be part of the road network.');
     }
@@ -105,6 +109,9 @@ class LevelSpec {
   final List<RouteKind> passengers;
   final String tutorialPrompt;
   final int bayCount;
+  final List<String> mechanicTags;
+  final String difficultyBand;
+  final int? seed;
 
   BusSpec busById(String id) => buses.firstWhere((bus) => bus.id == id);
 }

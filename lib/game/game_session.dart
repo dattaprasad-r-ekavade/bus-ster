@@ -3,10 +3,13 @@ import 'package:flutter/foundation.dart';
 import 'game_model.dart';
 import 'game_progress.dart';
 import 'game_replay.dart';
-import 'levels.dart';
 
 class GameSession extends ChangeNotifier {
-  GameSession({List<LevelSpec>? levelList}) : _levels = levelList ?? levels {
+  GameSession({required List<LevelSpec> levelList})
+    : _levels = List.unmodifiable(levelList) {
+    if (_levels.isEmpty) {
+      throw ArgumentError.value(levelList, 'levelList', 'Must not be empty.');
+    }
     _state = BoardState.initial(level);
     _message = _levelStartMessage;
   }

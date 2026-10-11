@@ -23,8 +23,11 @@ dart format lib test tools integration_test
 flutter analyze
 flutter test
 dart run tools/validate_levels.dart
+dart run tools/preview_levels.dart
 flutter build apk --debug
 ```
+
+Edit `assets/levels/levels.json` to author levels. The validator checks the versioned schema, geometry, passenger capacity, tutorial metadata, and solver path. The preview tool writes an HTML overview to `build/level-preview.html`. To create a solver-checked mirrored candidate, run `dart run tools/level_variants.dart depot-03 x`; generated variants go under `build/level-variants/` and still need human playtesting before release.
 
 With an Android emulator or device connected, run the first-dispatch smoke test:
 
@@ -36,6 +39,7 @@ flutter test integration_test/first_dispatch_test.dart -d <device-id>
 
 - [Step-by-step game plan](GAME_PLAN.md)
 - [Stage 0 research and playtest workbook](docs/STAGE_0_FIELDWORK.md)
+- [Level schema and authoring workflow](docs/LEVEL_SCHEMA.md)
 - [Asset and license ledger](docs/ASSET_LEDGER.md)
 - [Level validation tool](tools/validate_levels.dart)
 

@@ -1,9 +1,21 @@
+import 'dart:io';
+
+import 'package:busster/game/game_model.dart';
 import 'package:busster/main.dart';
+import 'package:busster/game/level_bundle.dart';
 import 'package:busster/game/game_progress.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  late List<LevelSpec> levels;
+
+  setUpAll(() async {
+    levels = LevelBundleCodec.decode(
+      await File('assets/levels/levels.json').readAsString(),
+    );
+  });
+
   testWidgets('restores the saved depot and move history', (tester) async {
     tester.view.physicalSize = const Size(430, 932);
     tester.view.devicePixelRatio = 1;
@@ -11,6 +23,7 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(
       BussterApp(
+        levelList: levels,
         initialProgress: GameProgress(
           currentLevelId: 'depot-02',
           dispatches: ['coral'],
@@ -31,7 +44,7 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    await tester.pumpWidget(const BussterApp());
+    await tester.pumpWidget(BussterApp(levelList: levels));
     await tester.pump(const Duration(milliseconds: 100));
 
     await tester.tap(find.byTooltip('Pause game'));
@@ -53,7 +66,7 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    await tester.pumpWidget(const BussterApp());
+    await tester.pumpWidget(BussterApp(levelList: levels));
     await tester.pump(const Duration(milliseconds: 100));
 
     expect(find.text('BUS-STER'), findsOneWidget);
@@ -68,7 +81,7 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    await tester.pumpWidget(const BussterApp());
+    await tester.pumpWidget(BussterApp(levelList: levels));
     await tester.pump(const Duration(milliseconds: 100));
 
     expect(find.text('BUS-STER'), findsOneWidget);

@@ -1,9 +1,11 @@
 import 'dart:io';
 
 import 'package:busster/game/game_model.dart';
-import 'package:busster/game/levels.dart';
+import 'package:busster/game/level_bundle.dart';
 
-void main() {
+Future<void> main() async {
+  final source = await File('assets/levels/levels.json').readAsString();
+  final levels = LevelBundleCodec.decode(source);
   var failures = 0;
 
   for (final level in levels) {
@@ -11,6 +13,12 @@ void main() {
 
     if (level.tutorialPrompt.trim().isEmpty) {
       problems.add('missing first-pass tutorial prompt');
+    }
+    if (level.difficultyBand == 'unrated') {
+      problems.add('missing provisional difficulty band');
+    }
+    if (level.mechanicTags.isEmpty) {
+      problems.add('missing mechanic tags');
     }
 
     for (final road in level.roads) {

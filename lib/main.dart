@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 
 import 'game/depot_game.dart';
 import 'game/game_model.dart';
+import 'game/level_loader.dart';
 import 'game/game_progress.dart';
 import 'game/game_session.dart';
 import 'game/progress_store.dart';
@@ -15,8 +16,11 @@ Future<void> main({
   ProgressFileStore? progressStoreOverride,
 }) async {
   WidgetsFlutterBinding.ensureInitialized();
+  final levelList = await loadBundledLevels();
   if (!loadSavedProgress) {
-    runApp(BussterApp(progressStore: progressStoreOverride));
+    runApp(
+      BussterApp(levelList: levelList, progressStore: progressStoreOverride),
+    );
     return;
   }
 
@@ -38,6 +42,7 @@ Future<void> main({
 
   runApp(
     BussterApp(
+      levelList: levelList,
       progressStore: progressStore,
       initialProgress: savedProgress,
       startupWarning: startupWarning,
@@ -48,11 +53,13 @@ Future<void> main({
 class BussterApp extends StatelessWidget {
   const BussterApp({
     super.key,
+    required this.levelList,
     this.progressStore,
     this.initialProgress,
     this.startupWarning,
   });
 
+  final List<LevelSpec> levelList;
   final ProgressFileStore? progressStore;
   final GameProgress? initialProgress;
   final String? startupWarning;
@@ -73,6 +80,7 @@ class BussterApp extends StatelessWidget {
         useMaterial3: true,
       ),
       home: DepotScreen(
+        levelList: levelList,
         progressStore: progressStore,
         initialProgress: initialProgress,
         startupWarning: startupWarning,
@@ -84,11 +92,13 @@ class BussterApp extends StatelessWidget {
 class DepotScreen extends StatefulWidget {
   const DepotScreen({
     super.key,
+    required this.levelList,
     this.progressStore,
     this.initialProgress,
     this.startupWarning,
   });
 
+  final List<LevelSpec> levelList;
   final ProgressFileStore? progressStore;
   final GameProgress? initialProgress;
   final String? startupWarning;
@@ -109,7 +119,7 @@ class _DepotScreenState extends State<DepotScreen> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _session = GameSession();
+    _session = GameSession(levelList: widget.levelList);
     _game = DepotGame(_session);
     _storageNotice = widget.startupWarning;
     if (widget.initialProgress != null) {

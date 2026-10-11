@@ -1,12 +1,21 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:busster/game/game_model.dart';
+import 'package:busster/game/level_bundle.dart';
 import 'package:busster/game/game_replay.dart';
 import 'package:busster/game/game_session.dart';
-import 'package:busster/game/levels.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  late List<LevelSpec> levels;
+
+  setUpAll(() async {
+    levels = LevelBundleCodec.decode(
+      await File('assets/levels/levels.json').readAsString(),
+    );
+  });
+
   group('depot rules', () {
     test('pathfinding reports a bus that is blocked by the center bus', () {
       final level = levels.first;
@@ -50,7 +59,7 @@ void main() {
     });
 
     test('tutorial prompt follows the active level and restarts', () {
-      final session = GameSession();
+      final session = GameSession(levelList: levels);
       expect(session.message, levels[0].tutorialPrompt);
 
       session.restart();
@@ -67,9 +76,9 @@ void main() {
     });
 
     test('saved progress restores the board and keeps undo history', () {
-      final original = GameSession()..dispatch('blue');
+      final original = GameSession(levelList: levels)..dispatch('blue');
       final saved = original.progress;
-      final restored = GameSession()..restoreProgress(saved);
+      final restored = GameSession(levelList: levels)..restoreProgress(saved);
 
       expect(restored.level.id, original.level.id);
       expect(
@@ -86,11 +95,12 @@ void main() {
     });
 
     test('restored win retains completion and advances to the next depot', () {
-      final original = GameSession()
+      final original = GameSession(levelList: levels)
         ..dispatch('blue')
         ..dispatch('coral')
         ..dispatch('mint');
-      final restored = GameSession()..restoreProgress(original.progress);
+      final restored = GameSession(levelList: levels)
+        ..restoreProgress(original.progress);
 
       expect(restored.state.status, GameStatus.won);
       expect(restored.progress.completedLevelIds, contains('depot-01'));
@@ -126,7 +136,7 @@ void main() {
     });
 
     test('paused session ignores dispatches until resumed', () {
-      final session = GameSession();
+      final session = GameSession(levelList: levels);
       final initialKey = GameRules.stateKey(session.state);
 
       session.pause();
@@ -144,7 +154,7 @@ void main() {
     test(
       'dispatch replay reproduces state and undo removes the last command',
       () {
-        final session = GameSession();
+        final session = GameSession(levelList: levels);
         session
           ..dispatch('blue')
           ..dispatch('coral')
