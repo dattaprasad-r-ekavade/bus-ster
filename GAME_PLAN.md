@@ -4,14 +4,14 @@ _Updated: 11 October 2026. Owner: Bus-ster team. Status: prototype in progress; 
 
 ## Current progress snapshot — 11 October 2026
 
-This is an active build plan, not a release-ready game. The repository now contains a Flutter/Flame Android prototype with 10 hand-authored depots, a pure-Dart rules model, a bounded breadth-first solver, a level validator, hint/undo/retry, an animated dispatch, an optional rules-help dialog, five passing tests, a GitHub Actions workflow, and a successful debug APK build. The prototype was installed and tapped through on the Android 15 / API 35 emulator `LLM_Clicker_API35` (generic `sdk_gphone64_x86_64`). One visual alignment issue was fixed during that check. A short emulator FPS sample was around 60 fps after startup; this is not a physical-device performance result.
+This is an active build plan, not a release-ready game. The repository now contains a Flutter/Flame Android prototype with 10 hand-authored depots, a pure-Dart rules model, a bounded breadth-first solver, a level validator, hint/undo/retry, an animated dispatch, an optional rules-help dialog, versioned JSON-serializable dispatch replays, six passing unit/widget tests, a passing Android integration smoke test, a GitHub Actions workflow, and a successful debug APK build. The first-dispatch test passed on a fresh Android 15 / API 35 Pixel 6 emulator (`Busster_QA_API35`). The earlier manual tap and short FPS check were on `LLM_Clicker_API35`, a generic `sdk_gphone64_x86_64` emulator; its startup sample was around 60 fps. Neither emulator result is a physical-device performance result.
 
 The competitive research below is a desk review of Google Play listings and a few public review excerpts. The current games have not yet been installed and played hands-on, and no outside player sessions have been run. The art is placeholder vector drawing; there is no save system, analytics, ads, billing, production signing, or release package. Do not treat the prototype or the revenue example as evidence that the game is ready to launch or will earn a particular amount.
 
 | Workstream | Current evidence | Remaining gate |
 | --- | --- | --- |
 | Market and product | Four current Play listings reviewed; category overlap and monetization patterns recorded below. | Hands-on teardown of the reference and at least three peers; 10 first-time player sessions; prove an original mechanic. |
-| Stage 1 playable slice | Ten levels, route/queue/bay rules, help dialog, hints, undo, dispatch animation, unit/widget tests, level validation, CI workflow, API 36 debug build, emulator touch smoke. | Tutorial teaching sequence, replay/debug support, fuller feedback and pause/resume; test on two physical Android devices and with players. |
+| Stage 1 playable slice | Ten levels, route/queue/bay rules, help dialog, hints, undo, dispatch animation, versioned deterministic replay, debug overlay, unit/widget tests, level validation, CI workflow, API 36 debug build. The first-dispatch integration smoke test passed on a fresh Pixel 6 API 35 emulator. | Tutorial teaching sequence, fuller boarding/departure feedback and pause/resume; test on two physical Android devices and with players. |
 | Stage 2 content | Bounded BFS solver returns a dispatch sequence; all 10 depots pass the validator. | JSON/schema and preview tool, generator, save/resume and migrations, and a human-tested launch content set. |
 | Production and business | Offline core and monetization guardrails are planned. | Original production assets, analytics/retention evidence, consent, ads/billing, Play Console testing, and measured unit economics. |
 
@@ -158,10 +158,10 @@ Estimated elapsed time for a small team: **12–16 weeks**, with art/content run
 ### Stage 1 — playable vertical slice (weeks 2–4)
 
 - [x] Create the Flutter Android scaffold. Portrait orientation, `Bus-ster` label, application ID `com.busster.busster`, Android target API 36, and compatible Flutter/Flame dependencies are set. Confirm the application ID is available to the team before Play Console setup; the current APK uses debug signing.
-- [ ] Finish the pure-Dart command/state model, queue/boarding, bay occupancy, win/stuck detection, undo, and deterministic replay. Core rules and undo exist and are unit-tested; a replay log is not implemented.
+- [x] Implement the pure-Dart state/rules model, queue/boarding, bay occupancy, win/stuck detection, undo, and deterministic replay. Versioned JSON replay records store dispatch IDs, replay through the rules engine, and stay in sync with Undo; unit tests verify the reproduced state.
 - [ ] Finish a responsive Flame board with color + symbol labels, touch feedback, move/board/leave feedback, pause/resume, and safe areas. The board scales within a Flutter safe area and bus dispatch animates; boarding/departure feedback and pause/resume remain.
-- [x] Hand-author 10 playable levels and validate them with the bounded solver and batch validator. The current ten are prototypes, not yet reviewed as a three-tutorial/four-easy/three-medium teaching curve. Level JSON, preview/editor, and an in-game debug overlay are not implemented.
-- [ ] Test touch accuracy, stable 60 fps, cold loading, and background/foreground behavior on two real Android phones. Current evidence is one emulator smoke test and a short startup FPS sample only.
+- [x] Hand-author 10 playable levels and validate them with the bounded solver and batch validator. The current ten are prototypes, not yet reviewed as a three-tutorial/four-easy/three-medium teaching curve. A debug overlay now exposes solver output and route legality during development; serialized level JSON and a preview/editor remain open.
+- [ ] Test touch accuracy, stable 60 fps, cold loading, and background/foreground behavior on two real Android phones. The automated real-app tap test passes on a Pixel 6 API 35 emulator; a short startup FPS sample around 60 fps came from a separate generic emulator. Physical-device checks remain open; the team currently has no test phones or player participants available.
 - **Exit:** 10 complete levels, no unsolvable states in validation, no blocker that requires a payment/ad, first level playable within 10 seconds on target devices. **Partial:** 10 levels and solver validation are present; tutorial, feedback, device, external playtest, and timing gates remain.
 
 ### Stage 2 — content pipeline and difficulty (weeks 4–6)
@@ -218,8 +218,8 @@ Estimated elapsed time for a small team: **12–16 weeks**, with art/content run
 
 ## 5. Immediate next actions
 
-1. Install/play the reference and at least three peers, then run 10 gray-box sessions. Resolve whether a route-switch mechanic is understandable and distinctive before locking the game design.
-2. Complete the vertical slice gates: set the first 10 tutorial beats, add replay/debug support and boarding/departure feedback, verify pause/resume, and test two physical Android devices.
+1. When Android phones and adult participants are available, install/play the reference and at least three peers, then run the 10 gray-box sessions in [`docs/STAGE_0_FIELDWORK.md`](docs/STAGE_0_FIELDWORK.md). Resolve whether a route-switch mechanic is understandable and distinctive before locking the game design.
+2. Complete the vertical slice gates: map the first 10 tutorial beats to the actual levels, add boarding/departure feedback, verify pause/resume, and test on two physical Android devices. Replay records and the debug overlay are implemented.
 3. Build the Stage 2 authoring/save pipeline: serialized level schema, preview/editor, solver-backed validation, progress persistence/migration, then expand content only after human QA.
 4. Keep the app offline and ad-free while testing; add production art, analytics, ads, and billing only at their stage gates, and judge revenue from measured cohort and acquisition data.
 5. Treat this file as the milestone checklist; track stage gates with concrete acceptance evidence and update assumptions after each playtest.

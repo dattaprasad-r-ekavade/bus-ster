@@ -23,5 +23,16 @@ void main() {
 
     expect(find.text('How to play'), findsOneWidget);
     expect(find.textContaining('Riders board from the front'), findsOneWidget);
+
+    await tester.tap(find.text('GOT IT'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.byTooltip('Debug overlay'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.textContaining('DEBUG · depot-01'), findsOneWidget);
+    expect(find.textContaining('blue: 2 tiles'), findsOneWidget);
+    expect(find.textContaining('Solver: blue → coral → mint'), findsOneWidget);
   });
 }

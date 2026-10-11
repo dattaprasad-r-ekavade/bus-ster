@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import 'game_model.dart';
+import 'game_replay.dart';
 import 'levels.dart';
 
 class GameSession extends ChangeNotifier {
@@ -10,6 +11,7 @@ class GameSession extends ChangeNotifier {
 
   final List<LevelSpec> _levels;
   final List<BoardState> _history = [];
+  final List<String> _dispatchLog = [];
   late BoardState _state;
   int _levelIndex = 0;
   String _message = 'Send the right buses to the gate. Follow the rider queue.';
@@ -25,6 +27,8 @@ class GameSession extends ChangeNotifier {
   String? get hintedBusId => _hintedBusId;
   DispatchAnimation? get lastDispatchAnimation => _lastDispatchAnimation;
   int get animationSerial => _animationSerial;
+  GameReplayRecord get replayRecord =>
+      GameReplayRecord(levelId: level.id, dispatches: _dispatchLog);
 
   void dispatch(String busId) {
     _hintedBusId = null;
@@ -37,6 +41,7 @@ class GameSession extends ChangeNotifier {
     }
 
     _history.add(_state);
+    _dispatchLog.add(busId);
     _state = result.state;
     if (path != null) {
       _lastDispatchAnimation = DispatchAnimation(
@@ -74,6 +79,7 @@ class GameSession extends ChangeNotifier {
     _lastDispatchAnimation = null;
     _animationSerial++;
     _state = _history.removeLast();
+    _dispatchLog.removeLast();
     _message = 'Last dispatch undone. Check the rider queue and road.';
     notifyListeners();
   }
@@ -84,6 +90,7 @@ class GameSession extends ChangeNotifier {
     _animationSerial++;
     _state = BoardState.initial(level);
     _history.clear();
+    _dispatchLog.clear();
     _message = 'Send the right buses to the gate. Follow the rider queue.';
     notifyListeners();
   }
@@ -93,6 +100,7 @@ class GameSession extends ChangeNotifier {
       _levelIndex++;
       _state = BoardState.initial(level);
       _history.clear();
+      _dispatchLog.clear();
       _hintedBusId = null;
       _lastDispatchAnimation = null;
       _animationSerial++;

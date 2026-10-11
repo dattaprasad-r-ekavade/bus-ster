@@ -17,11 +17,17 @@ Open **How to play** in the top bar for the core rules.
 ## Check the project
 
 ```sh
-dart format lib test
+dart format lib test tools integration_test
 flutter analyze
 flutter test
 dart run tools/validate_levels.dart
 flutter build apk --debug
+```
+
+With an Android emulator or device connected, run the first-dispatch smoke test:
+
+```sh
+flutter test integration_test/first_dispatch_test.dart -d <device-id>
 ```
 
 ## Project documents

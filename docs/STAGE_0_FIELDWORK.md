@@ -1,6 +1,6 @@
 # Stage 0 fieldwork workbook
 
-_Prepared 11 October 2026. No hands-on competitor session or external player session has been run yet._
+_Prepared 11 October 2026. No hands-on competitor session or external player session has been run yet. The team currently has no physical test phones or adult playtest participants available._
 
 Use this workbook to close the Stage 0 evidence gates in [`GAME_PLAN.md`](../GAME_PLAN.md). Store-listing descriptions and review snippets are useful discovery signals, but do not substitute for playing the apps or observing people try Bus-ster.
 

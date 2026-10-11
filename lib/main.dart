@@ -1,4 +1,5 @@
 import 'package:flame/game.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 
 import 'game/depot_game.dart';
@@ -79,6 +80,57 @@ class _DepotScreenState extends State<DepotScreen> {
     );
   }
 
+  void _showDebugOverlay() {
+    final level = _session.level;
+    final state = _session.state;
+    final legalRoutes = <String>[];
+    final blockedBuses = <String>[];
+
+    for (final bus in level.buses) {
+      if (!state.activeBusIds.contains(bus.id)) continue;
+      final path = GameRules.routeToExit(level, state, bus.id);
+      if (path == null || state.parked.length >= level.bayCount) {
+        blockedBuses.add(bus.id);
+      } else {
+        legalRoutes.add('${bus.id}: ${path.length - 1} tiles');
+      }
+    }
+    final solution = LevelSolver.findSolution(level, start: state);
+
+    showModalBottomSheet<void>(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'DEBUG · ${level.id}',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Status: ${state.status.name} · Moves: ${state.moveCount} · '
+                'Queue index: ${state.queueIndex}',
+              ),
+              Text('Seed: authored level (no random seed)'),
+              Text('Active buses: ${state.activeBusIds.toList()..sort()}'),
+              Text(
+                'Legal routes: ${legalRoutes.isEmpty ? 'none' : legalRoutes.join(', ')}',
+              ),
+              Text(
+                'Blocked buses: ${blockedBuses.isEmpty ? 'none' : blockedBuses.join(', ')}',
+              ),
+              Text('Solver: ${solution?.join(' → ') ?? 'no solution'}'),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return AnimatedBuilder(
@@ -99,6 +151,8 @@ class _DepotScreenState extends State<DepotScreen> {
                       _TopBar(
                         levelNumber: _session.levelIndex + 1,
                         moveCount: state.moveCount,
+                        showDebug: kDebugMode,
+                        onDebug: _showDebugOverlay,
                         onHelp: _showHowToPlay,
                         onRestart: _session.restart,
                       ),
@@ -168,12 +222,16 @@ class _TopBar extends StatelessWidget {
   const _TopBar({
     required this.levelNumber,
     required this.moveCount,
+    required this.showDebug,
+    required this.onDebug,
     required this.onHelp,
     required this.onRestart,
   });
 
   final int levelNumber;
   final int moveCount;
+  final bool showDebug;
+  final VoidCallback onDebug;
   final VoidCallback onHelp;
   final VoidCallback onRestart;
 
@@ -224,6 +282,12 @@ class _TopBar extends StatelessWidget {
           tooltip: 'How to play',
           icon: const Icon(Icons.help_outline_rounded),
         ),
+        if (showDebug)
+          IconButton(
+            onPressed: onDebug,
+            tooltip: 'Debug overlay',
+            icon: const Icon(Icons.bug_report_outlined),
+          ),
         IconButton.filledTonal(
           onPressed: onRestart,
           tooltip: 'Restart level',

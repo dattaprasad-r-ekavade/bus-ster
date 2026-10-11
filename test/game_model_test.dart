@@ -1,4 +1,7 @@
+import 'dart:convert';
+
 import 'package:busster/game/game_model.dart';
+import 'package:busster/game/game_replay.dart';
 import 'package:busster/game/game_session.dart';
 import 'package:busster/game/levels.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -58,5 +61,33 @@ void main() {
       expect(session.canUndo, isTrue);
       session.dispose();
     });
+
+    test(
+      'dispatch replay reproduces state and undo removes the last command',
+      () {
+        final session = GameSession();
+        session
+          ..dispatch('blue')
+          ..dispatch('coral')
+          ..dispatch('mint');
+
+        final encoded = jsonEncode(session.replayRecord.toJson());
+        final decoded = GameReplayRecord.fromJson(
+          jsonDecode(encoded) as Map<String, Object?>,
+        );
+        final replayedState = decoded.replay(session.level);
+
+        expect(replayedState.status, GameStatus.won);
+        expect(
+          GameRules.stateKey(replayedState),
+          GameRules.stateKey(session.state),
+        );
+
+        session.undo();
+        expect(session.replayRecord.dispatches, ['blue', 'coral']);
+        expect(session.state.status, GameStatus.playing);
+        session.dispose();
+      },
+    );
   });
 }
