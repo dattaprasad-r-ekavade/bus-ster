@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:busster/game/game_model.dart';
+import 'package:busster/game/level_analysis.dart';
 import 'package:busster/game/level_bundle.dart';
 
 Future<void> main() async {
@@ -42,15 +43,21 @@ Future<void> main() async {
       }
     }
 
-    final solution = LevelSolver.findSolution(level);
-    if (solution == null) {
+    final analysis = LevelAnalyzer.analyze(level);
+    if (analysis.solution == null) {
       problems.add('no complete solution found');
+    }
+    if (!analysis.isComplete) {
+      problems.add('state analysis exceeded its 100,000-state limit');
     }
 
     if (problems.isEmpty) {
       stdout.writeln(
         'PASS ${level.id}: ${level.buses.length} buses, '
-        '${level.passengers.length} riders, ${solution!.length} dispatches',
+        '${level.passengers.length} riders, '
+        '${analysis.solutionDepth} dispatches, '
+        '${analysis.reachableStates} states, '
+        '${analysis.unwinnableStates} no-win states',
       );
     } else {
       failures++;

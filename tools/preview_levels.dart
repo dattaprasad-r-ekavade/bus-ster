@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:busster/game/game_model.dart';
+import 'package:busster/game/level_analysis.dart';
 import 'package:busster/game/level_bundle.dart';
 
 Future<void> main(List<String> args) async {
@@ -19,9 +20,9 @@ Future<void> main(List<String> args) async {
   var failures = 0;
 
   for (final level in levels) {
-    final solution = LevelSolver.findSolution(level);
-    if (solution == null) failures++;
-    cards.add(_levelCard(level, solution));
+    final analysis = LevelAnalyzer.analyze(level);
+    if (analysis.solution == null || !analysis.isComplete) failures++;
+    cards.add(_levelCard(level, analysis));
   }
 
   final output = File(outputPath);
@@ -29,12 +30,14 @@ Future<void> main(List<String> args) async {
   await output.writeAsString(_document(cards), flush: true);
   stdout.writeln('Wrote ${output.path} with ${levels.length} level previews.');
   if (failures > 0) {
-    stderr.writeln('$failures levels have no solver path.');
+    stderr.writeln(
+      '$failures levels are unsolved or exceeded the analysis limit.',
+    );
     exitCode = 1;
   }
 }
 
-String _levelCard(LevelSpec level, List<String>? solution) {
+String _levelCard(LevelSpec level, LevelAnalysis analysis) {
   final initial = BoardState.initial(level);
   final legalOpeners = level.buses
       .where((bus) => GameRules.routeToExit(level, initial, bus.id) != null)
@@ -73,6 +76,7 @@ String _levelCard(LevelSpec level, List<String>? solution) {
   final tags = level.mechanicTags
       .map((tag) => '<span class="tag">${_escape(tag)}</span>')
       .join();
+  final solution = analysis.solution;
   final route = solution == null
       ? 'No solution found within the solver limit.'
       : solution.map(_escape).join(' → ');
@@ -85,7 +89,13 @@ String _levelCard(LevelSpec level, List<String>? solution) {
   <div class="board" style="--columns:${level.width}">$cells</div>
   <h3>Rider queue</h3><div class="queue">$queue</div>
   <div class="tags">$tags</div>
-  <dl><div><dt>Solver moves</dt><dd>${solution?.length ?? '—'}</dd></div>
+  <dl><div><dt>Shortest solution</dt><dd>${analysis.solutionDepth ?? '—'} moves</dd></div>
+  <div><dt>Reachable states</dt><dd>${analysis.reachableStates}${analysis.isComplete ? '' : '+'}</dd></div>
+  <div><dt>Branching states</dt><dd>${analysis.legalBranchingStates}</dd></div>
+  <div><dt>Shortest path choice points</dt><dd>${analysis.shortestPathChoicePoints}</dd></div>
+  <div><dt>No-win states</dt><dd>${analysis.unwinnableStates}</dd></div>
+  <div><dt>Dead-end states</dt><dd>${analysis.deadEndStates}</dd></div>
+  <div><dt>Max legal moves</dt><dd>${analysis.maximumLegalMoves}</dd></div>
   <div><dt>Legal opening buses</dt><dd>$legalOpeners</dd></div>
   <div><dt>Road junctions</dt><dd>$junctions</dd></div></dl>
   <p class="solution"><strong>Solver route:</strong> $route</p>
@@ -114,10 +124,10 @@ h2{font-size:1.25rem;margin:2px 0 8px}.eyebrow{font-size:.76rem;color:#a9b8cc;te
 .bus b{font-size:1.15rem;color:var(--route)}.bus small{font-size:.52rem;color:#fff}
 h3{font-size:.9rem;margin:14px 0 6px}.queue,.tags{display:flex;flex-wrap:wrap;gap:6px}
 .chip{background:color-mix(in srgb,var(--route) 22%,#24344b);border:1px solid var(--route);color:#fff;border-radius:99px;padding:4px 8px;font-size:.75rem}
-.tags{margin-top:12px}.tag{background:#29384f}dl{display:flex;gap:12px;margin:14px 0 8px}dl div{flex:1;background:#152238;border-radius:9px;padding:8px}dt{font-size:.65rem;color:#a9b8cc}dd{margin:2px 0 0;font-weight:700}
+.tags{margin-top:12px}.tag{background:#29384f}dl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:14px 0 8px}dl div{background:#152238;border-radius:9px;padding:8px}dt{font-size:.65rem;color:#a9b8cc}dd{margin:2px 0 0;font-weight:700}
 .solution{font-size:.8rem;color:#becce0;overflow-wrap:anywhere}
 </style></head><body><h1>Bus-ster level preview</h1>
-<p class="note">Generated from the versioned level JSON. Solver metrics are structural checks; they do not replace human playtests.</p>
+<p class="note">Generated from the versioned level JSON. Branch and no-win counts come from a bounded state-graph analysis; they do not measure human difficulty or replace playtests.</p>
 <main class="levels">${cards.join('\n')}</main></body></html>''';
 
 String _color(int colorValue) =>
