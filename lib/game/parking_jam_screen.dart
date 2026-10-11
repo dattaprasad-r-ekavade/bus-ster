@@ -11,12 +11,11 @@ const _coral = Color(0xFFF27968);
 const _blue = Color(0xFF62BBD5);
 const _mint = Color(0xFF77C98C);
 const _gold = Color(0xFFF1BE4E);
-const _purple = Color(0xFFAB8BD5);
 
 JamLevel createParkingJamTutorialLevel() => JamLevel(
   width: 5,
   height: 5,
-  bayCount: 1,
+  bayCount: 7,
   vehicles: const [
     JamVehicle(
       id: 'coral-bus',
@@ -39,45 +38,66 @@ JamLevel createParkingJamTutorialLevel() => JamLevel(
       origin: JamCell(1, 1),
       facing: JamFacing.left,
       length: 2,
+      route: JamRoute.gold,
+      capacity: 1,
     ),
     JamVehicle(
       id: 'lower-blocker',
       origin: JamCell(0, 0),
       facing: JamFacing.down,
       length: 2,
+      route: JamRoute.mint,
+      capacity: 1,
     ),
     JamVehicle(
       id: 'top-car',
       origin: JamCell(3, 0),
       facing: JamFacing.left,
       length: 2,
+      route: JamRoute.gold,
+      capacity: 1,
     ),
     JamVehicle(
       id: 'upper-car',
       origin: JamCell(3, 1),
       facing: JamFacing.left,
       length: 2,
+      route: JamRoute.mint,
+      capacity: 1,
     ),
     JamVehicle(
       id: 'middle-car',
       origin: JamCell(3, 2),
       facing: JamFacing.left,
       length: 2,
+      route: JamRoute.blue,
+      capacity: 1,
     ),
     JamVehicle(
       id: 'lower-car',
       origin: JamCell(3, 3),
       facing: JamFacing.left,
       length: 2,
+      route: JamRoute.coral,
+      capacity: 1,
     ),
   ],
-  passengers: const [JamRoute.blue, JamRoute.coral],
+  passengers: const [
+    JamRoute.blue,
+    JamRoute.mint,
+    JamRoute.gold,
+    JamRoute.coral,
+    JamRoute.gold,
+    JamRoute.mint,
+    JamRoute.blue,
+    JamRoute.coral,
+  ],
 );
 
 JamLevel createParkingJamDemoLevel() => JamLevel(
   width: 6,
   height: 6,
-  bayCount: 2,
+  bayCount: 7,
   vehicles: const [
     JamVehicle(
       id: 'coral-bus',
@@ -85,7 +105,7 @@ JamLevel createParkingJamDemoLevel() => JamLevel(
       facing: JamFacing.up,
       length: 2,
       route: JamRoute.coral,
-      capacity: 2,
+      capacity: 1,
     ),
     JamVehicle(
       id: 'blue-bus',
@@ -93,7 +113,7 @@ JamLevel createParkingJamDemoLevel() => JamLevel(
       facing: JamFacing.right,
       length: 2,
       route: JamRoute.blue,
-      capacity: 2,
+      capacity: 1,
     ),
     JamVehicle(
       id: 'mint-bus',
@@ -116,56 +136,78 @@ JamLevel createParkingJamDemoLevel() => JamLevel(
       origin: JamCell(1, 1),
       facing: JamFacing.left,
       length: 2,
+      route: JamRoute.coral,
+      capacity: 1,
     ),
     JamVehicle(
       id: 'top-car',
       origin: JamCell(1, 0),
       facing: JamFacing.right,
       length: 2,
+      route: JamRoute.blue,
+      capacity: 1,
     ),
     JamVehicle(
       id: 'left-car',
       origin: JamCell(0, 0),
       facing: JamFacing.down,
       length: 2,
+      route: JamRoute.mint,
+      capacity: 1,
     ),
     JamVehicle(
       id: 'lower-car',
       origin: JamCell(1, 2),
       facing: JamFacing.down,
       length: 2,
+      route: JamRoute.gold,
+      capacity: 1,
     ),
     JamVehicle(
       id: 'upper-car',
       origin: JamCell(3, 0),
       facing: JamFacing.right,
       length: 2,
+      route: JamRoute.coral,
+      capacity: 1,
     ),
     JamVehicle(
       id: 'blue-blocker',
       origin: JamCell(2, 4),
       facing: JamFacing.right,
       length: 2,
+      route: JamRoute.blue,
+      capacity: 1,
     ),
     JamVehicle(
       id: 'middle-car',
       origin: JamCell(3, 2),
       facing: JamFacing.down,
       length: 2,
+      route: JamRoute.mint,
+      capacity: 1,
     ),
     JamVehicle(
       id: 'mint-blocker',
       origin: JamCell(4, 1),
       facing: JamFacing.up,
       length: 2,
+      route: JamRoute.gold,
+      capacity: 1,
     ),
   ],
   passengers: const [
     JamRoute.gold,
     JamRoute.mint,
     JamRoute.blue,
+    JamRoute.coral,
+    JamRoute.gold,
+    JamRoute.mint,
     JamRoute.blue,
     JamRoute.coral,
+    JamRoute.gold,
+    JamRoute.mint,
+    JamRoute.blue,
     JamRoute.coral,
   ],
 );
@@ -210,8 +252,8 @@ class _ParkingJamScreenState extends State<ParkingJamScreen> {
         _hintedId = null;
         _message = switch (move.block) {
           JamBlock.vehicle =>
-            'Blocked by ${move.blockingVehicleId}. Clear it first.',
-          JamBlock.fullBays => 'Both boarding spaces are full. Free one first.',
+            'The ${_routeName(_level.vehicle(move.blockingVehicleId!).route)} bus is in the way. Move it first.',
+          JamBlock.fullBays => 'All bus stops are full. Free one first.',
           JamBlock.alreadyGone || null => 'That vehicle has already left.',
         };
       });
@@ -251,18 +293,18 @@ class _ParkingJamScreenState extends State<ParkingJamScreen> {
       }
       if (state.passengerIndex == 1) {
         if (state.activeVehicleIds.contains('lower-blocker')) {
-          return 'Move the green car down to free the orange blocker.';
+          return 'Send the green bus down to clear the yellow bus’s lane.';
         }
         if (state.activeVehicleIds.contains('coral-blocker')) {
-          return 'Send the orange blocker left to free the coral bus.';
+          return 'Send the yellow bus left to open the coral bus’s route.';
         }
         if (state.activeVehicleIds.contains('coral-bus')) {
           return 'The coral bus is clear. Tap it for the last rider.';
         }
       }
-      return 'All riders are aboard. Clear the remaining cars to finish.';
+      return 'Match the waiting colors and clear the lot.';
     }
-    return 'Clear a lane, then bring the matching bus to the riders.';
+    return 'Clear a lane, then send a bus to the matching riders.';
   }
 
   void _showHint() {
@@ -278,7 +320,8 @@ class _ParkingJamScreenState extends State<ParkingJamScreen> {
     setState(() {
       _hintedId = solution.first;
       _blockedId = null;
-      _message = 'Try ${vehicle.id} first. Follow its arrow.';
+      _message =
+          'Try the ${_routeName(vehicle.route)} bus first. Follow its arrow.';
     });
   }
 
@@ -344,7 +387,7 @@ class _ParkingJamScreenState extends State<ParkingJamScreen> {
                   SizedBox(height: gap),
                   _GoalCard(message: _message, compact: compact),
                   SizedBox(height: gap),
-                  _PassengerPanel(passengers: pending, compact: compact),
+                  _PassengerTrack(passengers: pending, compact: compact),
                   SizedBox(height: gap),
                   _BoardingBays(
                     level: _level,
@@ -353,25 +396,35 @@ class _ParkingJamScreenState extends State<ParkingJamScreen> {
                   ),
                   SizedBox(height: gap),
                   Expanded(
-                    child: Center(
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                          maxWidth: math.min(constraints.maxWidth, 470),
-                          maxHeight: constraints.maxHeight,
-                        ),
-                        child: AspectRatio(
-                          aspectRatio: _level.width / _level.height,
-                          child: _ParkingLot(
-                            level: _level,
-                            state: state,
-                            departingId: _departingId,
-                            blockedId: _blockedId,
-                            hintedId: _hintedId,
-                            enabled:
-                                !_busy && state.status == JamStatus.playing,
-                            onTapVehicle: _release,
-                          ),
-                        ),
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      child: LayoutBuilder(
+                        builder: (context, boardConstraints) {
+                          final maxWidth = math.min(
+                            boardConstraints.maxWidth,
+                            470.0,
+                          );
+                          final cell = math.min(
+                            (maxWidth - 20) / _level.width,
+                            (boardConstraints.maxHeight - 20) / _level.height,
+                          );
+                          final boardWidth = cell * _level.width + 20;
+                          final boardHeight = cell * _level.height + 20;
+                          return SizedBox(
+                            width: boardWidth,
+                            height: boardHeight,
+                            child: _ParkingLot(
+                              level: _level,
+                              state: state,
+                              departingId: _departingId,
+                              blockedId: _blockedId,
+                              hintedId: _hintedId,
+                              enabled:
+                                  !_busy && state.status == JamStatus.playing,
+                              onTapVehicle: _release,
+                            ),
+                          );
+                        },
                       ),
                     ),
                   ),
@@ -496,90 +549,196 @@ class _GoalCard extends StatelessWidget {
   );
 }
 
-class _PassengerPanel extends StatelessWidget {
-  const _PassengerPanel({required this.passengers, required this.compact});
+class _PassengerTrack extends StatelessWidget {
+  const _PassengerTrack({required this.passengers, required this.compact});
   final List<JamRoute> passengers;
   final bool compact;
 
   @override
-  Widget build(BuildContext context) => Container(
-    width: double.infinity,
-    padding: EdgeInsets.fromLTRB(12, compact ? 7 : 9, 12, compact ? 6 : 8),
-    decoration: BoxDecoration(
-      color: const Color(0xFFFFFCF1),
-      borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: const Color(0xFFC3D3C6), width: 2),
-      boxShadow: const [
-        BoxShadow(
-          color: Color(0x222A4B51),
-          offset: Offset(0, 3),
-          blurRadius: 0,
-        ),
-      ],
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Row(
-          children: [
-            const Text(
-              'WAITING FOR A RIDE',
-              style: TextStyle(
-                color: _ink,
-                fontWeight: FontWeight.w900,
-                fontSize: 10,
-                letterSpacing: 1.1,
-              ),
-            ),
-            const Spacer(),
-            Text(
-              '${passengers.length} LEFT',
-              style: TextStyle(
-                color: _ink.withValues(alpha: .55),
-                fontWeight: FontWeight.w800,
-                fontSize: 10,
-              ),
-            ),
-          ],
-        ),
-        SizedBox(height: compact ? 4 : 7),
-        SizedBox(
-          height: compact ? 39 : 45,
-          child: passengers.isEmpty
-              ? const Center(
-                  child: Text(
-                    'All riders are on their way!',
-                    style: TextStyle(color: _ink, fontWeight: FontWeight.w700),
+  Widget build(BuildContext context) {
+    final shown = passengers.take(12).toList();
+    final riderWidth = compact ? 24.0 : 29.0;
+    final riderHeight = compact ? 34.0 : 39.0;
+    return Container(
+      width: double.infinity,
+      height: compact ? 96 : 142,
+      clipBehavior: Clip.hardEdge,
+      decoration: BoxDecoration(
+        color: const Color(0xFFB9DAA3),
+        borderRadius: BorderRadius.circular(compact ? 24 : 32),
+        border: Border.all(color: const Color(0xFF8EBC82), width: 2),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x332A4B35),
+            offset: Offset(0, 4),
+            blurRadius: 0,
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          Positioned.fill(child: CustomPaint(painter: _PassengerRoadPainter())),
+          Positioned(
+            left: 12,
+            right: 12,
+            top: compact ? 5 : 8,
+            child: Row(
+              children: [
+                Text(
+                  'PASSENGER LOOP',
+                  style: TextStyle(
+                    color: _ink,
+                    fontWeight: FontWeight.w900,
+                    fontSize: compact ? 9 : 10,
+                    letterSpacing: 1,
                   ),
-                )
-              : Row(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    for (final route in passengers.take(8))
-                      Padding(
-                        padding: const EdgeInsets.only(right: 6),
-                        child: _Rider(route: route, compact: compact),
-                      ),
-                  ],
                 ),
-        ),
-      ],
-    ),
-  );
+                const Spacer(),
+                Text(
+                  '${passengers.length} LEFT',
+                  style: TextStyle(
+                    color: _ink.withValues(alpha: .65),
+                    fontWeight: FontWeight.w900,
+                    fontSize: compact ? 9 : 10,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (shown.isEmpty)
+            const Positioned.fill(
+              child: Center(
+                child: Text(
+                  'The crowd is on its way!',
+                  style: TextStyle(color: _ink, fontWeight: FontWeight.w800),
+                ),
+              ),
+            )
+          else
+            Positioned.fill(
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final center = Offset(
+                    constraints.maxWidth / 2,
+                    constraints.maxHeight * .63,
+                  );
+                  final radiusX = constraints.maxWidth * .39;
+                  final radiusY = constraints.maxHeight * .25;
+                  return Stack(
+                    clipBehavior: Clip.hardEdge,
+                    children: [
+                      for (var index = 0; index < shown.length; index++)
+                        AnimatedPositioned(
+                          key: ValueKey('$index-${shown[index].name}'),
+                          duration: const Duration(milliseconds: 260),
+                          curve: Curves.easeOutCubic,
+                          left:
+                              (center.dx +
+                                      math.cos(
+                                            -math.pi / 2 +
+                                                index *
+                                                    math.pi *
+                                                    2 /
+                                                    shown.length,
+                                          ) *
+                                          radiusX -
+                                      riderWidth / 2)
+                                  .clamp(
+                                    2.0,
+                                    constraints.maxWidth - riderWidth - 2,
+                                  ),
+                          top:
+                              (center.dy +
+                                      math.sin(
+                                            -math.pi / 2 +
+                                                index *
+                                                    math.pi *
+                                                    2 /
+                                                    shown.length,
+                                          ) *
+                                          radiusY -
+                                      riderHeight / 2)
+                                  .clamp(
+                                    22.0,
+                                    constraints.maxHeight - riderHeight - 2,
+                                  ),
+                          child: _Rider(
+                            route: shown[index],
+                            compact: compact,
+                            isNext: index == 0,
+                          ),
+                        ),
+                    ],
+                  );
+                },
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PassengerRoadPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final oval = Rect.fromCenter(
+      center: Offset(size.width / 2, size.height * .63),
+      width: size.width * .78,
+      height: size.height * .5,
+    );
+    canvas.drawOval(
+      oval,
+      Paint()
+        ..color = const Color(0xFF81987B)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = size.height * .34,
+    );
+    canvas.drawOval(
+      oval,
+      Paint()
+        ..color = const Color(0xFFEEE6CD)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = size.height * .29,
+    );
+    final path = Path()..addOval(oval);
+    final dashPaint = Paint()
+      ..color = const Color(0xFFB7B49F)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.4;
+    for (final metric in path.computeMetrics()) {
+      for (var distance = 0.0; distance < metric.length; distance += 13) {
+        canvas.drawPath(metric.extractPath(distance, distance + 6), dashPaint);
+      }
+    }
+    final center = Rect.fromCenter(
+      center: oval.center,
+      width: oval.width * .47,
+      height: oval.height * .38,
+    );
+    canvas.drawOval(center, Paint()..color = const Color(0xFFA5D493));
+  }
+
+  @override
+  bool shouldRepaint(covariant _PassengerRoadPainter oldDelegate) => false;
 }
 
 class _Rider extends StatelessWidget {
-  const _Rider({required this.route, required this.compact});
+  const _Rider({
+    required this.route,
+    required this.compact,
+    this.isNext = false,
+  });
   final JamRoute route;
   final bool compact;
+  final bool isNext;
 
   @override
   Widget build(BuildContext context) {
     final color = _routeColor(route);
     return SizedBox(
-      width: compact ? 28 : 35,
-      height: compact ? 37 : 43,
+      width: compact ? 24 : 29,
+      height: compact ? 34 : 39,
       child: Stack(
         alignment: Alignment.bottomCenter,
         children: [
@@ -589,6 +748,10 @@ class _Rider extends StatelessWidget {
             decoration: BoxDecoration(
               color: color,
               borderRadius: BorderRadius.circular(12),
+              border: isNext ? Border.all(color: Colors.white, width: 2) : null,
+              boxShadow: const [
+                BoxShadow(color: Color(0x44354C37), offset: Offset(0, 2)),
+              ],
             ),
           ),
           Positioned(
@@ -599,7 +762,10 @@ class _Rider extends StatelessWidget {
               decoration: BoxDecoration(
                 color: color,
                 shape: BoxShape.circle,
-                border: Border.all(color: _ink, width: 1.4),
+                border: Border.all(
+                  color: isNext ? Colors.white : _ink,
+                  width: isNext ? 2 : 1.4,
+                ),
               ),
             ),
           ),
@@ -632,36 +798,56 @@ class _BoardingBays extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Container(
-    padding: EdgeInsets.symmetric(horizontal: 10, vertical: compact ? 6 : 8),
+    padding: EdgeInsets.fromLTRB(9, compact ? 5 : 7, 9, compact ? 6 : 8),
     decoration: BoxDecoration(
-      color: const Color(0xFFE3E4C8),
-      borderRadius: BorderRadius.circular(17),
-      border: Border.all(color: const Color(0xFFB5C193), width: 2),
+      color: const Color(0xFFD8E5B7),
+      borderRadius: BorderRadius.circular(18),
+      border: Border.all(color: const Color(0xFFABC58F), width: 2),
+      boxShadow: const [
+        BoxShadow(color: Color(0x222C4A30), offset: Offset(0, 3)),
+      ],
     ),
-    child: Row(
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Padding(
-          padding: const EdgeInsets.only(right: 8),
-          child: Text(
-            'BAYS',
-            style: TextStyle(
-              color: _ink.withValues(alpha: .72),
-              fontSize: compact ? 9 : 10,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 1,
+        Row(
+          children: [
+            Text(
+              'BOARDING BAYS',
+              style: TextStyle(
+                color: _ink.withValues(alpha: .75),
+                fontSize: compact ? 8 : 9,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1,
+              ),
             ),
-          ),
+            const Spacer(),
+            Text(
+              '${parked.length}/${level.bayCount} OCCUPIED',
+              style: TextStyle(
+                color: _ink.withValues(alpha: .6),
+                fontSize: compact ? 8 : 9,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ],
         ),
-        for (var index = 0; index < level.bayCount; index++) ...[
-          if (index > 0) const SizedBox(width: 7),
-          Expanded(
-            child: _BaySlot(
-              level: level,
-              parked: index < parked.length ? parked[index] : null,
-              compact: compact,
-            ),
-          ),
-        ],
+        SizedBox(height: compact ? 4 : 6),
+        Row(
+          children: [
+            for (var index = 0; index < level.bayCount; index++) ...[
+              if (index > 0) SizedBox(width: compact ? 3 : 5),
+              Expanded(
+                child: _BaySlot(
+                  level: level,
+                  parked: index < parked.length ? parked[index] : null,
+                  index: index,
+                  compact: compact,
+                ),
+              ),
+            ],
+          ],
+        ),
       ],
     ),
   );
@@ -671,58 +857,80 @@ class _BaySlot extends StatelessWidget {
   const _BaySlot({
     required this.level,
     required this.parked,
+    required this.index,
     required this.compact,
   });
   final JamLevel level;
   final JamParkedBus? parked;
+  final int index;
   final bool compact;
 
   @override
   Widget build(BuildContext context) {
     final bus = parked == null ? null : level.vehicle(parked!.id);
     return Container(
-      height: compact ? 42 : 50,
+      height: compact ? 31 : 39,
       decoration: BoxDecoration(
-        color: bus == null ? const Color(0xFFB8C8B0) : _routeColor(bus.route!),
-        borderRadius: BorderRadius.circular(13),
-        border: Border.all(color: const Color(0xFF819B84), width: 2),
+        color: bus == null ? const Color(0xFFB9CCA8) : _routeColor(bus.route),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFF829B75), width: 1.5),
       ),
-      child: bus == null
-          ? Center(
-              child: Text(
-                'EMPTY',
-                style: TextStyle(
-                  color: _ink.withValues(alpha: .55),
-                  fontSize: 9,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: .7,
-                ),
-              ),
-            )
-          : Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  _routeSymbol(bus.route!),
-                  style: const TextStyle(
-                    color: _ink,
+      child: AnimatedSwitcher(
+        duration: const Duration(milliseconds: 220),
+        transitionBuilder: (child, animation) => FadeTransition(
+          opacity: animation,
+          child: SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0, .25),
+              end: Offset.zero,
+            ).animate(animation),
+            child: child,
+          ),
+        ),
+        child: bus == null
+            ? Center(
+                child: Text(
+                  '${index + 1}',
+                  key: ValueKey('empty-bay-$index'),
+                  style: TextStyle(
+                    color: _ink.withValues(alpha: .38),
+                    fontSize: compact ? 8 : 9,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
-                const SizedBox(width: 4),
-                Flexible(
-                  child: Text(
-                    '${parked!.loaded}/${bus.capacity}',
-                    overflow: TextOverflow.ellipsis,
+              )
+            : Row(
+                key: ValueKey('bus-${bus.id}-${parked!.loaded}'),
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.directions_bus_filled_rounded,
+                    color: _ink,
+                    size: compact ? 12 : 15,
+                  ),
+                  Text(
+                    _routeSymbol(bus.route),
                     style: TextStyle(
                       color: _ink,
-                      fontSize: compact ? 10 : 11,
                       fontWeight: FontWeight.w900,
+                      fontSize: compact ? 9 : 11,
                     ),
                   ),
-                ),
-              ],
-            ),
+                  SizedBox(width: compact ? 1 : 3),
+                  Flexible(
+                    child: Text(
+                      '${parked!.loaded}/${bus.capacity}',
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: _ink,
+                        fontSize: compact ? 10 : 11,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+      ),
     );
   }
 }
@@ -751,19 +959,22 @@ class _ParkingLot extends StatelessWidget {
       if (constraints.maxWidth <= 20 + level.width * 4) {
         return const SizedBox.shrink();
       }
-      final cell = (constraints.maxWidth - 20) / level.width;
+      final cell = math.min(
+        (constraints.maxWidth - 20) / level.width,
+        (constraints.maxHeight - 20) / level.height,
+      );
       final width = cell * level.width;
       final height = cell * level.height;
       return ClipRRect(
         borderRadius: BorderRadius.circular(23),
         child: Container(
           decoration: BoxDecoration(
-            color: const Color(0xFFAFBFBA),
-            border: Border.all(color: const Color(0xFF829993), width: 4),
+            color: const Color(0xFFC7DEA8),
+            border: Border.all(color: const Color(0xFF779C65), width: 4),
             borderRadius: BorderRadius.circular(23),
             boxShadow: const [
               BoxShadow(
-                color: Color(0x33283E44),
+                color: Color(0x44364F36),
                 offset: Offset(0, 5),
                 blurRadius: 0,
               ),
@@ -812,9 +1023,7 @@ class _ParkingLot extends StatelessWidget {
           top = boardHeight;
       }
     }
-    final color = vehicle.isBus
-        ? _routeColor(vehicle.route!)
-        : _carColor(vehicle.id);
+    final color = _routeColor(vehicle.route);
     final highlighted = vehicle.id == hintedId;
     final blocked = vehicle.id == blockedId;
     return AnimatedPositioned(
@@ -829,22 +1038,32 @@ class _ParkingLot extends StatelessWidget {
         onTap: enabled ? () => onTapVehicle(vehicle) : null,
         child: Semantics(
           button: true,
-          label:
-              '${vehicle.isBus ? 'Bus' : 'Car'} ${vehicle.id}, facing ${vehicle.facing.name}',
+          label: 'Bus ${vehicle.id}, facing ${vehicle.facing.name}',
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 120),
             decoration: BoxDecoration(
-              color: color,
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color.lerp(color, Colors.white, .30)!,
+                  color,
+                  Color.lerp(color, _ink, .08)!,
+                ],
+                stops: const [0, .48, 1],
+              ),
               borderRadius: BorderRadius.circular(math.max(10, cell * .19)),
               border: Border.all(
-                color: blocked ? const Color(0xFFB84036) : _ink,
-                width: blocked ? 4 : 2.2,
+                color: blocked
+                    ? const Color(0xFFB84036)
+                    : const Color(0xFF294352),
+                width: blocked ? 4 : 2.4,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0x5530464C),
-                  offset: Offset(0, cell * .07),
-                  blurRadius: 1,
+                  color: const Color(0x66354C37),
+                  offset: Offset(0, cell * .10),
+                  blurRadius: 2,
                 ),
                 if (highlighted)
                   const BoxShadow(
@@ -881,12 +1100,7 @@ class _VehicleArtwork extends StatelessWidget {
       children: [
         Positioned.fill(
           child: CustomPaint(
-            painter: _VehicleDetailsPainter(
-              horizontal: horizontal,
-              isBus: vehicle.isBus,
-              facing: vehicle.facing,
-              cell: cell,
-            ),
+            painter: _VehicleDetailsPainter(horizontal: horizontal, cell: cell),
           ),
         ),
         Padding(
@@ -895,19 +1109,17 @@ class _VehicleArtwork extends StatelessWidget {
               ? Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    if (vehicle.isBus) _WindowStrip(vertical: false),
+                    _WindowStrip(vertical: false),
                     Icon(forward, color: _ink, size: cell * .46),
-                    if (vehicle.isBus)
-                      _RouteBadge(route: vehicle.route!, cell: cell),
+                    _RouteBadge(route: vehicle.route, cell: cell),
                   ],
                 )
               : Column(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
-                    if (vehicle.isBus) _WindowStrip(vertical: true),
+                    _WindowStrip(vertical: true),
                     Icon(forward, color: _ink, size: cell * .46),
-                    if (vehicle.isBus)
-                      _RouteBadge(route: vehicle.route!, cell: cell),
+                    _RouteBadge(route: vehicle.route, cell: cell),
                   ],
                 ),
         ),
@@ -917,16 +1129,9 @@ class _VehicleArtwork extends StatelessWidget {
 }
 
 class _VehicleDetailsPainter extends CustomPainter {
-  const _VehicleDetailsPainter({
-    required this.horizontal,
-    required this.isBus,
-    required this.facing,
-    required this.cell,
-  });
+  const _VehicleDetailsPainter({required this.horizontal, required this.cell});
 
   final bool horizontal;
-  final bool isBus;
-  final JamFacing facing;
   final double cell;
 
   @override
@@ -970,43 +1175,11 @@ class _VehicleDetailsPainter extends CustomPainter {
         );
       }
     }
-
-    if (isBus) return;
-    final glassPaint = Paint()
-      ..color = const Color(0xFFDFF4EC)
-      ..style = PaintingStyle.fill;
-    final outlinePaint = Paint()
-      ..color = const Color(0xFF47636B)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1;
-    late final Rect glass;
-    if (horizontal) {
-      final x = facing == JamFacing.right
-          ? size.width - cell * .48
-          : cell * .19;
-      glass = Rect.fromLTWH(
-        x,
-        size.height * .29,
-        cell * .25,
-        size.height * .42,
-      );
-    } else {
-      final y = facing == JamFacing.down
-          ? size.height - cell * .48
-          : cell * .19;
-      glass = Rect.fromLTWH(size.width * .29, y, size.width * .42, cell * .25);
-    }
-    final rrect = RRect.fromRectAndRadius(glass, const Radius.circular(5));
-    canvas.drawRRect(rrect, glassPaint);
-    canvas.drawRRect(rrect, outlinePaint);
   }
 
   @override
   bool shouldRepaint(covariant _VehicleDetailsPainter oldDelegate) =>
-      oldDelegate.horizontal != horizontal ||
-      oldDelegate.isBus != isBus ||
-      oldDelegate.facing != facing ||
-      oldDelegate.cell != cell;
+      oldDelegate.horizontal != horizontal || oldDelegate.cell != cell;
 }
 
 class _WindowStrip extends StatelessWidget {
@@ -1064,25 +1237,27 @@ class _LotPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final cellW = size.width / width;
     final cellH = size.height / height;
-    final gridPaint = Paint()
-      ..color = const Color(0x63F9FFF3)
+    final pavement = Paint()..color = const Color(0xFFE8DECA);
+    canvas.drawRect(Offset.zero & size, pavement);
+    final slotPaint = Paint()
+      ..color = const Color(0xB5FFFDF2)
       ..strokeWidth = 1.2;
     for (var x = 1; x < width; x++) {
       canvas.drawLine(
         Offset(x * cellW, 0),
         Offset(x * cellW, size.height),
-        gridPaint,
+        slotPaint,
       );
     }
     for (var y = 1; y < height; y++) {
       canvas.drawLine(
         Offset(0, y * cellH),
         Offset(size.width, y * cellH),
-        gridPaint,
+        slotPaint,
       );
     }
     final edgePaint = Paint()
-      ..color = const Color(0x557A938A)
+      ..color = const Color(0x88778C62)
       ..strokeWidth = 4;
     canvas.drawLine(Offset(4, 3), Offset(size.width - 4, 3), edgePaint);
   }
@@ -1260,9 +1435,9 @@ String _routeSymbol(JamRoute route) => switch (route) {
   JamRoute.gold => '✦',
 };
 
-Color _carColor(String id) => switch (id) {
-  'coral-blocker' || 'left-car' => const Color(0xFFF7A15E),
-  'top-car' || 'upper-car' => _purple,
-  'lower-car' || 'middle-car' => const Color(0xFFE6D66D),
-  _ => const Color(0xFF7AC5A7),
+String _routeName(JamRoute route) => switch (route) {
+  JamRoute.coral => 'coral',
+  JamRoute.blue => 'blue',
+  JamRoute.mint => 'green',
+  JamRoute.gold => 'yellow',
 };

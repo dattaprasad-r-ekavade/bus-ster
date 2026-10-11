@@ -1,7 +1,6 @@
 // Provisional, UI-independent rules for the replacement parking-jam slice.
-// This does not claim to reproduce Bus Fever Party!'s exact rules. Keep the
-// model separate from the superseded road-network prototype until direct
-// reference play and owner review settle the interaction contract.
+// Every selectable piece is a colored bus. Direct reference play is still
+// needed to settle exact route, bay, and capacity rules.
 import 'dart:collection';
 
 enum JamFacing { up, right, down, left }
@@ -32,18 +31,16 @@ class JamVehicle {
     required this.origin,
     required this.facing,
     required this.length,
-    this.route,
-    this.capacity = 0,
+    required this.route,
+    required this.capacity,
   });
 
   final String id;
   final JamCell origin;
   final JamFacing facing;
   final int length;
-  final JamRoute? route;
+  final JamRoute route;
   final int capacity;
-
-  bool get isBus => route != null;
 
   Iterable<JamCell> get cells sync* {
     for (var offset = 0; offset < length; offset++) {
@@ -104,17 +101,14 @@ class JamLevel {
       if (vehicle.length < 2 || vehicle.length > 3) {
         throw ArgumentError('Vehicle length must be 2 or 3.');
       }
-      if (vehicle.isBus != (vehicle.capacity > 0)) {
-        throw ArgumentError('Buses need positive capacity; cars need zero.');
+      if (vehicle.capacity < 1) {
+        throw ArgumentError('Every bus needs positive passenger capacity.');
       }
-      final route = vehicle.route;
-      if (route != null) {
-        seats.update(
-          route,
-          (value) => value + vehicle.capacity,
-          ifAbsent: () => vehicle.capacity,
-        );
-      }
+      seats.update(
+        vehicle.route,
+        (value) => value + vehicle.capacity,
+        ifAbsent: () => vehicle.capacity,
+      );
       for (final cell in vehicle.cells) {
         if (cell.x < 0 || cell.x >= width || cell.y < 0 || cell.y >= height) {
           throw ArgumentError('Vehicle ${vehicle.id} is outside the lot.');
@@ -233,7 +227,7 @@ class JamRules {
         );
       }
     }
-    if (vehicle.isBus && state.parked.length >= level.bayCount) {
+    if (state.parked.length >= level.bayCount) {
       return JamMove(
         state: state,
         vehicleId: vehicleId,
@@ -243,7 +237,7 @@ class JamRules {
 
     final active = state.activeVehicleIds.toSet()..remove(vehicleId);
     final bays = state.parked.toList();
-    if (vehicle.isBus) bays.add(JamParkedBus(vehicleId, 0));
+    bays.add(JamParkedBus(vehicleId, 0));
     var passengerIndex = state.passengerIndex;
     var boarded = 0;
     final departed = <String>[];
@@ -308,7 +302,7 @@ class JamRules {
     }
     for (final vehicle in level.vehicles) {
       if (!active.contains(vehicle.id)) continue;
-      if (vehicle.isBus && bays.length >= level.bayCount) continue;
+      if (bays.length >= level.bayCount) continue;
       if (vehicle
           .laneToEdge(level.width, level.height)
           .every((cell) => !occupiedBy.containsKey(cell))) {
