@@ -186,7 +186,8 @@ Estimated elapsed time for a small team: **12–16 weeks**, with art/content run
 - [x] Replace font glyphs with platform-independent vector route shapes in the bus, rider queue, and bay views; add screen-reader labels to queued riders and parked buses. Widget tests check route shapes and rider labels.
 - [ ] Verify color-vision readability through contrast checks, grayscale screenshots, and player sessions. Confirm every rule-critical object remains distinguishable without color.
 - [x] Check the core controls at 1.5× system text size in the compact 320×568 layout. Repeat the text and layout review on physical Android devices when available.
-- [ ] Build help, settings, privacy link placeholder, support contact, and localization-ready strings; ship at least clear English, then localize only markets that can be QA'd.
+- [x] Keep the help dialog and pause-screen settings available; draft a source-checked privacy data inventory for the current prototype in [`docs/PRIVACY_POLICY_DRAFT.md`](docs/PRIVACY_POLICY_DRAFT.md).
+- [ ] Complete publisher/support details, verify Android backup behavior, publish and link the final privacy policy in-app/Play Console, and prepare localization-ready strings. Localize only markets that can be QA'd.
 - [ ] Measure frame times, memory, battery/thermal behavior, cold start, and AAB size on the device matrix; optimize overdraw and oversized textures.
 - **Exit:** stable, understandable, accessible build with no placeholder art and no device-specific blocker.
 
@@ -210,7 +211,8 @@ Estimated elapsed time for a small team: **12–16 weeks**, with art/content run
 
 ### Stage 6 — Android release preparation (weeks 11–13)
 
-- [ ] Target **Android 16 / API 36 or higher** for new Google Play submissions under the rule effective 31 August 2026; recheck policy before upload. Build a signed `.aab`, configure Play App Signing, and keep upload keys outside Git. [Target API policy](https://support.google.com/googleplay/android-developer/answer/11926878), [App Bundle](https://developer.android.com/guide/app-bundle), [signing](https://developer.android.com/studio/publish/app-signing).
+- [x] Build and inspect local release-profile artifacts: API 36 target, API 24 minimum, and no `INTERNET` permission in the merged release manifest. The universal APK is 44.8 MB and the AAB is 39.3 MB; both use the debug signing key and are validation builds only.
+- [ ] Target **Android 16 / API 36 or higher** for new Google Play submissions under the rule effective 31 August 2026; recheck policy before upload. Build a signed `.aab`, configure Play App Signing, confirm final permissions and download size, and keep upload keys outside Git. [Target API policy](https://support.google.com/googleplay/android-developer/answer/11926878), [App Bundle](https://developer.android.com/guide/app-bundle), [signing](https://developer.android.com/studio/publish/app-signing).
 - [ ] Create Play Console app, content rating, target audience, privacy policy, Data safety declaration (including all SDK collection), ads declaration, app access, store text/screenshots, and support channel. Avoid listing claims not present in game. [Data safety guidance](https://support.google.com/googleplay/android-developer/answer/10787469).
 - [ ] Run `flutter analyze`, unit/integration tests, device matrix QA, TalkBack/text scaling checks, ad/IAP test flows, offline and airplane-mode tests, and Play pre-launch report. Fix ANRs and crashes.
 - [ ] Release to internal then closed testing. If the developer account is a new personal account, Play currently requires **12 continuously opted-in testers for 14 days** before production access; confirm account eligibility in Play Console. [Testing requirement](https://support.google.com/googleplay/android-developer/answer/14151465).

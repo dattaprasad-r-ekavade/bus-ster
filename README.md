@@ -11,6 +11,15 @@ flutter pub get
 flutter run
 ```
 
+Release-profile validation builds:
+
+```sh
+flutter build apk --release
+flutter build appbundle --release
+```
+
+The current Android Gradle release variant uses the debug signing key. These artifacts are for local validation only and must not be uploaded to Play Console.
+
 The first 10 depots are playable. Tap a bus on the road to send it toward the exit. If it cannot board the next riders, it waits in a departure bay. Use **Route Tip** for a solver hint or **Undo** to reverse a dispatch.
 Open **How to play** in the top bar for the core rules.
 
@@ -45,5 +54,6 @@ flutter test integration_test/first_dispatch_test.dart -d <device-id>
 - [Asset and license ledger](docs/ASSET_LEDGER.md)
 - [Level validation tool](tools/validate_levels.dart)
 - [Gameplay analytics event schema](docs/ANALYTICS_EVENT_SCHEMA.md)
+- [Internal privacy-policy draft (not release-ready)](docs/PRIVACY_POLICY_DRAFT.md)
 
 The game and all eventual store assets must use original art, level layouts, sounds, and copy. The plan tracks playtest, production, monetization, and release gates.
