@@ -87,6 +87,7 @@ class LevelCandidateGenerator {
           buses: source.buses,
           passengers: queue,
           tutorialPrompt: source.tutorialPrompt,
+          localizedTutorialPrompts: source.localizedTutorialPrompts,
           bayCount: source.bayCount,
           mechanicTags: [...source.mechanicTags, 'queue-order-candidate'],
           difficultyBand: 'unrated',

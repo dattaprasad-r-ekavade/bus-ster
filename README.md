@@ -39,10 +39,13 @@ When a publisher account exists, the Android manifest app ID comes from the `BUS
 
 Pause the game to control sound effects and haptics independently, or enable reduced motion. These preferences save locally; haptics accompany successful bus dispatches only. Audio mix and haptic feel still need physical-device testing.
 
+The UI uses Flutter's generated localization support with English source copy in [`lib/l10n/app_en.arb`](lib/l10n/app_en.arb). Level titles and tutorial prompts use locale-keyed content in schema version 2; the codec still reads version 1. Only English is currently shipped. Add a locale only after translating both the UI and level copy and checking text fit and gameplay instructions for that language.
+
 ## Check the project
 
 ```sh
 dart format lib test tools integration_test
+flutter gen-l10n
 flutter analyze
 flutter test
 dart run tools/validate_levels.dart

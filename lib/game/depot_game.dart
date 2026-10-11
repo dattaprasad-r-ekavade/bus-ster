@@ -18,11 +18,13 @@ class DepotGame extends FlameGame {
     this.session, {
     this.onSuccessfulDispatch,
     this.reduceMotion = false,
+    this.exitLabel = 'EXIT',
   });
 
   final GameSession session;
   final ValueChanged<DispatchResult>? onSuccessfulDispatch;
   bool reduceMotion;
+  String exitLabel;
 
   @override
   Color backgroundColor() => const Color(0xFF152238);
@@ -350,7 +352,7 @@ class DepotBoard extends PositionComponent with TapCallbacks {
     canvas.drawRRect(gateRect, ui.Paint()..color = const Color(0xFFFFC857));
     _drawText(
       canvas,
-      'EXIT',
+      _game.exitLabel,
       ui.Offset(center.dx, top - cellSize * 0.23),
       math.max(8, cellSize * 0.16),
       const Color(0xFF26364E),

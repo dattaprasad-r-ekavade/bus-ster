@@ -65,22 +65,67 @@ class BusSpec {
   final int capacity;
 }
 
+class LocalizedText {
+  LocalizedText(Map<String, String> values) : values = _normalize(values) {
+    if (this.values.isEmpty || !this.values.containsKey('en')) {
+      throw ArgumentError.value(values, 'values', 'Must include English copy.');
+    }
+    if (this.values.keys.any((locale) => locale.trim().isEmpty)) {
+      throw ArgumentError.value(
+        values,
+        'values',
+        'Locale keys cannot be empty.',
+      );
+    }
+  }
+
+  final Map<String, String> values;
+
+  static Map<String, String> _normalize(Map<String, String> values) {
+    final normalized = <String, String>{};
+    for (final entry in values.entries) {
+      final locale = entry.key.replaceAll('_', '-').toLowerCase();
+      if (normalized.containsKey(locale)) {
+        throw ArgumentError.value(
+          values,
+          'values',
+          'Locale keys must be unique ignoring case.',
+        );
+      }
+      normalized[locale] = entry.value;
+    }
+    return UnmodifiableMapView(normalized);
+  }
+
+  String resolve(String locale) {
+    final normalized = locale.replaceAll('_', '-').toLowerCase();
+    final language = normalized.split('-').first;
+    return values[normalized] ?? values[language] ?? values['en']!;
+  }
+}
+
 class LevelSpec {
   LevelSpec({
     required this.id,
-    required this.title,
+    required String title,
     required this.width,
     required this.height,
     required this.exit,
     required Iterable<GridPoint> roads,
     required Iterable<BusSpec> buses,
     required Iterable<RouteKind> passengers,
-    this.tutorialPrompt = '',
+    String tutorialPrompt = '',
+    Map<String, String>? localizedTitles,
+    Map<String, String>? localizedTutorialPrompts,
     this.bayCount = 3,
     Iterable<String> mechanicTags = const [],
     this.difficultyBand = 'unrated',
     this.seed,
-  }) : roads = UnmodifiableSetView(roads.toSet()),
+  }) : _localizedTitles = LocalizedText(localizedTitles ?? {'en': title}),
+       _localizedTutorialPrompts = LocalizedText(
+         localizedTutorialPrompts ?? {'en': tutorialPrompt},
+       ),
+       roads = UnmodifiableSetView(roads.toSet()),
        buses = List.unmodifiable(buses),
        passengers = List.unmodifiable(passengers),
        mechanicTags = List.unmodifiable(mechanicTags.toSet().toList()..sort()) {
@@ -100,14 +145,22 @@ class LevelSpec {
   }
 
   final String id;
-  final String title;
+  final LocalizedText _localizedTitles;
+  final LocalizedText _localizedTutorialPrompts;
+  String get title => titleFor('en');
+  String titleFor(String locale) => _localizedTitles.resolve(locale);
+  Map<String, String> get localizedTitles => _localizedTitles.values;
   final int width;
   final int height;
   final GridPoint exit;
   final Set<GridPoint> roads;
   final List<BusSpec> buses;
   final List<RouteKind> passengers;
-  final String tutorialPrompt;
+  String get tutorialPrompt => tutorialPromptFor('en');
+  String tutorialPromptFor(String locale) =>
+      _localizedTutorialPrompts.resolve(locale);
+  Map<String, String> get localizedTutorialPrompts =>
+      _localizedTutorialPrompts.values;
   final int bayCount;
   final List<String> mechanicTags;
   final String difficultyBand;
@@ -172,18 +225,20 @@ class BoardState {
 class DispatchResult {
   const DispatchResult({
     required this.state,
-    required this.message,
     required this.changed,
+    this.failure,
     this.boardedRiders = const [],
     this.departedBusIds = const [],
   });
 
   final BoardState state;
-  final String message;
   final bool changed;
+  final DispatchFailure? failure;
   final List<RouteKind> boardedRiders;
   final List<String> departedBusIds;
 }
+
+enum DispatchFailure { routeFinished, busAlreadyLeft, blockedRoute, baysFull }
 
 class GameRules {
   static List<GridPoint>? routeToExit(
@@ -235,15 +290,15 @@ class GameRules {
     if (state.status != GameStatus.playing) {
       return DispatchResult(
         state: state,
-        message: 'This route is finished. Start the next depot.',
         changed: false,
+        failure: DispatchFailure.routeFinished,
       );
     }
     if (!state.activeBusIds.contains(busId)) {
       return DispatchResult(
         state: state,
-        message: 'That bus has already left the depot.',
         changed: false,
+        failure: DispatchFailure.busAlreadyLeft,
       );
     }
 
@@ -252,15 +307,15 @@ class GameRules {
     if (path == null) {
       return DispatchResult(
         state: state,
-        message: 'Another bus is blocking every route to the gate.',
         changed: false,
+        failure: DispatchFailure.blockedRoute,
       );
     }
     if (state.parked.length >= level.bayCount) {
       return DispatchResult(
         state: state,
-        message: 'All departure bays are occupied. Undo a bus to make room.',
         changed: false,
+        failure: DispatchFailure.baysFull,
       );
     }
 
@@ -305,14 +360,8 @@ class GameRules {
       moveCount: state.moveCount + 1,
       status: won ? GameStatus.won : GameStatus.playing,
     );
-    final message = won
-        ? 'Depot clear! Every rider reached the right bus.'
-        : path.length > 1
-        ? '${bus.route.label} route dispatched through ${path.length - 1} road tiles.'
-        : '${bus.route.label} route entered a departure bay.';
     return DispatchResult(
       state: nextState,
-      message: message,
       changed: true,
       boardedRiders: List.unmodifiable(boardedRiders),
       departedBusIds: List.unmodifiable(departedBusIds),

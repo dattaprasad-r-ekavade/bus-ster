@@ -6,6 +6,8 @@ import 'package:path_provider/path_provider.dart';
 
 import 'game_progress.dart';
 
+enum ProgressLoadWarning { damagedPrimary, recoveredBackup, damagedBoth }
+
 /// Stores the small progress record as a validated JSON file with a last-good
 /// backup. Writes go through a temporary file in the same directory.
 class ProgressFileStore {
@@ -24,9 +26,11 @@ class ProgressFileStore {
   Future<void> _writeQueue = Future<void>.value();
   bool _canWrite = true;
   String? _loadWarning;
+  ProgressLoadWarning? _loadWarningKind;
 
   bool get canWrite => _canWrite;
   String? get loadWarning => _loadWarning;
+  ProgressLoadWarning? get loadWarningKind => _loadWarningKind;
 
   File get _backupFile => File('${file.path}.bak');
   File get _temporaryFile => File('${file.path}.tmp');
@@ -47,10 +51,12 @@ class ProgressFileStore {
       } on Object {
         if (!backupExists) {
           _loadWarning = 'Saved progress was damaged. Starting a fresh depot.';
+          _loadWarningKind = ProgressLoadWarning.damagedPrimary;
           return null;
         }
         try {
           _loadWarning = 'Recovered saved progress from its last-good backup.';
+          _loadWarningKind = ProgressLoadWarning.recoveredBackup;
           return (await _read(_backupFile)).progress;
         } on UnsupportedProgressVersion {
           _canWrite = false;
@@ -58,6 +64,7 @@ class ProgressFileStore {
         } on Object {
           _loadWarning =
               'Saved progress and its backup were damaged. Starting a fresh depot.';
+          _loadWarningKind = ProgressLoadWarning.damagedBoth;
           return null;
         }
       }

@@ -1,9 +1,11 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "levels": [
     {
       "id": "depot-01",
-      "title": "One clear route",
+      "title": {
+        "en": "One clear route"
+      },
       "width": 5,
       "height": 5,
       "exit": {
@@ -86,7 +88,9 @@
         "mint",
         "mint"
       ],
-      "tutorialPrompt": "Tap a bus with a clear road to the EXIT.",
+      "tutorialPrompt": {
+        "en": "Tap a bus with a clear road to the EXIT."
+      },
       "mechanicTags": [
         "clear-path"
       ],
@@ -95,7 +99,9 @@
     },
     {
       "id": "depot-02",
-      "title": "Two branches",
+      "title": {
+        "en": "Two branches"
+      },
       "width": 5,
       "height": 5,
       "exit": {
@@ -189,7 +195,9 @@
         "mint",
         "mint"
       ],
-      "tutorialPrompt": "The first rider in the visible queue boards first.",
+      "tutorialPrompt": {
+        "en": "The first rider in the visible queue boards first."
+      },
       "mechanicTags": [
         "branch",
         "fifo-queue"
@@ -199,7 +207,9 @@
     },
     {
       "id": "depot-03",
-      "title": "Queue order",
+      "title": {
+        "en": "Queue order"
+      },
       "width": 5,
       "height": 5,
       "exit": {
@@ -293,7 +303,9 @@
         "gold",
         "gold"
       ],
-      "tutorialPrompt": "A mismatched bus can wait in a bay while you serve the next rider.",
+      "tutorialPrompt": {
+        "en": "A mismatched bus can wait in a bay while you serve the next rider."
+      },
       "mechanicTags": [
         "fifo-queue",
         "limited-bays"
@@ -303,7 +315,9 @@
     },
     {
       "id": "depot-04",
-      "title": "The center stop",
+      "title": {
+        "en": "The center stop"
+      },
       "width": 5,
       "height": 5,
       "exit": {
@@ -397,7 +411,9 @@
         "mint",
         "mint"
       ],
-      "tutorialPrompt": "A bus on the road blocks every route through its tile.",
+      "tutorialPrompt": {
+        "en": "A bus on the road blocks every route through its tile."
+      },
       "mechanicTags": [
         "bus-blocking",
         "shared-exit"
@@ -407,7 +423,9 @@
     },
     {
       "id": "depot-05",
-      "title": "Hold the right bus",
+      "title": {
+        "en": "Hold the right bus"
+      },
       "width": 5,
       "height": 5,
       "exit": {
@@ -501,7 +519,9 @@
         "mint",
         "mint"
       ],
-      "tutorialPrompt": "Queue order and road access both shape a good dispatch order.",
+      "tutorialPrompt": {
+        "en": "Queue order and road access both shape a good dispatch order."
+      },
       "mechanicTags": [
         "bus-blocking",
         "dispatch-order"
@@ -511,7 +531,9 @@
     },
     {
       "id": "depot-06",
-      "title": "Open the junction",
+      "title": {
+        "en": "Open the junction"
+      },
       "width": 5,
       "height": 5,
       "exit": {
@@ -605,7 +627,9 @@
         "coral",
         "coral"
       ],
-      "tutorialPrompt": "A full bus leaves and opens a bay for the next bus.",
+      "tutorialPrompt": {
+        "en": "A full bus leaves and opens a bay for the next bus."
+      },
       "mechanicTags": [
         "bay-turnover",
         "dispatch-order"
@@ -615,7 +639,9 @@
     },
     {
       "id": "depot-07",
-      "title": "Clear the upper lane",
+      "title": {
+        "en": "Clear the upper lane"
+      },
       "width": 5,
       "height": 5,
       "exit": {
@@ -709,7 +735,9 @@
         "blue",
         "blue"
       ],
-      "tutorialPrompt": "Branches rejoin the shared road leading to the EXIT.",
+      "tutorialPrompt": {
+        "en": "Branches rejoin the shared road leading to the EXIT."
+      },
       "mechanicTags": [
         "branch",
         "shared-road"
@@ -719,7 +747,9 @@
     },
     {
       "id": "depot-08",
-      "title": "A bus in reserve",
+      "title": {
+        "en": "A bus in reserve"
+      },
       "width": 5,
       "height": 5,
       "exit": {
@@ -813,7 +843,9 @@
         "mint",
         "mint"
       ],
-      "tutorialPrompt": "Think ahead: sending a bus opens road tiles but may fill a bay.",
+      "tutorialPrompt": {
+        "en": "Think ahead: sending a bus opens road tiles but may fill a bay."
+      },
       "mechanicTags": [
         "bay-pressure",
         "route-planning"
@@ -823,7 +855,9 @@
     },
     {
       "id": "depot-09",
-      "title": "Two free bays",
+      "title": {
+        "en": "Two free bays"
+      },
       "width": 5,
       "height": 5,
       "exit": {
@@ -917,7 +951,9 @@
         "blue",
         "blue"
       ],
-      "tutorialPrompt": "Use the bays to stage buses while following the queue.",
+      "tutorialPrompt": {
+        "en": "Use the bays to stage buses while following the queue."
+      },
       "mechanicTags": [
         "fifo-queue",
         "staging"
@@ -927,7 +963,9 @@
     },
     {
       "id": "depot-10",
-      "title": "Depot master",
+      "title": {
+        "en": "Depot master"
+      },
       "width": 5,
       "height": 5,
       "exit": {
@@ -1021,7 +1059,9 @@
         "coral",
         "coral"
       ],
-      "tutorialPrompt": "Depot review: check the road, the next rider, and open bays each move.",
+      "tutorialPrompt": {
+        "en": "Depot review: check the road, the next rider, and open bays each move."
+      },
       "mechanicTags": [
         "mixed-rules",
         "review"

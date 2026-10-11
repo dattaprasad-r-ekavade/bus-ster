@@ -4,24 +4,26 @@ The canonical authored level pack is [`assets/levels/levels.json`](../assets/lev
 
 ## Bundle shape
 
-The top-level object has `schemaVersion: 1` and a non-empty `levels` array. Each level contains:
+The top-level object has `schemaVersion: 2` and a non-empty `levels` array. The codec still reads schema version 1, where `title` and `tutorialPrompt` are plain English strings; encoding always writes version 2. Each level contains:
 
 | Field | Type | Rule |
 | --- | --- | --- |
 | `id` | string | Stable, unique ID. Keep it unchanged after release so saves and analytics keep their meaning. |
-| `title` | string | Short player-facing depot title. |
+| `title` | locale-to-string object | Short player-facing depot title. English (`en`) is required; optional entries use BCP 47 language tags such as `es` or `pt-br`. |
 | `width`, `height` | integer | Positive grid dimensions. |
 | `exit` | `{ "x": int, "y": int }` | Must point to a road tile. |
 | `roads` | array of points | Unique, in-bounds grid coordinates. |
 | `bayCount` | integer | Positive number of staging bays. |
 | `buses` | array | Each bus has a unique `id`, `route`, `position`, and positive `capacity`. Bus positions must be unique road tiles. |
 | `passengerQueue` | array of routes | Non-empty first-in-first-out queue. Routes are `coral`, `blue`, `mint`, or `gold`. |
-| `tutorialPrompt` | string | Provisional teaching line shown when the depot starts. |
+| `tutorialPrompt` | locale-to-string object | Provisional teaching line shown when the depot starts. English (`en`) is required; optional entries use BCP 47 language tags such as `es` or `pt-br`. |
 | `difficultyBand` | string | `tutorial`, `easy`, `medium`, `hard`, or `unrated`. Current bands are design hypotheses, not player-measured ratings. |
 | `mechanicTags` | array of strings | Author notes such as `branch`, `fifo-queue`, or `bay-pressure`; use consistent kebab-case tags. |
 | `seed` | integer or null | Reserved for deterministic generated layouts; authored levels currently use `null`. |
 
-The codec rejects unsupported schema versions and invalid coordinates, duplicate IDs/tiles, missing routes, and malformed metadata. The batch validator also checks that passenger counts match bus capacity for each route and that the bounded solver finds a complete dispatch sequence (up to 100,000 explored states). The preview counts reachable nonterminal states, legal branching states, dead ends, states with no path to a win, and choice points along a shortest solution. These are puzzle-graph properties, not measured player difficulty; they do not replace completion time, solve rate, or usability observations from playtests.
+The app resolves content by exact locale, then language code, then English. Translation keys are BCP 47 tags, normalized to lowercase, and must be unique. The codec rejects unsupported schema versions and invalid coordinates, duplicate IDs/tiles, missing routes, missing English copy, and malformed metadata. The batch validator also checks that passenger counts match bus capacity for each route and that the bounded solver finds a complete dispatch sequence (up to 100,000 explored states). The preview uses English copy. These prototype levels currently contain English only; adding a supported app locale requires translated ARB UI strings and translated level content together, followed by layout and language QA.
+
+The preview counts reachable nonterminal states, legal branching states, dead ends, states with no path to a win, and choice points along a shortest solution. These are puzzle-graph properties, not measured player difficulty; they do not replace completion time, solve rate, or usability observations from playtests.
 
 The seeded candidate generator in [`tools/generate_level_candidates.dart`](../tools/generate_level_candidates.dart) shuffles rider order for each authored layout, keeps route totals and bus geometry intact, and writes a separate versioned JSON bundle under `build/level-candidates/`. It uses a small specified PRNG so a seed regenerates the same candidate bundle across runs. Candidates are tagged `queue-order-candidate`, have difficulty `unrated`, and are never loaded by the game unless deliberately copied into the canonical pack. They reuse the source prompt, so revise the prompt after reviewing the new queue. Solver success proves only that a solution exists; it does not prove the layout is fair, distinct, or well taught.
 

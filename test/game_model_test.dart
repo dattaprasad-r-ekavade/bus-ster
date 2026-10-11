@@ -61,10 +61,11 @@ void main() {
 
     test('tutorial prompt follows the active level and restarts', () {
       final session = GameSession(levelList: levels);
-      expect(session.message, levels[0].tutorialPrompt);
+      expect(session.message.kind, GameMessageKind.levelPrompt);
+      expect(levels[0].tutorialPromptFor('en'), levels[0].tutorialPrompt);
 
       session.restart();
-      expect(session.message, levels[0].tutorialPrompt);
+      expect(session.message.kind, GameMessageKind.levelPrompt);
 
       session
         ..dispatch('blue')
@@ -72,7 +73,7 @@ void main() {
         ..dispatch('mint')
         ..nextLevel();
       expect(session.levelIndex, 1);
-      expect(session.message, levels[1].tutorialPrompt);
+      expect(session.message.kind, GameMessageKind.levelPrompt);
       session.dispose();
     });
 

@@ -12,7 +12,8 @@ class LevelVariant {
     final suffix = axis.name;
     return LevelSpec(
       id: '${source.id}-mirror-$suffix',
-      title: '${source.title} (mirror $suffix)',
+      title: source.title,
+      localizedTitles: source.localizedTitles,
       width: source.width,
       height: source.height,
       exit: transform(source.exit),
@@ -28,6 +29,7 @@ class LevelVariant {
       ],
       passengers: source.passengers,
       tutorialPrompt: source.tutorialPrompt,
+      localizedTutorialPrompts: source.localizedTutorialPrompts,
       bayCount: source.bayCount,
       difficultyBand: source.difficultyBand,
       mechanicTags: source.mechanicTags,

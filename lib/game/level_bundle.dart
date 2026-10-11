@@ -4,13 +4,15 @@ import 'game_model.dart';
 
 /// Reads and writes the versioned JSON bundle used by the Android game.
 class LevelBundleCodec {
-  static const schemaVersion = 1;
+  static const schemaVersion = 2;
+  static const _legacySchemaVersion = 1;
 
   static List<LevelSpec> decode(String source) {
     final decoded = jsonDecode(source);
     final bundle = _object(decoded, 'level bundle');
     final version = bundle['schemaVersion'];
-    if (version != schemaVersion) {
+    if (version is! int ||
+        (version != schemaVersion && version != _legacySchemaVersion)) {
       throw FormatException('Unsupported level bundle schema: $version.');
     }
     final rawLevels = bundle['levels'];
@@ -21,7 +23,11 @@ class LevelBundleCodec {
     final result = <LevelSpec>[];
     final levelIds = <String>{};
     for (var index = 0; index < rawLevels.length; index++) {
-      final level = _decodeLevel(rawLevels[index], 'levels[$index]');
+      final level = _decodeLevel(
+        rawLevels[index],
+        'levels[$index]',
+        schemaVersion: version,
+      );
       if (!levelIds.add(level.id)) {
         throw FormatException('Duplicate level ID "${level.id}".');
       }
@@ -38,10 +44,19 @@ class LevelBundleCodec {
     });
   }
 
-  static LevelSpec _decodeLevel(Object? value, String path) {
+  static LevelSpec _decodeLevel(
+    Object? value,
+    String path, {
+    required int schemaVersion,
+  }) {
     final json = _object(value, path);
     final id = _string(json, 'id', path, allowEmpty: false);
-    final title = _string(json, 'title', path, allowEmpty: false);
+    final titles = _localizedText(
+      json['title'],
+      '$path.title',
+      schemaVersion: schemaVersion,
+      allowEmpty: false,
+    );
     final width = _integer(json, 'width', path);
     final height = _integer(json, 'height', path);
     if (width < 1 || height < 1) {
@@ -117,7 +132,11 @@ class LevelBundleCodec {
       throw FormatException('$path.bayCount must be positive.');
     }
 
-    final prompt = _string(json, 'tutorialPrompt', path);
+    final prompts = _localizedText(
+      json['tutorialPrompt'],
+      '$path.tutorialPrompt',
+      schemaVersion: schemaVersion,
+    );
     final rawTags = json['mechanicTags'];
     if (rawTags is! List ||
         rawTags.any((tag) => tag is! String || tag.isEmpty)) {
@@ -137,14 +156,16 @@ class LevelBundleCodec {
 
     return LevelSpec(
       id: id,
-      title: title,
+      title: titles['en']!,
+      localizedTitles: titles,
       width: width,
       height: height,
       exit: exit,
       roads: roads,
       buses: buses,
       passengers: passengers,
-      tutorialPrompt: prompt,
+      tutorialPrompt: prompts['en']!,
+      localizedTutorialPrompts: prompts,
       bayCount: bayCount,
       mechanicTags: rawTags.cast<String>(),
       difficultyBand: difficultyBand,
@@ -154,7 +175,7 @@ class LevelBundleCodec {
 
   static Map<String, Object?> _encodeLevel(LevelSpec level) => {
     'id': level.id,
-    'title': level.title,
+    'title': level.localizedTitles,
     'width': level.width,
     'height': level.height,
     'exit': _encodePoint(level.exit),
@@ -173,7 +194,7 @@ class LevelBundleCodec {
         },
     ],
     'passengerQueue': [for (final route in level.passengers) route.name],
-    'tutorialPrompt': level.tutorialPrompt,
+    'tutorialPrompt': level.localizedTutorialPrompts,
     'mechanicTags': level.mechanicTags,
     'difficultyBand': level.difficultyBand,
     'seed': level.seed,
@@ -210,6 +231,42 @@ class LevelBundleCodec {
       throw FormatException('$path.$key must be a string.');
     }
     return value;
+  }
+
+  static Map<String, String> _localizedText(
+    Object? value,
+    String path, {
+    required int schemaVersion,
+    bool allowEmpty = true,
+  }) {
+    if (schemaVersion == _legacySchemaVersion) {
+      if (value is! String || (!allowEmpty && value.trim().isEmpty)) {
+        throw FormatException('$path must be a string.');
+      }
+      return {'en': value};
+    }
+
+    final json = _object(value, path);
+    final translations = <String, String>{};
+    final localePattern = RegExp(r'^[a-zA-Z]{2,8}(?:-[a-zA-Z0-9]{1,8})*$');
+    for (final entry in json.entries) {
+      final locale = entry.key;
+      final normalizedLocale = locale.replaceAll('_', '-').toLowerCase();
+      final text = entry.value;
+      if (!localePattern.hasMatch(locale) ||
+          text is! String ||
+          (!allowEmpty && text.trim().isEmpty)) {
+        throw FormatException('$path must map locale codes to strings.');
+      }
+      if (translations.containsKey(normalizedLocale)) {
+        throw FormatException('$path contains duplicate locale "$locale".');
+      }
+      translations[normalizedLocale] = text;
+    }
+    if (!translations.containsKey('en')) {
+      throw FormatException('$path must include an English fallback.');
+    }
+    return translations;
   }
 
   static int _integer(Map<String, Object?> json, String key, String path) {

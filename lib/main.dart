@@ -5,6 +5,7 @@ import 'package:flame/game.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'game/depot_game.dart';
 import 'game/game_audio.dart';
@@ -19,6 +20,18 @@ import 'game/game_telemetry.dart';
 import 'game/progress_store.dart';
 import 'game/route_symbol.dart';
 import 'game/settings_store.dart';
+import 'l10n/app_localizations.dart';
+
+enum StorageNotice {
+  unavailable,
+  unreadable,
+  newerVersion,
+  resumeFailed,
+  saveFailed,
+  damaged,
+  recoveredBackup,
+  damagedBoth,
+}
 
 Future<void> main({
   bool loadSavedProgress = true,
@@ -46,18 +59,23 @@ Future<void> main({
 
   ProgressFileStore? progressStore;
   GameProgress? savedProgress;
-  String? startupWarning;
+  StorageNotice? startupWarning;
   try {
     progressStore =
         progressStoreOverride ?? await ProgressFileStore.inApplicationSupport();
     savedProgress = await progressStore.load();
-    startupWarning = progressStore.loadWarning;
+    startupWarning = switch (progressStore.loadWarningKind) {
+      null => null,
+      ProgressLoadWarning.damagedPrimary => StorageNotice.damaged,
+      ProgressLoadWarning.recoveredBackup => StorageNotice.recoveredBackup,
+      ProgressLoadWarning.damagedBoth => StorageNotice.damagedBoth,
+    };
   } on Object {
     startupWarning = progressStore == null
-        ? 'Progress storage is unavailable on this device.'
+        ? StorageNotice.unavailable
         : progressStore.canWrite
-        ? 'Saved progress could not be read. Its files were preserved.'
-        : 'Saved progress belongs to a newer app version and was preserved.';
+        ? StorageNotice.unreadable
+        : StorageNotice.newerVersion;
   }
 
   runApp(
@@ -90,7 +108,7 @@ class BussterApp extends StatelessWidget {
   final List<LevelSpec> levelList;
   final ProgressFileStore? progressStore;
   final GameProgress? initialProgress;
-  final String? startupWarning;
+  final StorageNotice? startupWarning;
   final GameSettingsStore? settingsStore;
   final GameTelemetry? telemetry;
   final GameAudio? audio;
@@ -101,6 +119,13 @@ class BussterApp extends StatelessWidget {
     return MaterialApp(
       title: 'Bus-ster',
       debugShowCheckedModeBanner: false,
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: AppLocalizations.supportedLocales,
       theme: ThemeData(
         brightness: Brightness.dark,
         scaffoldBackgroundColor: const Color(0xFF101A2A),
@@ -141,7 +166,7 @@ class DepotScreen extends StatefulWidget {
   final List<LevelSpec> levelList;
   final ProgressFileStore? progressStore;
   final GameProgress? initialProgress;
-  final String? startupWarning;
+  final StorageNotice? startupWarning;
   final GameSettingsStore? settingsStore;
   final GameTelemetry? telemetry;
   final GameAudio? audio;
@@ -161,7 +186,7 @@ class _DepotScreenState extends State<DepotScreen> with WidgetsBindingObserver {
   late final RewardedHintAds _rewardedHintAds;
   GameSettings _settings = GameSettings.defaults;
   int _settingsChanges = 0;
-  String? _storageNotice;
+  StorageNotice? _storageNotice;
   String? _lastSavedProgress;
   String? _lastQueuedProgress;
   Future<void> _saveQueue = Future<void>.value();
@@ -195,8 +220,7 @@ class _DepotScreenState extends State<DepotScreen> with WidgetsBindingObserver {
         _lastSavedProgress = jsonEncode(_session.progress.toJson());
         _lastQueuedProgress = _lastSavedProgress;
       } on Object {
-        _storageNotice =
-            'Saved progress could not be resumed. Start this depot again.';
+        _storageNotice = StorageNotice.resumeFailed;
       }
     }
     _session.addListener(_queueProgressSave);
@@ -236,7 +260,11 @@ class _DepotScreenState extends State<DepotScreen> with WidgetsBindingObserver {
     } on Object {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Settings could not be saved.')),
+          SnackBar(
+            content: Text(
+              AppLocalizations.of(context)!.settingsCouldNotBeSaved,
+            ),
+          ),
         );
       }
     }
@@ -274,6 +302,12 @@ class _DepotScreenState extends State<DepotScreen> with WidgetsBindingObserver {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _game.exitLabel = AppLocalizations.of(context)!.exitLabel;
+  }
+
+  @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _session.removeListener(_queueProgressSave);
@@ -304,10 +338,7 @@ class _DepotScreenState extends State<DepotScreen> with WidgetsBindingObserver {
           _lastQueuedProgress = _lastSavedProgress;
         }
         if (mounted) {
-          setState(
-            () =>
-                _storageNotice = 'Progress could not be saved on this device.',
-          );
+          setState(() => _storageNotice = StorageNotice.saveFailed);
         }
       }
     });
@@ -334,23 +365,21 @@ class _DepotScreenState extends State<DepotScreen> with WidgetsBindingObserver {
       return;
     }
 
+    final l10n = AppLocalizations.of(context)!;
     _session.recordRewardedHintOffer();
     final accepted = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Need a Route Tip?'),
-        content: const Text(
-          'Watch a short ad to earn 1 Route Tip. You receive it only after '
-          'the ad confirms the reward; closing early may earn nothing.',
-        ),
+        title: Text(l10n.needRouteTipTitle),
+        content: Text(l10n.watchAdForRouteTip),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('NOT NOW'),
+            child: Text(l10n.notNow),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('WATCH AD'),
+            child: Text(l10n.watchAd),
           ),
         ],
       ),
@@ -369,13 +398,9 @@ class _DepotScreenState extends State<DepotScreen> with WidgetsBindingObserver {
       );
       if (!mounted) return;
       if (!earned || !rewardGranted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'No Route Tip was earned. The game is still free to play.',
-            ),
-          ),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(l10n.routeTipNotEarned)));
       }
     } finally {
       if (mounted) setState(() => _rewardedHintFlowInProgress = false);
@@ -394,6 +419,7 @@ class _DepotScreenState extends State<DepotScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _showDepotPicker() async {
+    final l10n = AppLocalizations.of(context)!;
     final selectedIndex = await showModalBottomSheet<int>(
       context: context,
       isScrollControlled: true,
@@ -414,18 +440,16 @@ class _DepotScreenState extends State<DepotScreen> with WidgetsBindingObserver {
       final discard = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('Leave this depot?'),
-          content: const Text(
-            'Switching depots will restart your current attempt.',
-          ),
+          title: Text(l10n.leaveDepotTitle),
+          content: Text(l10n.leaveDepotBody),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('CANCEL'),
+              child: Text(l10n.cancel),
             ),
             FilledButton(
               onPressed: () => Navigator.of(context).pop(true),
-              child: const Text('SWITCH DEPOT'),
+              child: Text(l10n.switchDepot),
             ),
           ],
         ),
@@ -437,21 +461,16 @@ class _DepotScreenState extends State<DepotScreen> with WidgetsBindingObserver {
   }
 
   void _showHowToPlay() {
+    final l10n = AppLocalizations.of(context)!;
     showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('How to play'),
-        content: const Text(
-          'Tap a bus when a clear road connects it to the EXIT.\n\n'
-          'The bus waits in a departure bay. Riders board from the front '
-          'of the queue, in order, and only ride a matching route.\n\n'
-          'A full bus leaves and opens its bay. Clear every rider to finish '
-          'the depot.',
-        ),
+        title: Text(l10n.howToPlayTitle),
+        content: Text(l10n.howToPlayBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('GOT IT'),
+            child: Text(l10n.gotIt),
           ),
         ],
       ),
@@ -459,6 +478,7 @@ class _DepotScreenState extends State<DepotScreen> with WidgetsBindingObserver {
   }
 
   void _showDebugOverlay() {
+    final l10n = AppLocalizations.of(context)!;
     final level = _session.level;
     final state = _session.state;
     final legalRoutes = <String>[];
@@ -485,23 +505,34 @@ class _DepotScreenState extends State<DepotScreen> with WidgetsBindingObserver {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'DEBUG · ${level.id}',
+                l10n.debugTitle(level.id),
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 8),
               Text(
-                'Status: ${state.status.name} · Moves: ${state.moveCount} · '
-                'Queue index: ${state.queueIndex}',
+                l10n.debugStatus(
+                  state.status.name,
+                  state.moveCount,
+                  state.queueIndex,
+                ),
               ),
-              Text('Seed: authored level (no random seed)'),
-              Text('Active buses: ${state.activeBusIds.toList()..sort()}'),
+              Text(l10n.debugAuthoredSeed),
               Text(
-                'Legal routes: ${legalRoutes.isEmpty ? 'none' : legalRoutes.join(', ')}',
+                l10n.debugActiveBuses(
+                  (state.activeBusIds.toList()..sort()).join(', '),
+                ),
               ),
               Text(
-                'Blocked buses: ${blockedBuses.isEmpty ? 'none' : blockedBuses.join(', ')}',
+                l10n.debugLegalRoutes(
+                  legalRoutes.isEmpty ? 'none' : legalRoutes.join(', '),
+                ),
               ),
-              Text('Solver: ${solution?.join(' → ') ?? 'no solution'}'),
+              Text(
+                l10n.debugBlockedBuses(
+                  blockedBuses.isEmpty ? 'none' : blockedBuses.join(', '),
+                ),
+              ),
+              Text(l10n.debugSolver(solution?.join(' → ') ?? 'no solution')),
             ],
           ),
         ),
@@ -514,6 +545,7 @@ class _DepotScreenState extends State<DepotScreen> with WidgetsBindingObserver {
     return AnimatedBuilder(
       animation: _session,
       builder: (context, _) {
+        final l10n = AppLocalizations.of(context)!;
         final level = _session.level;
         final state = _session.state;
         final pending = level.passengers.skip(state.queueIndex).toList();
@@ -551,13 +583,18 @@ class _DepotScreenState extends State<DepotScreen> with WidgetsBindingObserver {
                           if (_storageNotice != null) ...[
                             const SizedBox(height: 8),
                             _StorageNotice(
-                              message: _storageNotice!,
+                              notice: _storageNotice!,
                               compact: compact,
                             ),
                           ],
                           SizedBox(height: compact ? 8 : 18),
                           _ObjectiveCard(
-                            message: _session.message,
+                            message: _gameMessageText(
+                              l10n,
+                              _session.message,
+                              level,
+                              Localizations.localeOf(context).toLanguageTag(),
+                            ),
                             passengerCount: pending.length,
                             compact: compact,
                             status: state.status,
@@ -571,7 +608,7 @@ class _DepotScreenState extends State<DepotScreen> with WidgetsBindingObserver {
                           Align(
                             alignment: Alignment.centerLeft,
                             child: Text(
-                              'DEPOT ROUTE',
+                              l10n.depotRoute,
                               style: Theme.of(context).textTheme.labelMedium
                                   ?.copyWith(
                                     color: const Color(0xFF8FA2BC),
@@ -676,13 +713,24 @@ class _DepotScreenState extends State<DepotScreen> with WidgetsBindingObserver {
 }
 
 class _StorageNotice extends StatelessWidget {
-  const _StorageNotice({required this.message, required this.compact});
+  const _StorageNotice({required this.notice, required this.compact});
 
-  final String message;
+  final StorageNotice notice;
   final bool compact;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final message = switch (notice) {
+      StorageNotice.unavailable => l10n.progressStorageUnavailable,
+      StorageNotice.unreadable => l10n.savedProgressUnreadable,
+      StorageNotice.newerVersion => l10n.newerProgressPreserved,
+      StorageNotice.resumeFailed => l10n.savedProgressCouldNotResume,
+      StorageNotice.saveFailed => l10n.progressCouldNotBeSaved,
+      StorageNotice.damaged => l10n.savedProgressDamaged,
+      StorageNotice.recoveredBackup => l10n.savedProgressRecovered,
+      StorageNotice.damagedBoth => l10n.savedProgressAndBackupDamaged,
+    };
     return Container(
       width: double.infinity,
       padding: EdgeInsets.symmetric(
@@ -736,6 +784,7 @@ class _PauseOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return ColoredBox(
       color: const Color(0xE6101A2A),
       child: Center(
@@ -751,7 +800,7 @@ class _PauseOverlay extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               Text(
-                'PAUSED',
+                l10n.paused,
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.w900,
                   letterSpacing: 2,
@@ -768,8 +817,8 @@ class _PauseOverlay extends StatelessWidget {
                       SwitchListTile.adaptive(
                         key: const ValueKey('haptics-setting'),
                         secondary: const Icon(Icons.vibration_rounded),
-                        title: const Text('Haptics'),
-                        subtitle: const Text('A light pulse on a valid move'),
+                        title: Text(l10n.haptics),
+                        subtitle: Text(l10n.hapticsDescription),
                         value: hapticsEnabled,
                         onChanged: onHapticsChanged,
                       ),
@@ -777,8 +826,8 @@ class _PauseOverlay extends StatelessWidget {
                       SwitchListTile.adaptive(
                         key: const ValueKey('sound-setting'),
                         secondary: const Icon(Icons.volume_up_rounded),
-                        title: const Text('Sound effects'),
-                        subtitle: const Text('Short sounds for game events'),
+                        title: Text(l10n.soundEffects),
+                        subtitle: Text(l10n.soundEffectsDescription),
                         value: soundEnabled,
                         onChanged: onSoundChanged,
                       ),
@@ -786,8 +835,8 @@ class _PauseOverlay extends StatelessWidget {
                       SwitchListTile.adaptive(
                         key: const ValueKey('reduce-motion-setting'),
                         secondary: const Icon(Icons.motion_photos_off_rounded),
-                        title: const Text('Reduce motion'),
-                        subtitle: const Text('Skip moving bus animations'),
+                        title: Text(l10n.reduceMotion),
+                        subtitle: Text(l10n.reduceMotionDescription),
                         value: reduceMotion,
                         onChanged: onReduceMotionChanged,
                       ),
@@ -800,14 +849,14 @@ class _PauseOverlay extends StatelessWidget {
                 TextButton.icon(
                   onPressed: onPrivacyOptions,
                   icon: const Icon(Icons.privacy_tip_outlined),
-                  label: const Text('PRIVACY OPTIONS'),
+                  label: Text(l10n.privacyOptions),
                 ),
                 const SizedBox(height: 8),
               ],
               FilledButton.icon(
                 onPressed: onResume,
                 icon: const Icon(Icons.play_arrow_rounded),
-                label: const Text('RESUME'),
+                label: Text(l10n.resume),
               ),
             ],
           ),
@@ -832,6 +881,7 @@ class _DepotPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
@@ -844,7 +894,7 @@ class _DepotPicker extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'SELECT DEPOT',
+                l10n.selectDepot,
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   color: const Color(0xFFFFC857),
                   fontWeight: FontWeight.w900,
@@ -852,7 +902,7 @@ class _DepotPicker extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 4),
-              const Text('Clear a depot to unlock the next one.'),
+              Text(l10n.unlockNextDepot),
               const SizedBox(height: 12),
               Flexible(
                 child: ListView.separated(
@@ -878,12 +928,19 @@ class _DepotPicker extends StatelessWidget {
                         ),
                       ),
                       title: Text(
-                        'DEPOT ${(index + 1).toString().padLeft(2, '0')} · ${level.title}',
+                        l10n.depotNumberTitle(
+                          (index + 1).toString().padLeft(2, '0'),
+                          level.titleFor(
+                            Localizations.localeOf(context).toLanguageTag(),
+                          ),
+                        ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                       subtitle: Text(
-                        level.mechanicTags.join(' · '),
+                        level.mechanicTags
+                            .map((tag) => _localizedMechanicTag(l10n, tag))
+                            .join(' · '),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -937,6 +994,7 @@ class _TopBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       children: [
         Container(
@@ -972,8 +1030,14 @@ class _TopBar extends StatelessWidget {
               SizedBox(height: compact ? 2 : 4),
               Text(
                 compact
-                    ? 'DEPOT ${levelNumber.toString().padLeft(2, '0')} · $moveCount'
-                    : 'DEPOT ${levelNumber.toString().padLeft(2, '0')}  ·  $moveCount MOVES',
+                    ? l10n.depotMoveCountCompact(
+                        levelNumber.toString().padLeft(2, '0'),
+                        moveCount,
+                      )
+                    : l10n.depotMoveCount(
+                        levelNumber.toString().padLeft(2, '0'),
+                        moveCount,
+                      ),
                 maxLines: 1,
                 overflow: TextOverflow.clip,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
@@ -988,7 +1052,7 @@ class _TopBar extends StatelessWidget {
         ),
         IconButton(
           onPressed: onPause,
-          tooltip: 'Pause game',
+          tooltip: l10n.pauseGameTooltip,
           constraints: compact
               ? const BoxConstraints.tightFor(width: 40, height: 40)
               : null,
@@ -998,7 +1062,7 @@ class _TopBar extends StatelessWidget {
         ),
         IconButton(
           onPressed: onHelp,
-          tooltip: 'How to play',
+          tooltip: l10n.howToPlayTitle,
           constraints: compact
               ? const BoxConstraints.tightFor(width: 40, height: 40)
               : null,
@@ -1008,7 +1072,7 @@ class _TopBar extends StatelessWidget {
         ),
         IconButton(
           onPressed: onSelectDepot,
-          tooltip: 'Select depot',
+          tooltip: l10n.selectDepotTooltip,
           constraints: compact
               ? const BoxConstraints.tightFor(width: 40, height: 40)
               : null,
@@ -1019,7 +1083,7 @@ class _TopBar extends StatelessWidget {
         if (showDebug)
           IconButton(
             onPressed: onDebug,
-            tooltip: 'Debug overlay',
+            tooltip: l10n.debugOverlayTooltip,
             constraints: compact
                 ? const BoxConstraints.tightFor(width: 40, height: 40)
                 : null,
@@ -1029,7 +1093,7 @@ class _TopBar extends StatelessWidget {
           ),
         IconButton.filledTonal(
           onPressed: onRestart,
-          tooltip: 'Restart level',
+          tooltip: l10n.restartLevelTooltip,
           constraints: compact
               ? const BoxConstraints.tightFor(width: 40, height: 40)
               : null,
@@ -1130,6 +1194,7 @@ class _PassengerQueue extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final visible = passengers.take(8).toList();
     return Container(
       width: double.infinity,
@@ -1147,7 +1212,7 @@ class _PassengerQueue extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'NEXT RIDERS',
+                l10n.nextRiders,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: const Color(0xFF8FA2BC),
                   letterSpacing: 1,
@@ -1155,7 +1220,7 @@ class _PassengerQueue extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 3),
-              const Text('FIFO QUEUE', style: TextStyle(fontSize: 9)),
+              Text(l10n.fifoQueue, style: const TextStyle(fontSize: 9)),
             ],
           ),
           const SizedBox(width: 12),
@@ -1163,11 +1228,11 @@ class _PassengerQueue extends StatelessWidget {
             child: SizedBox(
               height: compact ? 30 : 34,
               child: visible.isEmpty
-                  ? const Align(
+                  ? Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        'All aboard!',
-                        style: TextStyle(fontSize: 12),
+                        l10n.allAboard,
+                        style: const TextStyle(fontSize: 12),
                       ),
                     )
                   : ListView.separated(
@@ -1203,6 +1268,7 @@ class _RouteToken extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       width: 32,
       height: 32,
@@ -1220,8 +1286,8 @@ class _RouteToken extends StatelessWidget {
       ),
       child: Semantics(
         label: isNext
-            ? 'Next rider, ${route.label}'
-            : 'Queued rider, ${route.label}',
+            ? l10n.nextRiderSemantics(_localizedRouteName(l10n, route))
+            : l10n.queuedRiderSemantics(_localizedRouteName(l10n, route)),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
@@ -1256,10 +1322,11 @@ class _BayPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Row(
       children: [
         Text(
-          'BAYS',
+          l10n.bays,
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
             color: const Color(0xFF8FA2BC),
             letterSpacing: 1.3,
@@ -1287,7 +1354,7 @@ class _BayPanel extends StatelessWidget {
                 duration: const Duration(milliseconds: 220),
                 child: bus == null
                     ? Semantics(
-                        label: 'Empty departure bay ${index + 1}',
+                        label: l10n.emptyDepartureBay(index + 1),
                         child: Icon(
                           Icons.local_parking_rounded,
                           key: ValueKey('empty-$index'),
@@ -1296,8 +1363,11 @@ class _BayPanel extends StatelessWidget {
                         ),
                       )
                     : Semantics(
-                        label:
-                            'Parked ${bus.route.label} bus with ${bus.loaded} of ${bus.capacity} riders',
+                        label: l10n.parkedBusSemantics(
+                          _localizedRouteName(l10n, bus.route),
+                          bus.loaded,
+                          bus.capacity,
+                        ),
                         excludeSemantics: true,
                         child: Row(
                           key: ValueKey('${bus.id}-${bus.loaded}'),
@@ -1321,6 +1391,92 @@ class _BayPanel extends StatelessWidget {
         }),
       ],
     );
+  }
+}
+
+String _localizedRouteName(AppLocalizations l10n, RouteKind route) =>
+    switch (route) {
+      RouteKind.coral => l10n.routeCoral,
+      RouteKind.blue => l10n.routeBlue,
+      RouteKind.mint => l10n.routeMint,
+      RouteKind.gold => l10n.routeGold,
+    };
+
+String _localizedMechanicTag(AppLocalizations l10n, String tag) =>
+    switch (tag) {
+      'bay-pressure' => l10n.mechanicTagBayPressure,
+      'bay-turnover' => l10n.mechanicTagBayTurnover,
+      'branch' => l10n.mechanicTagBranch,
+      'bus-blocking' => l10n.mechanicTagBusBlocking,
+      'clear-path' => l10n.mechanicTagClearPath,
+      'dispatch-order' => l10n.mechanicTagDispatchOrder,
+      'fifo-queue' => l10n.mechanicTagFifoQueue,
+      'limited-bays' => l10n.mechanicTagLimitedBays,
+      'mixed-rules' => l10n.mechanicTagMixedRules,
+      'review' => l10n.mechanicTagReview,
+      'route-planning' => l10n.mechanicTagRoutePlanning,
+      'shared-exit' => l10n.mechanicTagSharedExit,
+      'shared-road' => l10n.mechanicTagSharedRoad,
+      'staging' => l10n.mechanicTagStaging,
+      _ => tag,
+    };
+
+String _gameMessageText(
+  AppLocalizations l10n,
+  GameMessage message,
+  LevelSpec level,
+  String locale,
+) {
+  switch (message.kind) {
+    case GameMessageKind.levelPrompt:
+      return level.tutorialPromptFor(locale);
+    case GameMessageKind.defaultStart:
+      return l10n.gameDefaultStart;
+    case GameMessageKind.routeFinished:
+      return l10n.gameRouteFinished;
+    case GameMessageKind.busAlreadyLeft:
+      return l10n.gameBusAlreadyLeft;
+    case GameMessageKind.blockedRoute:
+      return l10n.gameBlockedRoute;
+    case GameMessageKind.baysFull:
+      return l10n.gameFullBays;
+    case GameMessageKind.noClearRoute:
+      return l10n.gameNoClearRoute;
+    case GameMessageKind.noRouteTips:
+      return l10n.gameNoRouteTips;
+    case GameMessageKind.noRouteFound:
+      return l10n.gameNoRouteFound;
+    case GameMessageKind.routeTip:
+      return l10n.gameRouteTip(
+        message.remainingHints,
+        _localizedRouteName(l10n, message.route!),
+      );
+    case GameMessageKind.dispatchUndone:
+      return l10n.gameDispatchUndone;
+    case GameMessageKind.progressRestored:
+      return l10n.gameProgressRestored;
+    case GameMessageKind.stuckRestored:
+      return l10n.gameStuckRestored;
+    case GameMessageKind.wonRestored:
+      return l10n.gameWonRestored;
+    case GameMessageKind.dispatchFeedback:
+      final details = <String>[
+        if (message.depotWon)
+          l10n.gameDepotClear
+        else if (message.enteredBay)
+          l10n.gameRouteEnteredBay(_localizedRouteName(l10n, message.route!))
+        else
+          l10n.gameRouteSent(_localizedRouteName(l10n, message.route!)),
+        if (message.ridersBoarded > 0)
+          l10n.gameRidersBoarded(message.ridersBoarded),
+        if (message.busesDeparted > 0)
+          l10n.gameBusesLeft(message.busesDeparted),
+        if (!message.depotWon &&
+            message.ridersBoarded == 0 &&
+            message.busesDeparted == 0)
+          l10n.gameNoRidersMatched,
+      ];
+      return details.join(' · ');
   }
 }
 
@@ -1349,6 +1505,7 @@ class _ActionBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     if (isWon) {
       return SizedBox(
         width: double.infinity,
@@ -1358,7 +1515,7 @@ class _ActionBar extends StatelessWidget {
           icon: Icon(
             isWon ? Icons.arrow_forward_rounded : Icons.replay_rounded,
           ),
-          label: Text(isWon ? 'NEXT DEPOT' : 'TRY AGAIN'),
+          label: Text(isWon ? l10n.nextDepot : l10n.tryAgain),
           style: FilledButton.styleFrom(
             backgroundColor: const Color(0xFFFFC857),
             foregroundColor: const Color(0xFF24344B),
@@ -1379,7 +1536,7 @@ class _ActionBar extends StatelessWidget {
             child: OutlinedButton.icon(
               onPressed: canUndo ? onUndo : null,
               icon: const Icon(Icons.undo_rounded, size: 19),
-              label: const Text('UNDO'),
+              label: Text(l10n.undo),
               style: OutlinedButton.styleFrom(
                 minimumSize: Size.fromHeight(compact ? 42 : 48),
               ),
@@ -1390,7 +1547,7 @@ class _ActionBar extends StatelessWidget {
             child: FilledButton.icon(
               onPressed: onRetry,
               icon: const Icon(Icons.replay_rounded),
-              label: const Text('TRY AGAIN'),
+              label: Text(l10n.tryAgain),
               style: FilledButton.styleFrom(
                 backgroundColor: const Color(0xFFFFC857),
                 foregroundColor: const Color(0xFF24344B),
@@ -1408,7 +1565,7 @@ class _ActionBar extends StatelessWidget {
           child: OutlinedButton.icon(
             onPressed: canUndo ? onUndo : null,
             icon: const Icon(Icons.undo_rounded, size: 19),
-            label: const Text('UNDO'),
+            label: Text(l10n.undo),
             style: OutlinedButton.styleFrom(
               minimumSize: Size.fromHeight(compact ? 40 : 48),
               padding: EdgeInsets.symmetric(horizontal: compact ? 8 : 16),
@@ -1421,7 +1578,9 @@ class _ActionBar extends StatelessWidget {
             onPressed: onHint,
             icon: const Icon(Icons.lightbulb_outline_rounded, size: 19),
             label: Text(
-              compact ? 'HINT $earnedHints' : 'ROUTE TIP · $earnedHints',
+              compact
+                  ? l10n.hintCount(earnedHints)
+                  : l10n.routeTipCount(earnedHints),
             ),
             style: FilledButton.styleFrom(
               backgroundColor: const Color(0xFF243A59),
@@ -1434,7 +1593,7 @@ class _ActionBar extends StatelessWidget {
         const SizedBox(width: 9),
         IconButton.filledTonal(
           onPressed: onRetry,
-          tooltip: 'Restart level',
+          tooltip: l10n.restartLevelTooltip,
           constraints: compact
               ? const BoxConstraints.tightFor(width: 40, height: 40)
               : null,

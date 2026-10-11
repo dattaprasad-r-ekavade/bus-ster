@@ -5,6 +5,44 @@ import 'game_progress.dart';
 import 'game_replay.dart';
 import 'game_telemetry.dart';
 
+enum GameMessageKind {
+  levelPrompt,
+  defaultStart,
+  routeFinished,
+  busAlreadyLeft,
+  blockedRoute,
+  baysFull,
+  noClearRoute,
+  noRouteTips,
+  noRouteFound,
+  routeTip,
+  dispatchUndone,
+  progressRestored,
+  stuckRestored,
+  wonRestored,
+  dispatchFeedback,
+}
+
+class GameMessage {
+  const GameMessage(
+    this.kind, {
+    this.route,
+    this.remainingHints = 0,
+    this.ridersBoarded = 0,
+    this.busesDeparted = 0,
+    this.depotWon = false,
+    this.enteredBay = false,
+  });
+
+  final GameMessageKind kind;
+  final RouteKind? route;
+  final int remainingHints;
+  final int ridersBoarded;
+  final int busesDeparted;
+  final bool depotWon;
+  final bool enteredBay;
+}
+
 class GameSession extends ChangeNotifier {
   GameSession({
     required List<LevelSpec> levelList,
@@ -22,9 +60,6 @@ class GameSession extends ChangeNotifier {
     }
   }
 
-  static const _defaultStartMessage =
-      'Send the right buses to the gate. Follow the rider queue.';
-
   final List<LevelSpec> _levels;
   final GameTelemetry _telemetry;
   final List<BoardState> _history = [];
@@ -32,7 +67,7 @@ class GameSession extends ChangeNotifier {
   final Set<String> _completedLevelIds = {};
   late BoardState _state;
   int _levelIndex = 0;
-  String _message = _defaultStartMessage;
+  GameMessage _message = const GameMessage(GameMessageKind.defaultStart);
   String? _hintedBusId;
   DispatchAnimation? _lastDispatchAnimation;
   int _animationSerial = 0;
@@ -43,7 +78,7 @@ class GameSession extends ChangeNotifier {
   BoardState get state => _state;
   int get levelIndex => _levelIndex;
   int get earnedHints => _earnedHints;
-  String get message => _message;
+  GameMessage get message => _message;
   bool get canUndo => _history.isNotEmpty;
   String? get hintedBusId => _hintedBusId;
   DispatchAnimation? get lastDispatchAnimation => _lastDispatchAnimation;
@@ -59,9 +94,11 @@ class GameSession extends ChangeNotifier {
     completedLevelIds: _completedLevelIds,
     earnedHints: _earnedHints,
   );
-  String get _levelStartMessage {
+  GameMessage get _levelStartMessage {
     final prompt = level.tutorialPrompt.trim();
-    return prompt.isEmpty ? _defaultStartMessage : prompt;
+    return prompt.isEmpty
+        ? const GameMessage(GameMessageKind.defaultStart)
+        : const GameMessage(GameMessageKind.levelPrompt);
   }
 
   DispatchResult? dispatch(String busId) {
@@ -75,7 +112,12 @@ class GameSession extends ChangeNotifier {
         'move_number': _state.moveCount,
         'reason': _dispatchRejectionReason(busId, path),
       });
-      _message = result.message;
+      _message = GameMessage(switch (result.failure!) {
+        DispatchFailure.routeFinished => GameMessageKind.routeFinished,
+        DispatchFailure.busAlreadyLeft => GameMessageKind.busAlreadyLeft,
+        DispatchFailure.blockedRoute => GameMessageKind.blockedRoute,
+        DispatchFailure.baysFull => GameMessageKind.baysFull,
+      });
       notifyListeners();
       return result;
     }
@@ -94,7 +136,7 @@ class GameSession extends ChangeNotifier {
     if (_state.status != GameStatus.won &&
         LevelSolver.findSolution(level, start: _state) == null) {
       _state = _state.copyWith(status: GameStatus.stuck);
-      _message = 'No clear route remains. Undo a dispatch or retry the depot.';
+      _message = const GameMessage(GameMessageKind.noClearRoute);
     }
     final firstClear =
         _state.status == GameStatus.won && _completedLevelIds.add(level.id);
@@ -135,7 +177,7 @@ class GameSession extends ChangeNotifier {
         'level_id': level.id,
         'reason': 'empty_balance',
       });
-      _message = 'No route tips left. Clear a depot to earn one.';
+      _message = const GameMessage(GameMessageKind.noRouteTips);
       notifyListeners();
       return;
     }
@@ -145,14 +187,16 @@ class GameSession extends ChangeNotifier {
         'level_id': level.id,
         'reason': 'no_solution',
       });
-      _message = 'No route found. Undo a dispatch or retry the depot.';
+      _message = const GameMessage(GameMessageKind.noRouteFound);
     } else {
       final bus = level.busById(solution.first);
       _earnedHints--;
       _hintedBusId = bus.id;
-      _message =
-          'Route tip ($_earnedHints left): dispatch the '
-          '${bus.route.label} bus.';
+      _message = GameMessage(
+        GameMessageKind.routeTip,
+        route: bus.route,
+        remainingHints: _earnedHints,
+      );
       _record(GameEventNames.routeTipUsed, {
         'level_id': level.id,
         'route': bus.route.name,
@@ -207,7 +251,7 @@ class GameSession extends ChangeNotifier {
       'level_id': level.id,
       'move_count': _state.moveCount,
     });
-    _message = 'Last dispatch undone. Check the rider queue and road.';
+    _message = const GameMessage(GameMessageKind.dispatchUndone);
     notifyListeners();
   }
 
@@ -273,9 +317,9 @@ class GameSession extends ChangeNotifier {
     _animationSerial++;
     _isPaused = false;
     _message = switch (_state.status) {
-      GameStatus.playing => 'Progress restored. Continue this depot.',
-      GameStatus.stuck => 'This saved route is stuck. Undo or retry the depot.',
-      GameStatus.won => 'This depot is clear. Continue to the next depot.',
+      GameStatus.playing => const GameMessage(GameMessageKind.progressRestored),
+      GameStatus.stuck => const GameMessage(GameMessageKind.stuckRestored),
+      GameStatus.won => const GameMessage(GameMessageKind.wonRestored),
     };
     _record(GameEventNames.levelResumed, {
       'level_id': level.id,
@@ -284,38 +328,19 @@ class GameSession extends ChangeNotifier {
     notifyListeners();
   }
 
-  String _dispatchFeedback(
+  GameMessage _dispatchFeedback(
     String busId,
     List<GridPoint>? path,
     DispatchResult result,
   ) {
-    final route = level.busById(busId).route;
-    final details = <String>[
-      if (_state.status == GameStatus.won)
-        'Depot clear!'
-      else if (path != null && path.length == 1)
-        '${route.label} entered a bay.'
-      else
-        '${route.label} sent.',
-    ];
-    final boardedCount = result.boardedRiders.length;
-    if (boardedCount > 0) {
-      details.add(
-        '$boardedCount ${boardedCount == 1 ? 'rider' : 'riders'} boarded',
-      );
-    }
-    final departedCount = result.departedBusIds.length;
-    if (departedCount > 0) {
-      details.add(
-        '$departedCount ${departedCount == 1 ? 'bus' : 'buses'} left the depot',
-      );
-    }
-    if (_state.status != GameStatus.won &&
-        boardedCount == 0 &&
-        departedCount == 0) {
-      details.add('No riders matched; bus waits in a bay');
-    }
-    return details.join(' · ');
+    return GameMessage(
+      GameMessageKind.dispatchFeedback,
+      route: level.busById(busId).route,
+      ridersBoarded: result.boardedRiders.length,
+      busesDeparted: result.departedBusIds.length,
+      depotWon: _state.status == GameStatus.won,
+      enteredBay: path != null && path.length == 1,
+    );
   }
 
   String _dispatchRejectionReason(String busId, List<GridPoint>? path) {

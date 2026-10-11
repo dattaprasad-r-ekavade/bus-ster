@@ -572,6 +572,7 @@ class _FakeRewardedHintAds extends RewardedHintAds {
 LevelSpec _copyLevelAs(LevelSpec source, String id) => LevelSpec(
   id: id,
   title: source.title,
+  localizedTitles: source.localizedTitles,
   width: source.width,
   height: source.height,
   exit: source.exit,
@@ -579,6 +580,7 @@ LevelSpec _copyLevelAs(LevelSpec source, String id) => LevelSpec(
   buses: source.buses,
   passengers: source.passengers,
   tutorialPrompt: source.tutorialPrompt,
+  localizedTutorialPrompts: source.localizedTutorialPrompts,
   bayCount: source.bayCount,
   mechanicTags: source.mechanicTags,
   difficultyBand: source.difficultyBand,

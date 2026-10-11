@@ -50,7 +50,8 @@ class GameReplayRecord {
       final result = GameRules.dispatch(level, state, busId);
       if (!result.changed) {
         throw FormatException(
-          'Replay dispatch ${index + 1} ($busId) is invalid: ${result.message}',
+          'Replay dispatch ${index + 1} ($busId) is invalid: '
+          '${result.failure?.name ?? 'unknown failure'}.',
         );
       }
       state = result.state;
