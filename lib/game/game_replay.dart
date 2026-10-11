@@ -34,7 +34,9 @@ class GameReplayRecord {
     );
   }
 
-  BoardState replay(LevelSpec level) {
+  BoardState replay(LevelSpec level) => replayStates(level).last;
+
+  List<BoardState> replayStates(LevelSpec level) {
     if (level.id != levelId) {
       throw FormatException(
         'Replay level "$levelId" does not match "${level.id}".',
@@ -42,6 +44,7 @@ class GameReplayRecord {
     }
 
     var state = BoardState.initial(level);
+    final states = <BoardState>[state];
     for (var index = 0; index < dispatches.length; index++) {
       final busId = dispatches[index];
       final result = GameRules.dispatch(level, state, busId);
@@ -55,7 +58,8 @@ class GameReplayRecord {
           LevelSolver.findSolution(level, start: state) == null) {
         state = state.copyWith(status: GameStatus.stuck);
       }
+      states.add(state);
     }
-    return state;
+    return List.unmodifiable(states);
   }
 }

@@ -66,6 +66,43 @@ void main() {
       session.dispose();
     });
 
+    test('saved progress restores the board and keeps undo history', () {
+      final original = GameSession()..dispatch('blue');
+      final saved = original.progress;
+      final restored = GameSession()..restoreProgress(saved);
+
+      expect(restored.level.id, original.level.id);
+      expect(
+        GameRules.stateKey(restored.state),
+        GameRules.stateKey(original.state),
+      );
+      expect(restored.canUndo, isTrue);
+
+      restored.undo();
+      expect(restored.state.moveCount, 0);
+      expect(restored.replayRecord.dispatches, isEmpty);
+      original.dispose();
+      restored.dispose();
+    });
+
+    test('restored win retains completion and advances to the next depot', () {
+      final original = GameSession()
+        ..dispatch('blue')
+        ..dispatch('coral')
+        ..dispatch('mint');
+      final restored = GameSession()..restoreProgress(original.progress);
+
+      expect(restored.state.status, GameStatus.won);
+      expect(restored.progress.completedLevelIds, contains('depot-01'));
+      restored.nextLevel();
+      expect(restored.level.id, 'depot-02');
+      expect(restored.progress.dispatches, isEmpty);
+      expect(restored.progress.completedLevelIds, contains('depot-01'));
+
+      original.dispose();
+      restored.dispose();
+    });
+
     test('session marks a full, unrecoverable bay state as stuck', () {
       final base = levels.first;
       final oneBayLevel = LevelSpec(

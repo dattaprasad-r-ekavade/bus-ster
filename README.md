@@ -14,6 +14,8 @@ flutter run
 The first 10 depots are playable. Tap a bus on the road to send it toward the exit. If it cannot board the next riders, it waits in a departure bay. Use **Route Tip** for a solver hint or **Undo** to reverse a dispatch.
 Open **How to play** in the top bar for the core rules.
 
+Progress saves locally on Android and the core game works offline. The progress format is versioned and tested for migration and recovery.
+
 ## Check the project
 
 ```sh

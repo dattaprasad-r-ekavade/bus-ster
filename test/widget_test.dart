@@ -1,8 +1,31 @@
 import 'package:busster/main.dart';
+import 'package:busster/game/game_progress.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
+  testWidgets('restores the saved depot and move history', (tester) async {
+    tester.view.physicalSize = const Size(430, 932);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      BussterApp(
+        initialProgress: GameProgress(
+          currentLevelId: 'depot-02',
+          dispatches: ['coral'],
+          completedLevelIds: ['depot-01'],
+        ),
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.textContaining('DEPOT 02'), findsOneWidget);
+    expect(find.textContaining('1 MOVES'), findsOneWidget);
+    expect(find.textContaining('Progress restored'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('pause overlay resumes the depot', (tester) async {
     tester.view.physicalSize = const Size(430, 932);
     tester.view.devicePixelRatio = 1;

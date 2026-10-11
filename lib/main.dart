@@ -1,18 +1,61 @@
+import 'dart:convert';
+
 import 'package:flame/game.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 
 import 'game/depot_game.dart';
 import 'game/game_model.dart';
+import 'game/game_progress.dart';
 import 'game/game_session.dart';
+import 'game/progress_store.dart';
 
-void main() {
+Future<void> main({
+  bool loadSavedProgress = true,
+  ProgressFileStore? progressStoreOverride,
+}) async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const BussterApp());
+  if (!loadSavedProgress) {
+    runApp(BussterApp(progressStore: progressStoreOverride));
+    return;
+  }
+
+  ProgressFileStore? progressStore;
+  GameProgress? savedProgress;
+  String? startupWarning;
+  try {
+    progressStore =
+        progressStoreOverride ?? await ProgressFileStore.inApplicationSupport();
+    savedProgress = await progressStore.load();
+    startupWarning = progressStore.loadWarning;
+  } on Object {
+    startupWarning = progressStore == null
+        ? 'Progress storage is unavailable on this device.'
+        : progressStore.canWrite
+        ? 'Saved progress could not be read. Its files were preserved.'
+        : 'Saved progress belongs to a newer app version and was preserved.';
+  }
+
+  runApp(
+    BussterApp(
+      progressStore: progressStore,
+      initialProgress: savedProgress,
+      startupWarning: startupWarning,
+    ),
+  );
 }
 
 class BussterApp extends StatelessWidget {
-  const BussterApp({super.key});
+  const BussterApp({
+    super.key,
+    this.progressStore,
+    this.initialProgress,
+    this.startupWarning,
+  });
+
+  final ProgressFileStore? progressStore;
+  final GameProgress? initialProgress;
+  final String? startupWarning;
 
   @override
   Widget build(BuildContext context) {
@@ -29,13 +72,26 @@ class BussterApp extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
-      home: const DepotScreen(),
+      home: DepotScreen(
+        progressStore: progressStore,
+        initialProgress: initialProgress,
+        startupWarning: startupWarning,
+      ),
     );
   }
 }
 
 class DepotScreen extends StatefulWidget {
-  const DepotScreen({super.key});
+  const DepotScreen({
+    super.key,
+    this.progressStore,
+    this.initialProgress,
+    this.startupWarning,
+  });
+
+  final ProgressFileStore? progressStore;
+  final GameProgress? initialProgress;
+  final String? startupWarning;
 
   @override
   State<DepotScreen> createState() => _DepotScreenState();
@@ -44,6 +100,10 @@ class DepotScreen extends StatefulWidget {
 class _DepotScreenState extends State<DepotScreen> with WidgetsBindingObserver {
   late final GameSession _session;
   late final DepotGame _game;
+  String? _storageNotice;
+  String? _lastSavedProgress;
+  String? _lastQueuedProgress;
+  Future<void> _saveQueue = Future<void>.value();
 
   @override
   void initState() {
@@ -51,6 +111,18 @@ class _DepotScreenState extends State<DepotScreen> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     _session = GameSession();
     _game = DepotGame(_session);
+    _storageNotice = widget.startupWarning;
+    if (widget.initialProgress != null) {
+      try {
+        _session.restoreProgress(widget.initialProgress!);
+        _lastSavedProgress = jsonEncode(_session.progress.toJson());
+        _lastQueuedProgress = _lastSavedProgress;
+      } on Object {
+        _storageNotice =
+            'Saved progress could not be resumed. Start this depot again.';
+      }
+    }
+    _session.addListener(_queueProgressSave);
   }
 
   @override
@@ -59,14 +131,45 @@ class _DepotScreenState extends State<DepotScreen> with WidgetsBindingObserver {
       if (!_session.isPaused) _game.resumeEngine();
     } else {
       _game.pauseEngine();
+      _queueProgressSave();
     }
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _session.removeListener(_queueProgressSave);
     _session.dispose();
     super.dispose();
+  }
+
+  void _queueProgressSave() {
+    final store = widget.progressStore;
+    if (store == null || !store.canWrite) return;
+
+    final progress = _session.progress;
+    final encoded = jsonEncode(progress.toJson());
+    if (encoded == _lastQueuedProgress) return;
+    _lastQueuedProgress = encoded;
+    _saveQueue = _saveQueue.then((_) async {
+      try {
+        await store.save(progress);
+        _lastSavedProgress = encoded;
+        if (_storageNotice != null && mounted) {
+          setState(() => _storageNotice = null);
+        }
+      } on Object {
+        if (_lastQueuedProgress == encoded) {
+          _lastQueuedProgress = _lastSavedProgress;
+        }
+        if (mounted) {
+          setState(
+            () =>
+                _storageNotice = 'Progress could not be saved on this device.',
+          );
+        }
+      }
+    });
   }
 
   void _pauseGame() {
@@ -190,6 +293,13 @@ class _DepotScreenState extends State<DepotScreen> with WidgetsBindingObserver {
                             onHelp: _showHowToPlay,
                             onRestart: _session.restart,
                           ),
+                          if (_storageNotice != null) ...[
+                            const SizedBox(height: 8),
+                            _StorageNotice(
+                              message: _storageNotice!,
+                              compact: compact,
+                            ),
+                          ],
                           SizedBox(height: compact ? 8 : 18),
                           _ObjectiveCard(
                             message: _session.message,
@@ -286,6 +396,42 @@ class _DepotScreenState extends State<DepotScreen> with WidgetsBindingObserver {
           ),
         );
       },
+    );
+  }
+}
+
+class _StorageNotice extends StatelessWidget {
+  const _StorageNotice({required this.message, required this.compact});
+
+  final String message;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 9 : 12,
+        vertical: compact ? 6 : 8,
+      ),
+      decoration: BoxDecoration(
+        color: const Color(0xFF4A321A),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.save_outlined, size: 18, color: Color(0xFFFFC857)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              message,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(fontSize: compact ? 10 : 12),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

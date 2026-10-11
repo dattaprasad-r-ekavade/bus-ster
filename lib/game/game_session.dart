@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import 'game_model.dart';
+import 'game_progress.dart';
 import 'game_replay.dart';
 import 'levels.dart';
 
@@ -16,6 +17,7 @@ class GameSession extends ChangeNotifier {
   final List<LevelSpec> _levels;
   final List<BoardState> _history = [];
   final List<String> _dispatchLog = [];
+  final Set<String> _completedLevelIds = {};
   late BoardState _state;
   int _levelIndex = 0;
   String _message = _defaultStartMessage;
@@ -35,6 +37,11 @@ class GameSession extends ChangeNotifier {
   bool get isPaused => _isPaused;
   GameReplayRecord get replayRecord =>
       GameReplayRecord(levelId: level.id, dispatches: _dispatchLog);
+  GameProgress get progress => GameProgress(
+    currentLevelId: level.id,
+    dispatches: _dispatchLog,
+    completedLevelIds: _completedLevelIds,
+  );
   String get _levelStartMessage {
     final prompt = level.tutorialPrompt.trim();
     return prompt.isEmpty ? _defaultStartMessage : prompt;
@@ -67,6 +74,7 @@ class GameSession extends ChangeNotifier {
       _state = _state.copyWith(status: GameStatus.stuck);
       _message = 'No clear route remains. Undo a dispatch or retry the depot.';
     }
+    if (_state.status == GameStatus.won) _completedLevelIds.add(level.id);
     notifyListeners();
   }
 
@@ -118,6 +126,43 @@ class GameSession extends ChangeNotifier {
     notifyListeners();
   }
 
+  void restoreProgress(GameProgress progress) {
+    final levelIndex = _levels.indexWhere(
+      (candidate) => candidate.id == progress.currentLevelId,
+    );
+    if (levelIndex < 0) {
+      throw FormatException(
+        'Saved level "${progress.currentLevelId}" is not in this build.',
+      );
+    }
+
+    final level = _levels[levelIndex];
+    final states = progress.replay.replayStates(level);
+    final knownLevelIds = _levels.map((candidate) => candidate.id).toSet();
+    _levelIndex = levelIndex;
+    _state = states.last;
+    _history
+      ..clear()
+      ..addAll(states.take(states.length - 1));
+    _dispatchLog
+      ..clear()
+      ..addAll(progress.dispatches);
+    _completedLevelIds
+      ..clear()
+      ..addAll(progress.completedLevelIds.where(knownLevelIds.contains));
+    if (_state.status == GameStatus.won) _completedLevelIds.add(level.id);
+    _hintedBusId = null;
+    _lastDispatchAnimation = null;
+    _animationSerial++;
+    _isPaused = false;
+    _message = switch (_state.status) {
+      GameStatus.playing => 'Progress restored. Continue this depot.',
+      GameStatus.stuck => 'This saved route is stuck. Undo or retry the depot.',
+      GameStatus.won => 'This depot is clear. Continue to the next depot.',
+    };
+    notifyListeners();
+  }
+
   String _dispatchFeedback(
     String busId,
     List<GridPoint>? path,
@@ -166,6 +211,7 @@ class GameSession extends ChangeNotifier {
       _levelIndex = 0;
       _state = BoardState.initial(level);
       _history.clear();
+      _dispatchLog.clear();
       _hintedBusId = null;
       _lastDispatchAnimation = null;
       _animationSerial++;
