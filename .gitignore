@@ -11,6 +11,8 @@ coverage/
 # IDE / local state
 .idea/
 .vscode/
+!.vscode/
+!.vscode/mcp.json
 *.iml
 *.log
 .DS_Store

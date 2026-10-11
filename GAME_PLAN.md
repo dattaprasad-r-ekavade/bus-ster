@@ -1,6 +1,34 @@
 # Bus-ster — staged Android game plan
 
-_Research and planning snapshot: 11 October 2026. Owner: Bus-ster team. Status: ready for Stage 0._
+_Updated: 11 October 2026. Owner: Bus-ster team. Status: prototype in progress; Stage 0 research and Stage 1 device/player gates remain open._
+
+## Current progress snapshot — 11 October 2026
+
+This is an active build plan, not a release-ready game. The repository now contains a Flutter/Flame Android prototype with 10 hand-authored depots, a pure-Dart rules model, a bounded breadth-first solver, a level validator, hint/undo/retry, an animated dispatch, an optional rules-help dialog, five passing tests, a GitHub Actions workflow, and a successful debug APK build. The prototype was installed and tapped through on the Android 15 / API 35 emulator `LLM_Clicker_API35` (generic `sdk_gphone64_x86_64`). One visual alignment issue was fixed during that check. A short emulator FPS sample was around 60 fps after startup; this is not a physical-device performance result.
+
+The competitive research below is a desk review of Google Play listings and a few public review excerpts. The current games have not yet been installed and played hands-on, and no outside player sessions have been run. The art is placeholder vector drawing; there is no save system, analytics, ads, billing, production signing, or release package. Do not treat the prototype or the revenue example as evidence that the game is ready to launch or will earn a particular amount.
+
+| Workstream | Current evidence | Remaining gate |
+| --- | --- | --- |
+| Market and product | Four current Play listings reviewed; category overlap and monetization patterns recorded below. | Hands-on teardown of the reference and at least three peers; 10 first-time player sessions; prove an original mechanic. |
+| Stage 1 playable slice | Ten levels, route/queue/bay rules, help dialog, hints, undo, dispatch animation, unit/widget tests, level validation, CI workflow, API 36 debug build, emulator touch smoke. | Tutorial teaching sequence, replay/debug support, fuller feedback and pause/resume; test on two physical Android devices and with players. |
+| Stage 2 content | Bounded BFS solver returns a dispatch sequence; all 10 depots pass the validator. | JSON/schema and preview tool, generator, save/resume and migrations, and a human-tested launch content set. |
+| Production and business | Offline core and monetization guardrails are planned. | Original production assets, analytics/retention evidence, consent, ads/billing, Play Console testing, and measured unit economics. |
+
+## Market scan and product risk
+
+Snapshot from Google Play listings reviewed on 11 October 2026. Listing install and review counts are store signals only: they do not reveal revenue, retention, acquisition cost, or profitability. Review excerpts are self-selected anecdotes, not a representative survey. Hands-on play is still required to verify the exact gameplay and ad cadence.
+
+| Game | Public listing signals | What Bus-ster should take from it |
+| --- | --- | --- |
+| [Bus Fever Party!](https://play.google.com/store/apps/details?id=gridplus.busjam.carpuzzle) | Listing showed 1M+ downloads, about 18.6K reviews, ads and in-app purchases. It describes clearing traffic, matching passengers to buses, and boosters. A few visible reviews praised color distinction and criticized early difficulty, ad load, or short VIP pricing. | This validates visible category interest, not an open niche. Keep the early game readable and fair; verify reviews across a larger sample before changing the design. |
+| [Bus Jam: Traffic Escape](https://play.google.com/store/apps/details?id=com.ashlabs.busjam) | Promotes solver-verified levels, offline play, color-blind-friendly colors, several themed worlds, optional reward ads, interstitials after level 15, and a no-ads purchase. | Solver validation, offline play, color accessibility, and optional ads are table stakes among direct peers; they are good quality requirements, not differentiation. |
+| [Bus Go! Car Traffic Jam](https://play.google.com/store/apps/details?id=bus.go.car.jam.traffic) | Listing showed 5M+ downloads, about 63K reviews, ads and in-app purchases; it combines bus/car traffic puzzles, passenger matching, and boosters. A visible review alleges levels become pay/help dependent. | There is category scale, but no public revenue proof. Test solvability and ad fairness with players, and do not design difficulty around booster use. |
+| [Bus Away: Traffic Jam](https://play.google.com/store/apps/details?id=com.fc.bus.away.traffic.jam) | Listing showed 1M+ downloads, about 32K reviews, ads and in-app purchases; it combines traffic, passenger pickup, parking, and power-ups. | The basic bus/traffic/passenger/booster loop is broadly repeated. Store art, title, level layouts, copy, and game feel need a distinct identity. |
+
+**Positioning risk:** the current prototype also combines a shared exit, bus blocking, FIFO riders, and limited boarding bays. A visible road graph helps explain routes but may not be a strong enough reason to choose Bus-ster over existing games. During Stage 0, compare actual play and test one distinctive mechanic, such as a player-controlled junction signal that changes which road branch is open. Keep this as a hypothesis until first-time players understand it and prefer it in a small gray-box test; do not spend heavily on production art or user acquisition before that evidence.
+
+**Revenue evidence:** public Play listings do not disclose competitor revenue. The model in Section 2 is an arithmetic scenario, not an estimate for this product. “Decent revenue” depends on finding and retaining a large enough audience at a net contribution margin that exceeds acquisition and operating costs. Validate retention, ad tolerance, conversion, and country-level net revenue in a small test before buying installs.
 
 ## 1. Product decision
 
@@ -16,13 +44,13 @@ Build a polished, original, single-player, portrait-mode **bus dispatch puzzle**
 - **Fair recovery:** undo and a limited earned hint path exist without a purchase. Rewarded ads only offer extra convenience.
 - **Original presentation:** a small, bright city depot, distinct bus silhouettes, clear movement arcs, and restrained sound/haptics. Avoid the competitor's layouts and visual language.
 
-### Provisional rules for the vertical slice
+### Current gray-box rules (still a design hypothesis)
 
-1. A board contains stationary buses, lanes, one exit, 3–4 departure bays, and an ordered, visible passenger queue. Every bus has a route color/symbol and seat capacity.
-2. Tap a bus. The rules engine checks an unblocked path from its current location to an available bay. An invalid selection shows the blocker/path reason; it never spends a life or currency.
-3. A bus in a bay boards only the currently accessible matching passengers. When full, it leaves and frees the bay. The player chooses bus order to avoid filling all bays with non-matches.
-4. Win when the required passengers have boarded and the required buses have departed. A loss is declared only when the solver finds no legal progress from the current state; offer undo/retry.
-5. A deterministic rules core, with animation driven from state changes, is required. Precise geometry, queue behavior, capacities, and bay count are **design hypotheses** to settle after the reference teardown and 10-player paper/gray-box test.
+1. Each depot is a grid of road nodes and blocked yard tiles, a shared gate, a small number of boarding bays, and a visible FIFO rider queue. Each bus has a route color and symbol, a fixed road node, and a seat capacity.
+2. Tap a bus. The rules engine finds an unblocked path over connected road nodes to the gate. A blocked bus remains in place and explains the issue without spending currency or a life.
+3. A dispatched bus occupies a bay and boards matching riders only from the head of the FIFO queue. A full bus leaves and frees the bay. The player chooses bus order to avoid filling bays with buses that cannot serve the next rider.
+4. Win when all riders are boarded and all buses have left. After a move, the bounded solver checks for a complete route; if none remains, offer undo/retry and explain the stuck state.
+5. Keep the rules core in plain Dart; animation follows a state transition. The exact network, queue behavior, capacities, and bay pressure remain **design hypotheses** until hands-on teardown and player testing.
 
 ## 2. Scope and commercial strategy
 
@@ -72,7 +100,7 @@ For each cohort and geography, track DAU/MAU, sessions/user, level attempts and 
 | Quality/release | `flutter analyze`, `flutter test`, integration tests on emulator and real devices, Flutter DevTools, Android Studio profiler, GitHub Actions, Play internal/closed tracks. | Every stage |
 | Art production | Inkscape/Krita for 2D originals; Blender only if prerendered 2.5D buses are chosen. Maintain an asset provenance/licensing ledger. | Stages 0–3 |
 
-**Local environment checked:** Flutter 3.41.6, Dart 3.11.4, Android SDK 36 and Android Studio are installed. `flutter doctor -v` reports Android licenses not fully accepted; the developer must review and accept them with `flutter doctor --android-licenses` before Android builds. Check plugin compatibility and select current stable package versions at implementation time; do not pin versions based on this planning snapshot.
+**Local environment checked:** Flutter 3.41.6, Dart 3.11.4, Android SDK 36 and Android Studio are installed. `flutter doctor -v` reports some Android SDK licenses not accepted. The debug APK built successfully, but the developer still needs to review/accept the applicable terms with `flutter doctor --android-licenses` before release work. Check plugin compatibility and select current stable package versions at implementation time; do not pin versions based on this planning snapshot.
 
 ### Module boundaries
 
@@ -90,7 +118,7 @@ integration_test/      first-session, save/resume, ads/IAP test doubles
 tools/                 level validator, generator, replay and metrics scripts
 ```
 
-Use a pure `apply(BoardState, Command) -> Result<BoardState, GameEvent>` function. Keep a seed and command log so any bug report can replay a level deterministically. Define stable level IDs and a format version; bundle launch levels locally. A draft level record includes `id`, `schemaVersion`, `grid`, `lanes`, `exit`, `bays`, `buses` (position, size, route symbol/color, capacity), `passengerQueue`, `objectives`, `difficultyTags`, `seed`, and `solutionMetadata`. The schema and solver are the source of truth, not animation state. Validate no overlapping pieces, valid routes, legal capacities, at least one solution, intended move depth, and no soft lock without an undo path.
+Use a pure `apply(BoardState, Command) -> Result<BoardState, GameEvent>` function. Keep a seed and command log so any bug report can replay a level deterministically. Define stable level IDs and a format version; bundle launch levels locally. The current prototype has a Dart `LevelSpec`, not the planned serialized format. A draft record should include `id`, `schemaVersion`, `width`, `height`, `roads` (grid coordinates), `exit`, `bayCount`, `buses` (id, position, route symbol/color, capacity), `passengerQueue`, `difficultyTags`, `seed`, and `solutionMetadata`. The schema and solver are the source of truth, not animation state. Validate no overlapping pieces, valid roads/routes, legal capacities, at least one solution, intended move depth, and no soft lock without an undo path.
 
 ### MCPs for development (not runtime game dependencies)
 
@@ -98,10 +126,10 @@ MCP servers help the team **build and operate** the game; the Android app should
 
 | MCP | Practical use | Decision |
 | --- | --- | --- |
-| Official [Dart/Flutter tooling MCP](https://dart.googlesource.com/ai/+/HEAD/pkgs/dart_mcp_server/README.md) (`dart mcp-server`; inspect `--help` for this installed SDK) | Analyze/format code, search pub.dev, run tests, inspect widget tree/runtime errors and screenshots, hot reload. Pair with CLI and DevTools. | **Install/configure in Stage 1** after a Flutter project exists; use workspace roots. |
-| Official [Firebase MCP](https://firebase.google.com/docs/ai-assistance/mcp-server) | Inspect Firebase project/configuration, rules and Crashlytics issues once Firebase exists. | **Stage 4**, scoped to a dev project first; review any project mutation. |
-| Official [GitHub MCP](https://github.com/github/github-mcp-server) or the available GitHub connector | Read issues/PRs, triage bugs, link milestones to code. | **Stage 1** if the team uses issue tracking; grant least privilege. |
-| [Blender MCP](https://www.blender.org/lab/mcp-server/) | Optional generation/inspection of Blender scenes for prerendered original sprites. | **Only if Blender art is chosen.** It executes generated Python without guards; use a disposable/isolated asset workspace, inspect outputs before importing. |
+| Official [Dart/Flutter tooling MCP](https://dart.googlesource.com/ai/+/HEAD/pkgs/dart_mcp_server/README.md) (`dart mcp-server`) | Analyze/format code, search pub.dev, run tests, inspect widget/runtime errors and screenshots, and hot reload. Pair with CLI and DevTools. | A repository-scoped VS Code entry is in `.vscode/mcp.json`, and `dart mcp-server --help` works in this environment. The full IDE MCP handshake still needs verification. Development only; never a game runtime dependency. |
+| Official [Firebase MCP](https://firebase.google.com/docs/ai-assistance/mcp-server) | Inspect Firebase project/configuration, rules, and Crashlytics issues once Firebase exists. | Stage 4 only, with a separate dev project and least privilege. Not configured; no Firebase project exists. |
+| Official [GitHub MCP](https://github.com/github/github-mcp-server) or the available GitHub connector | Read issues/PRs, triage bugs, and link milestones to code. | Optional when issue tracking starts. Use least privilege; normal Git and GitHub Actions already cover source control and CI. |
+| [Blender MCP](https://www.blender.org/lab/mcp-server/) | Optional generation/inspection of Blender scenes for prerendered original sprites. | Only if Blender art is chosen. It executes generated Python without guards; use a disposable asset workspace and inspect outputs before importing. Not configured. |
 | Play Console / AdMob administration | Product IDs, store listing, testing tracks, policy and revenue data. | Use official UIs/APIs and human review; **do not adopt an unverified third-party MCP** with publishing or payment access. |
 
 ## 4. Stepwise delivery plan
@@ -110,25 +138,26 @@ Estimated elapsed time for a small team: **12–16 weeks**, with art/content run
 
 ### Stage 0 — competitive teardown and product brief (week 1)
 
-- [ ] Install/play the current Bus Fever Party! and three genre peers. Record first 30 minutes, level 1–20 progression, exact movement/boarding rules, bay behavior, fail states, booster economy, ad placements, shop, accessibility, and store positioning. Keep recordings private as research; no copied assets or levels.
-- [ ] Write a one-page original game design brief with the final core rule set, 2–3 visual directions, audience, and the first 10-level teaching sequence.
-- [ ] Run 10 rapid gray-box/paper sessions with people unfamiliar with the genre. Note where they misread routes, queue order, and blockers.
-- [ ] Make an asset/license ledger and choose a distinctive title/icon direction. Check title and listing for IP/impersonation risk.
-- [ ] Decide the target device matrix: small/large phone, low/mid/high GPU, Android versions supported by current plugins; establish memory and APK/AAB size budgets.
-- **Exit:** written rules and at least one genuinely differentiated mechanic; ≥ 8/10 participants can explain the core objective after the tutorial without coaching.
+- [x] Review current Play listings for Bus Fever Party! and three genre peers; record advertised mechanics, public scale signals, monetization and a small number of review themes in the Market Scan above. This is desk research only.
+- [ ] Install and play the current Bus Fever Party! and at least three genre peers. Record the first 30 minutes, levels 1–20 progression, exact movement/boarding rules, bay behavior, fail states, booster economy, ad placements, shop, accessibility, and store positioning. Keep recordings private as research; copy no assets or levels.
+- [x] Draft the original product decision and provisional rules in Section 1, and add an optional in-game rules-help dialog. The audience, visual direction, final differentiator, and first-10 teaching sequence still need to be settled.
+- [ ] Run 10 rapid gray-box/paper sessions with people unfamiliar with the genre. Note where they misread routes, queue order, and blockers; compare at least one original mechanic candidate.
+- [ ] Make an asset/license ledger and choose a distinctive title/icon direction. Check title and listing for IP/impersonation risk before store investment.
+- [ ] Decide the target device matrix: small/large phone, low/mid/high GPU, Android versions supported by current plugins; establish memory and APK/AAB size budgets. So far only the generic Android 15 / API 35 emulator named above has been used.
+- **Exit:** written final rules and at least one genuinely differentiated mechanic; ≥ 8/10 participants can explain the core objective after the tutorial without coaching. **Not met:** hands-on teardown and external playtests are still open.
 
 ### Stage 1 — playable vertical slice (weeks 2–4)
 
-- [ ] Create `flutter create --platforms=android` app; set a unique application ID under the team's domain, portrait orientation, app icon placeholder, min SDK based on plugin requirements, and current Play target SDK. Use Flutter/Flame stable compatible versions.
-- [ ] Implement pure-Dart board state, command validation, queue/boarding, bay occupancy, win/loss, undo, and deterministic replays; unit-test tricky transitions and deadlocks.
-- [ ] Render a responsive board in Flame with placeholder art, readable color + symbol labels, tap feedback, move/board/leave animations, pause/resume, and safe-area handling.
-- [ ] Hand-author 10 levels: 3 tutorial, 4 easy, 3 medium. Add level JSON validation and a debug overlay showing state, seed, and legal moves.
-- [ ] Test touch accuracy, 60 fps, loading, and background/foreground behavior on two real Android phones.
-- **Exit:** 10 complete levels, no unsolvable states in validation, no blocker that requires a payment/ad, first level playable within 10 seconds on target devices.
+- [x] Create the Flutter Android scaffold. Portrait orientation, `Bus-ster` label, application ID `com.busster.busster`, Android target API 36, and compatible Flutter/Flame dependencies are set. Confirm the application ID is available to the team before Play Console setup; the current APK uses debug signing.
+- [ ] Finish the pure-Dart command/state model, queue/boarding, bay occupancy, win/stuck detection, undo, and deterministic replay. Core rules and undo exist and are unit-tested; a replay log is not implemented.
+- [ ] Finish a responsive Flame board with color + symbol labels, touch feedback, move/board/leave feedback, pause/resume, and safe areas. The board scales within a Flutter safe area and bus dispatch animates; boarding/departure feedback and pause/resume remain.
+- [x] Hand-author 10 playable levels and validate them with the bounded solver and batch validator. The current ten are prototypes, not yet reviewed as a three-tutorial/four-easy/three-medium teaching curve. Level JSON, preview/editor, and an in-game debug overlay are not implemented.
+- [ ] Test touch accuracy, stable 60 fps, cold loading, and background/foreground behavior on two real Android phones. Current evidence is one emulator smoke test and a short startup FPS sample only.
+- **Exit:** 10 complete levels, no unsolvable states in validation, no blocker that requires a payment/ad, first level playable within 10 seconds on target devices. **Partial:** 10 levels and solver validation are present; tutorial, feedback, device, external playtest, and timing gates remain.
 
 ### Stage 2 — content pipeline and difficulty (weeks 4–6)
 
-- [ ] Build a solver (BFS/A* or equivalent over canonicalized board states) to verify all authored levels and to return an explainable hint. Add limits so validation cannot hang.
+- [x] Build a bounded BFS solver to verify levels and return a next-dispatch hint. It currently stops after 100,000 examined states; the ten prototype levels all solve. State canonicalization and more diverse rule coverage remain future work.
 - [ ] Build a level preview/editor and a reverse-construction generator or variant tool; never publish raw generated levels without solver and human play checks.
 - [ ] Tag levels by mechanics, solution depth, branch count, traps, expected time, and observed solve rate. Create 60–100 launch levels across four bands; ensure first 20 introduce one idea at a time.
 - [ ] Add save/resume, atomic progress migration, level selection, retry, earned hints, and a no-network path.
@@ -180,9 +209,11 @@ Estimated elapsed time for a small team: **12–16 weeks**, with art/content run
 
 ## 5. Immediate next actions
 
-1. Complete the Stage 0 teardown and settle the exact rules and original visual direction.
-2. Create the Flutter Android scaffold and 10-level vertical slice; configure CI and Dart tooling MCP.
-3. Use this file as the milestone checklist. Open issues per stage with measurable acceptance criteria and update assumptions after the first playtests.
+1. Install/play the reference and at least three peers, then run 10 gray-box sessions. Resolve whether a route-switch mechanic is understandable and distinctive before locking the game design.
+2. Complete the vertical slice gates: set the first 10 tutorial beats, add replay/debug support and boarding/departure feedback, verify pause/resume, and test two physical Android devices.
+3. Build the Stage 2 authoring/save pipeline: serialized level schema, preview/editor, solver-backed validation, progress persistence/migration, then expand content only after human QA.
+4. Keep the app offline and ad-free while testing; add production art, analytics, ads, and billing only at their stage gates, and judge revenue from measured cohort and acquisition data.
+5. Treat this file as the milestone checklist; track stage gates with concrete acceptance evidence and update assumptions after each playtest.
 
 ## Source notes
 

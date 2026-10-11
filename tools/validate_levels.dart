@@ -1,0 +1,51 @@
+import 'dart:io';
+
+import 'package:busster/game/game_model.dart';
+import 'package:busster/game/levels.dart';
+
+void main() {
+  var failures = 0;
+
+  for (final level in levels) {
+    final problems = <String>[];
+
+    for (final road in level.roads) {
+      if (road.x < 0 ||
+          road.y < 0 ||
+          road.x >= level.width ||
+          road.y >= level.height) {
+        problems.add(
+          'road $road is outside the ${level.width}x${level.height} board',
+        );
+      }
+    }
+
+    for (final route in RouteKind.values) {
+      final seats = level.buses
+          .where((bus) => bus.route == route)
+          .fold<int>(0, (sum, bus) => sum + bus.capacity);
+      final riders = level.passengers.where((rider) => rider == route).length;
+      if (seats != riders) {
+        problems.add('${route.label}: $seats seats for $riders riders');
+      }
+    }
+
+    final solution = LevelSolver.findSolution(level);
+    if (solution == null) {
+      problems.add('no complete solution found');
+    }
+
+    if (problems.isEmpty) {
+      stdout.writeln(
+        'PASS ${level.id}: ${level.buses.length} buses, '
+        '${level.passengers.length} riders, ${solution!.length} dispatches',
+      );
+    } else {
+      failures++;
+      stderr.writeln('FAIL ${level.id}: ${problems.join('; ')}');
+    }
+  }
+
+  stdout.writeln('${levels.length - failures}/${levels.length} levels valid');
+  if (failures > 0) exitCode = 1;
+}
