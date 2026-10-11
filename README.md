@@ -58,6 +58,14 @@ With an Android emulator or device connected, run the first-dispatch smoke test:
 flutter test integration_test/first_dispatch_test.dart -d <device-id>
 ```
 
+After installing a release APK on an emulator, collect repeatable process-launch time, one-second post-launch PSS, and artifact-size samples with:
+
+```powershell
+.\tools\measure_android_emulator.ps1 -DeviceId emulator-5554 -Samples 5
+```
+
+The JSON report is written under the ignored `build/android-metrics/` folder. `am start -W` and emulator memory readings are diagnostics; they do not measure first-input latency or replace physical-device frame-time, thermal, and touch testing.
+
 ## Project documents
 
 - [Step-by-step game plan](GAME_PLAN.md)
