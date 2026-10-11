@@ -53,6 +53,7 @@ void main() {
     expect(find.text('NEXT RIDERS'), findsOneWidget);
     expect(find.text('FIFO QUEUE'), findsOneWidget);
     expect(find.text('ROUTE TIP'), findsOneWidget);
+    expect(find.textContaining('Tap a bus with a clear road'), findsOneWidget);
 
     await tester.tap(find.byTooltip('How to play'));
     await tester.pump();

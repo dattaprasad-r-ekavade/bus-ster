@@ -9,6 +9,10 @@ void main() {
   for (final level in levels) {
     final problems = <String>[];
 
+    if (level.tutorialPrompt.trim().isEmpty) {
+      problems.add('missing first-pass tutorial prompt');
+    }
+
     for (final road in level.roads) {
       if (road.x < 0 ||
           road.y < 0 ||

@@ -7,14 +7,18 @@ import 'levels.dart';
 class GameSession extends ChangeNotifier {
   GameSession({List<LevelSpec>? levelList}) : _levels = levelList ?? levels {
     _state = BoardState.initial(level);
+    _message = _levelStartMessage;
   }
+
+  static const _defaultStartMessage =
+      'Send the right buses to the gate. Follow the rider queue.';
 
   final List<LevelSpec> _levels;
   final List<BoardState> _history = [];
   final List<String> _dispatchLog = [];
   late BoardState _state;
   int _levelIndex = 0;
-  String _message = 'Send the right buses to the gate. Follow the rider queue.';
+  String _message = _defaultStartMessage;
   String? _hintedBusId;
   DispatchAnimation? _lastDispatchAnimation;
   int _animationSerial = 0;
@@ -31,6 +35,10 @@ class GameSession extends ChangeNotifier {
   bool get isPaused => _isPaused;
   GameReplayRecord get replayRecord =>
       GameReplayRecord(levelId: level.id, dispatches: _dispatchLog);
+  String get _levelStartMessage {
+    final prompt = level.tutorialPrompt.trim();
+    return prompt.isEmpty ? _defaultStartMessage : prompt;
+  }
 
   void dispatch(String busId) {
     if (_isPaused) return;
@@ -94,7 +102,7 @@ class GameSession extends ChangeNotifier {
     _state = BoardState.initial(level);
     _history.clear();
     _dispatchLog.clear();
-    _message = 'Send the right buses to the gate. Follow the rider queue.';
+    _message = _levelStartMessage;
     notifyListeners();
   }
 
@@ -153,7 +161,7 @@ class GameSession extends ChangeNotifier {
       _hintedBusId = null;
       _lastDispatchAnimation = null;
       _animationSerial++;
-      _message = 'New depot. Read the queue, then clear the road to the gate.';
+      _message = _levelStartMessage;
     } else if (_state.status == GameStatus.won) {
       _levelIndex = 0;
       _state = BoardState.initial(level);
@@ -161,7 +169,7 @@ class GameSession extends ChangeNotifier {
       _hintedBusId = null;
       _lastDispatchAnimation = null;
       _animationSerial++;
-      _message = 'Prototype route complete. Play the depots again.';
+      _message = _levelStartMessage;
     } else {
       restart();
       return;

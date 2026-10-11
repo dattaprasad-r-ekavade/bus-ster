@@ -75,6 +75,7 @@ class LevelSpec {
     required Iterable<GridPoint> roads,
     required Iterable<BusSpec> buses,
     required Iterable<RouteKind> passengers,
+    this.tutorialPrompt = '',
     this.bayCount = 3,
   }) : roads = UnmodifiableSetView(roads.toSet()),
        buses = List.unmodifiable(buses),
@@ -102,6 +103,7 @@ class LevelSpec {
   final Set<GridPoint> roads;
   final List<BusSpec> buses;
   final List<RouteKind> passengers;
+  final String tutorialPrompt;
   final int bayCount;
 
   BusSpec busById(String id) => buses.firstWhere((bus) => bus.id == id);

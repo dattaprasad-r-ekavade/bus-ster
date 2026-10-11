@@ -29,6 +29,7 @@ LevelSpec _level(
   List<List<GridPoint>> branches,
   List<BusSpec> buses,
   List<RouteKind> riderOrder, {
+  required String tutorialPrompt,
   int bayCount = 3,
 }) => LevelSpec(
   id: id,
@@ -38,6 +39,7 @@ LevelSpec _level(
   exit: _p(2, 0),
   roads: _network(branches),
   buses: buses,
+  tutorialPrompt: tutorialPrompt,
   passengers: [
     for (final route in riderOrder) ...[route, route],
   ],
@@ -55,6 +57,7 @@ final List<LevelSpec> levels = [
       _bus('mint', RouteKind.mint, 4, 2),
     ],
     [RouteKind.coral, RouteKind.blue, RouteKind.mint],
+    tutorialPrompt: 'Tap a bus with a clear road to the EXIT.',
   ),
   _level(
     'depot-02',
@@ -67,6 +70,7 @@ final List<LevelSpec> levels = [
       _bus('mint', RouteKind.mint, 2, 4),
     ],
     [RouteKind.coral, RouteKind.blue, RouteKind.gold, RouteKind.mint],
+    tutorialPrompt: 'The first rider in the visible queue boards first.',
   ),
   _level(
     'depot-03',
@@ -79,6 +83,8 @@ final List<LevelSpec> levels = [
       _bus('mint', RouteKind.mint, 2, 4),
     ],
     [RouteKind.blue, RouteKind.coral, RouteKind.mint, RouteKind.gold],
+    tutorialPrompt:
+        'A mismatched bus can wait in a bay while you serve the next rider.',
     bayCount: 2,
   ),
   _level(
@@ -92,6 +98,7 @@ final List<LevelSpec> levels = [
       _bus('mint', RouteKind.mint, 2, 4),
     ],
     [RouteKind.gold, RouteKind.coral, RouteKind.blue, RouteKind.mint],
+    tutorialPrompt: 'A bus on the road blocks every route through its tile.',
     bayCount: 2,
   ),
   _level(
@@ -105,6 +112,8 @@ final List<LevelSpec> levels = [
       _bus('mint', RouteKind.mint, 2, 4),
     ],
     [RouteKind.gold, RouteKind.blue, RouteKind.coral, RouteKind.mint],
+    tutorialPrompt:
+        'Queue order and road access both shape a good dispatch order.',
     bayCount: 2,
   ),
   _level(
@@ -118,6 +127,7 @@ final List<LevelSpec> levels = [
       _bus('mint', RouteKind.mint, 2, 4),
     ],
     [RouteKind.blue, RouteKind.gold, RouteKind.mint, RouteKind.coral],
+    tutorialPrompt: 'A full bus leaves and opens a bay for the next bus.',
     bayCount: 2,
   ),
   _level(
@@ -131,6 +141,7 @@ final List<LevelSpec> levels = [
       _bus('mint', RouteKind.mint, 2, 1),
     ],
     [RouteKind.mint, RouteKind.gold, RouteKind.coral, RouteKind.blue],
+    tutorialPrompt: 'Branches rejoin the shared road leading to the EXIT.',
     bayCount: 2,
   ),
   _level(
@@ -144,6 +155,8 @@ final List<LevelSpec> levels = [
       _bus('blue', RouteKind.blue, 2, 3),
     ],
     [RouteKind.coral, RouteKind.blue, RouteKind.gold, RouteKind.mint],
+    tutorialPrompt:
+        'Think ahead: sending a bus opens road tiles but may fill a bay.',
     bayCount: 2,
   ),
   _level(
@@ -157,6 +170,7 @@ final List<LevelSpec> levels = [
       _bus('blue', RouteKind.blue, 2, 4),
     ],
     [RouteKind.gold, RouteKind.mint, RouteKind.coral, RouteKind.blue],
+    tutorialPrompt: 'Use the bays to stage buses while following the queue.',
     bayCount: 2,
   ),
   _level(
@@ -170,6 +184,8 @@ final List<LevelSpec> levels = [
       _bus('blue', RouteKind.blue, 2, 1),
     ],
     [RouteKind.blue, RouteKind.gold, RouteKind.mint, RouteKind.coral],
+    tutorialPrompt:
+        'Depot review: check the road, the next rider, and open bays each move.',
     bayCount: 2,
   ),
 ];

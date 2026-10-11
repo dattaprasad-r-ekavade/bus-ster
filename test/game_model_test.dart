@@ -45,7 +45,25 @@ void main() {
     test('all prototype levels have a complete solver path', () {
       for (final level in levels) {
         expect(LevelSolver.findSolution(level), isNotNull, reason: level.id);
+        expect(level.tutorialPrompt.trim(), isNotEmpty, reason: level.id);
       }
+    });
+
+    test('tutorial prompt follows the active level and restarts', () {
+      final session = GameSession();
+      expect(session.message, levels[0].tutorialPrompt);
+
+      session.restart();
+      expect(session.message, levels[0].tutorialPrompt);
+
+      session
+        ..dispatch('blue')
+        ..dispatch('coral')
+        ..dispatch('mint')
+        ..nextLevel();
+      expect(session.levelIndex, 1);
+      expect(session.message, levels[1].tutorialPrompt);
+      session.dispose();
     });
 
     test('session marks a full, unrecoverable bay state as stuck', () {

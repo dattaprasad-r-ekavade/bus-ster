@@ -69,17 +69,17 @@ Run one worksheet per title. If an app is unavailable in the test region or cann
 
 ## First 10 teaching beats (proposal)
 
-These are sequencing goals, not a claim that the current ten prototype levels already teach them cleanly. Revise after the teardown and sessions.
+These prompts are attached to the ten prototype levels as a first pass. They describe intended instruction, not evidence that players learn the rule or that the difficulty curve works. Revise the prompts and level order after the competitor teardown and player sessions.
 
-| Level | Intended lesson | Keep out of this level |
-| --- | --- | --- |
-| 1 | A clear-route bus can be dispatched; identify the exit and route symbol. | Bay traps, undo dependence, hidden colors |
-| 2 | The visible FIFO queue determines who boards next. | Multiple new blockers |
-| 3 | A mismatched bus can wait safely while the player sends a needed bus. | New booster or timer |
-| 4 | A bus blocks a road node; opening the road changes which bus can move. | Tight bay pressure |
-| 5 | Compare two reachable buses and choose the order that serves the next riders. | Extra route colors beyond what is needed |
-| 6 | A second bay gives temporary flexibility, but a full bus leaves and frees space. | Hard deadlock |
-| 7 | Follow a branch through a junction to the shared exit. | Color-only distinctions |
-| 8 | Plan a short dispatch sequence around both queue order and road blocking. | Randomness |
-| 9 | Introduce the tested route-switch mechanic only if Stage 0 validates it. | Combining it with several unlearned rules |
-| 10 | Review the first eight lessons in a compact capstone; allow Undo and a solver hint. | Required ad/purchase or an untested difficulty spike |
+| Level | Intended lesson | Current in-game prompt (provisional) | Keep out of this level |
+| --- | --- | --- | --- |
+| 1 | A clear-route bus can be dispatched; identify the exit and route symbol. | “Tap a bus with a clear road to the EXIT.” | Bay traps, undo dependence, hidden colors |
+| 2 | The visible FIFO queue determines who boards next. | “The first rider in the visible queue boards first.” | Multiple new blockers |
+| 3 | A mismatched bus can wait safely while the player sends a needed bus. | “A mismatched bus can wait in a bay while you serve the next rider.” | New booster or timer |
+| 4 | A bus blocks a road node; opening the road changes which bus can move. | “A bus on the road blocks every route through its tile.” | Tight bay pressure |
+| 5 | Queue order and road access both affect dispatch order. | “Queue order and road access both shape a good dispatch order.” | Extra route colors beyond what is needed |
+| 6 | A full bus leaves and frees a bay for later buses. | “A full bus leaves and opens a bay for the next bus.” | Hard deadlock |
+| 7 | Follow a branch through a junction to the shared exit. | “Branches rejoin the shared road leading to the EXIT.” | Color-only distinctions |
+| 8 | Plan around both queue order and road blocking. | “Think ahead: sending a bus opens road tiles but may fill a bay.” | Randomness |
+| 9 | Use bays for staging while applying the established rules. | “Use the bays to stage buses while following the queue.” | Unvalidated route-switch mechanic or several new rules |
+| 10 | Review the road, queue, and bay lessons in a capstone. | “Depot review: check the road, the next rider, and open bays each move.” | Required ad/purchase or an untested difficulty spike |
