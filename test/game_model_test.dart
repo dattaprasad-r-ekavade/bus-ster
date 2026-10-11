@@ -25,7 +25,15 @@ void main() {
       expect(state.parked.single.route, RouteKind.blue);
       expect(state.queueIndex, 0);
 
-      state = GameRules.dispatch(level, state, 'coral').state;
+      final coralDispatch = GameRules.dispatch(level, state, 'coral');
+      expect(coralDispatch.boardedRiders, [
+        RouteKind.coral,
+        RouteKind.coral,
+        RouteKind.blue,
+        RouteKind.blue,
+      ]);
+      expect(coralDispatch.departedBusIds, ['coral', 'blue']);
+      state = coralDispatch.state;
       expect(state.queueIndex, 4);
       expect(state.parked, isEmpty);
 
@@ -59,6 +67,22 @@ void main() {
 
       expect(session.state.status, GameStatus.stuck);
       expect(session.canUndo, isTrue);
+      session.dispose();
+    });
+
+    test('paused session ignores dispatches until resumed', () {
+      final session = GameSession();
+      final initialKey = GameRules.stateKey(session.state);
+
+      session.pause();
+      session.dispatch('blue');
+      expect(session.isPaused, isTrue);
+      expect(GameRules.stateKey(session.state), initialKey);
+
+      session.resume();
+      session.dispatch('blue');
+      expect(session.isPaused, isFalse);
+      expect(session.state.activeBusIds, isNot(contains('blue')));
       session.dispose();
     });
 

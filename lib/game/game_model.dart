@@ -165,11 +165,15 @@ class DispatchResult {
     required this.state,
     required this.message,
     required this.changed,
+    this.boardedRiders = const [],
+    this.departedBusIds = const [],
   });
 
   final BoardState state;
   final String message;
   final bool changed;
+  final List<RouteKind> boardedRiders;
+  final List<String> departedBusIds;
 }
 
 class GameRules {
@@ -257,6 +261,8 @@ class GameRules {
       ParkedBus(id: bus.id, route: bus.route, capacity: bus.capacity),
     ];
     var queueIndex = state.queueIndex;
+    final boardedRiders = <RouteKind>[];
+    final departedBusIds = <String>[];
 
     while (queueIndex < level.passengers.length) {
       final passenger = level.passengers[queueIndex];
@@ -269,8 +275,10 @@ class GameRules {
 
       final waitingBus = parked[matchingIndex];
       final loadedBus = waitingBus.withLoaded(waitingBus.loaded + 1);
+      boardedRiders.add(passenger);
       queueIndex++;
       if (loadedBus.loaded == loadedBus.capacity) {
+        departedBusIds.add(loadedBus.id);
         parked.removeAt(matchingIndex);
       } else {
         parked[matchingIndex] = loadedBus;
@@ -293,7 +301,13 @@ class GameRules {
         : path.length > 1
         ? '${bus.route.label} route dispatched through ${path.length - 1} road tiles.'
         : '${bus.route.label} route entered a departure bay.';
-    return DispatchResult(state: nextState, message: message, changed: true);
+    return DispatchResult(
+      state: nextState,
+      message: message,
+      changed: true,
+      boardedRiders: List.unmodifiable(boardedRiders),
+      departedBusIds: List.unmodifiable(departedBusIds),
+    );
   }
 
   static String stateKey(BoardState state) {

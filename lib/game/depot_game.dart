@@ -100,6 +100,7 @@ class DepotBoard extends PositionComponent with TapCallbacks {
 
   @override
   void onTapUp(TapUpEvent event) {
+    if (session.isPaused) return;
     final level = session.level;
     final cellSize = math.min(
       (size.x - 28) / level.width,

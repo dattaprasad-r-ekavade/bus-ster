@@ -41,21 +41,42 @@ class DepotScreen extends StatefulWidget {
   State<DepotScreen> createState() => _DepotScreenState();
 }
 
-class _DepotScreenState extends State<DepotScreen> {
+class _DepotScreenState extends State<DepotScreen> with WidgetsBindingObserver {
   late final GameSession _session;
   late final DepotGame _game;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _session = GameSession();
     _game = DepotGame(_session);
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      if (!_session.isPaused) _game.resumeEngine();
+    } else {
+      _game.pauseEngine();
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _session.dispose();
     super.dispose();
+  }
+
+  void _pauseGame() {
+    _session.pause();
+    _game.pauseEngine();
+  }
+
+  void _resumeGame() {
+    _session.resume();
+    _game.resumeEngine();
   }
 
   void _showHowToPlay() {
@@ -144,70 +165,121 @@ class _DepotScreenState extends State<DepotScreen> {
           body: SafeArea(
             child: LayoutBuilder(
               builder: (context, constraints) {
-                return Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
-                  child: Column(
-                    children: [
-                      _TopBar(
-                        levelNumber: _session.levelIndex + 1,
-                        moveCount: state.moveCount,
-                        showDebug: kDebugMode,
-                        onDebug: _showDebugOverlay,
-                        onHelp: _showHowToPlay,
-                        onRestart: _session.restart,
+                final compact =
+                    constraints.maxWidth < 360 || constraints.maxHeight < 700;
+                final horizontalPadding = compact ? 16.0 : 20.0;
+                final sectionGap = compact ? 8.0 : 12.0;
+                return Stack(
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.fromLTRB(
+                        horizontalPadding,
+                        compact ? 8 : 12,
+                        horizontalPadding,
+                        compact ? 8 : 16,
                       ),
-                      const SizedBox(height: 18),
-                      _ObjectiveCard(
-                        message: _session.message,
-                        passengerCount: pending.length,
-                      ),
-                      const SizedBox(height: 14),
-                      _PassengerQueue(passengers: pending),
-                      const SizedBox(height: 12),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          'DEPOT ROUTE',
-                          style: Theme.of(context).textTheme.labelMedium
-                              ?.copyWith(
-                                color: const Color(0xFF8FA2BC),
-                                letterSpacing: 1.6,
-                                fontWeight: FontWeight.w800,
-                              ),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Expanded(
-                        child: Center(
-                          child: ConstrainedBox(
-                            constraints: BoxConstraints(
-                              maxWidth: 440,
-                              maxHeight: constraints.maxHeight * 0.58,
-                            ),
-                            child: AspectRatio(
-                              aspectRatio: 1,
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(24),
-                                child: GameWidget<DepotGame>(game: _game),
-                              ),
+                      child: Column(
+                        children: [
+                          _TopBar(
+                            levelNumber: _session.levelIndex + 1,
+                            moveCount: state.moveCount,
+                            compact: compact,
+                            onPause: _pauseGame,
+                            showDebug: kDebugMode,
+                            onDebug: _showDebugOverlay,
+                            onHelp: _showHowToPlay,
+                            onRestart: _session.restart,
+                          ),
+                          SizedBox(height: compact ? 8 : 18),
+                          _ObjectiveCard(
+                            message: _session.message,
+                            passengerCount: pending.length,
+                            compact: compact,
+                          ),
+                          SizedBox(height: sectionGap),
+                          _PassengerQueue(
+                            passengers: pending,
+                            compact: compact,
+                          ),
+                          SizedBox(height: sectionGap),
+                          Align(
+                            alignment: Alignment.centerLeft,
+                            child: Text(
+                              'DEPOT ROUTE',
+                              style: Theme.of(context).textTheme.labelMedium
+                                  ?.copyWith(
+                                    color: const Color(0xFF8FA2BC),
+                                    letterSpacing: 1.6,
+                                    fontWeight: FontWeight.w800,
+                                  ),
                             ),
                           ),
-                        ),
+                          SizedBox(height: compact ? 4 : 8),
+                          if (compact)
+                            SizedBox(
+                              height: (constraints.maxHeight * 0.32).clamp(
+                                170.0,
+                                220.0,
+                              ),
+                              child: Center(
+                                child: ConstrainedBox(
+                                  constraints: const BoxConstraints(
+                                    maxWidth: 440,
+                                    maxHeight: 220,
+                                  ),
+                                  child: AspectRatio(
+                                    aspectRatio: 1,
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(24),
+                                      child: GameWidget<DepotGame>(game: _game),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            )
+                          else
+                            Expanded(
+                              child: Center(
+                                child: ConstrainedBox(
+                                  constraints: BoxConstraints(
+                                    maxWidth: 440,
+                                    maxHeight: constraints.maxHeight * 0.58,
+                                  ),
+                                  child: AspectRatio(
+                                    aspectRatio: 1,
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(24),
+                                      child: GameWidget<DepotGame>(game: _game),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          SizedBox(height: compact ? 6 : 10),
+                          _BayPanel(
+                            parked: state.parked,
+                            bayCount: level.bayCount,
+                            compact: compact,
+                          ),
+                          SizedBox(height: sectionGap),
+                          _ActionBar(
+                            compact: compact,
+                            canUndo: _session.canUndo,
+                            isWon: state.status == GameStatus.won,
+                            isStuck: state.status == GameStatus.stuck,
+                            onUndo: _session.undo,
+                            onHint: _session.showHint,
+                            onNext: _session.nextLevel,
+                            onRetry: _session.restart,
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 10),
-                      _BayPanel(parked: state.parked, bayCount: level.bayCount),
-                      const SizedBox(height: 12),
-                      _ActionBar(
-                        canUndo: _session.canUndo,
-                        isWon: state.status == GameStatus.won,
-                        isStuck: state.status == GameStatus.stuck,
-                        onUndo: _session.undo,
-                        onHint: _session.showHint,
-                        onNext: _session.nextLevel,
-                        onRetry: _session.restart,
+                    ),
+                    if (_session.isPaused)
+                      Positioned.fill(
+                        child: _PauseOverlay(onResume: _resumeGame),
                       ),
-                    ],
-                  ),
+                  ],
                 );
               },
             ),
@@ -218,10 +290,51 @@ class _DepotScreenState extends State<DepotScreen> {
   }
 }
 
+class _PauseOverlay extends StatelessWidget {
+  const _PauseOverlay({required this.onResume});
+
+  final VoidCallback onResume;
+
+  @override
+  Widget build(BuildContext context) {
+    return ColoredBox(
+      color: const Color(0xE6101A2A),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.pause_circle_filled_rounded,
+              size: 64,
+              color: Color(0xFFFFC857),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'PAUSED',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.w900,
+                letterSpacing: 2,
+              ),
+            ),
+            const SizedBox(height: 20),
+            FilledButton.icon(
+              onPressed: onResume,
+              icon: const Icon(Icons.play_arrow_rounded),
+              label: const Text('RESUME'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _TopBar extends StatelessWidget {
   const _TopBar({
     required this.levelNumber,
     required this.moveCount,
+    required this.compact,
+    required this.onPause,
     required this.showDebug,
     required this.onDebug,
     required this.onHelp,
@@ -230,6 +343,8 @@ class _TopBar extends StatelessWidget {
 
   final int levelNumber;
   final int moveCount;
+  final bool compact;
+  final VoidCallback onPause;
   final bool showDebug;
   final VoidCallback onDebug;
   final VoidCallback onHelp;
@@ -240,8 +355,8 @@ class _TopBar extends StatelessWidget {
     return Row(
       children: [
         Container(
-          width: 44,
-          height: 44,
+          width: compact ? 40 : 44,
+          height: compact ? 40 : 44,
           decoration: BoxDecoration(
             color: const Color(0xFFFFC857),
             borderRadius: BorderRadius.circular(14),
@@ -252,25 +367,34 @@ class _TopBar extends StatelessWidget {
             size: 27,
           ),
         ),
-        const SizedBox(width: 11),
+        SizedBox(width: compact ? 8 : 11),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'BUS-STER',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1.5,
-                  height: 1,
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'BUS-STER',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.5,
+                    height: 1,
+                  ),
                 ),
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: compact ? 2 : 4),
               Text(
-                'DEPOT ${levelNumber.toString().padLeft(2, '0')}  ·  $moveCount MOVES',
+                compact
+                    ? 'DEPOT ${levelNumber.toString().padLeft(2, '0')} · $moveCount'
+                    : 'DEPOT ${levelNumber.toString().padLeft(2, '0')}  ·  $moveCount MOVES',
+                maxLines: 1,
+                overflow: TextOverflow.clip,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: const Color(0xFF8FA2BC),
-                  letterSpacing: 1.1,
+                  fontSize: compact ? 9 : null,
+                  letterSpacing: compact ? 0.2 : 1.1,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -278,19 +402,44 @@ class _TopBar extends StatelessWidget {
           ),
         ),
         IconButton(
+          onPressed: onPause,
+          tooltip: 'Pause game',
+          constraints: compact
+              ? const BoxConstraints.tightFor(width: 40, height: 40)
+              : null,
+          padding: compact ? EdgeInsets.zero : null,
+          iconSize: compact ? 20 : null,
+          icon: const Icon(Icons.pause_rounded),
+        ),
+        IconButton(
           onPressed: onHelp,
           tooltip: 'How to play',
+          constraints: compact
+              ? const BoxConstraints.tightFor(width: 40, height: 40)
+              : null,
+          padding: compact ? EdgeInsets.zero : null,
+          iconSize: compact ? 20 : null,
           icon: const Icon(Icons.help_outline_rounded),
         ),
         if (showDebug)
           IconButton(
             onPressed: onDebug,
             tooltip: 'Debug overlay',
+            constraints: compact
+                ? const BoxConstraints.tightFor(width: 40, height: 40)
+                : null,
+            padding: compact ? EdgeInsets.zero : null,
+            iconSize: compact ? 20 : null,
             icon: const Icon(Icons.bug_report_outlined),
           ),
         IconButton.filledTonal(
           onPressed: onRestart,
           tooltip: 'Restart level',
+          constraints: compact
+              ? const BoxConstraints.tightFor(width: 40, height: 40)
+              : null,
+          padding: compact ? EdgeInsets.zero : null,
+          iconSize: compact ? 20 : null,
           icon: const Icon(Icons.refresh_rounded),
         ),
       ],
@@ -299,16 +448,24 @@ class _TopBar extends StatelessWidget {
 }
 
 class _ObjectiveCard extends StatelessWidget {
-  const _ObjectiveCard({required this.message, required this.passengerCount});
+  const _ObjectiveCard({
+    required this.message,
+    required this.passengerCount,
+    required this.compact,
+  });
 
   final String message;
   final int passengerCount;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 13),
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 11 : 15,
+        vertical: compact ? 8 : 13,
+      ),
       decoration: BoxDecoration(
         color: const Color(0xFF1B2940),
         borderRadius: BorderRadius.circular(17),
@@ -316,20 +473,25 @@ class _ObjectiveCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(
+          Icon(
             Icons.alt_route_rounded,
             color: Color(0xFFFFC857),
-            size: 22,
+            size: compact ? 19 : 22,
           ),
-          const SizedBox(width: 10),
+          SizedBox(width: compact ? 7 : 10),
           Expanded(
-            child: Text(
-              message,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                height: 1.25,
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 180),
+              child: Text(
+                message,
+                key: ValueKey(message),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontSize: compact ? 12 : null,
+                  fontWeight: FontWeight.w600,
+                  height: 1.25,
+                ),
               ),
             ),
           ),
@@ -348,16 +510,20 @@ class _ObjectiveCard extends StatelessWidget {
 }
 
 class _PassengerQueue extends StatelessWidget {
-  const _PassengerQueue({required this.passengers});
+  const _PassengerQueue({required this.passengers, required this.compact});
 
   final List<RouteKind> passengers;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     final visible = passengers.take(8).toList();
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 11),
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 10 : 13,
+        vertical: compact ? 7 : 11,
+      ),
       decoration: BoxDecoration(
         color: const Color(0xFF17243A),
         borderRadius: BorderRadius.circular(17),
@@ -382,7 +548,7 @@ class _PassengerQueue extends StatelessWidget {
           const SizedBox(width: 12),
           Expanded(
             child: SizedBox(
-              height: 34,
+              height: compact ? 30 : 34,
               child: visible.isEmpty
                   ? const Align(
                       alignment: Alignment.centerLeft,
@@ -452,10 +618,15 @@ class _RouteToken extends StatelessWidget {
 }
 
 class _BayPanel extends StatelessWidget {
-  const _BayPanel({required this.parked, required this.bayCount});
+  const _BayPanel({
+    required this.parked,
+    required this.bayCount,
+    required this.compact,
+  });
 
   final List<ParkedBus> parked;
   final int bayCount;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
@@ -474,7 +645,7 @@ class _BayPanel extends StatelessWidget {
           final bus = index < parked.length ? parked[index] : null;
           return Expanded(
             child: Container(
-              height: 48,
+              height: compact ? 40 : 48,
               margin: EdgeInsets.only(right: index == bayCount - 1 ? 0 : 7),
               decoration: BoxDecoration(
                 color: const Color(0xFF1B2940),
@@ -486,33 +657,38 @@ class _BayPanel extends StatelessWidget {
                   width: bus == null ? 1 : 2,
                 ),
               ),
-              child: bus == null
-                  ? const Icon(
-                      Icons.add_rounded,
-                      color: Color(0xFF566982),
-                      size: 18,
-                    )
-                  : Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          bus.route.symbol,
-                          style: TextStyle(
-                            color: Color(bus.route.colorValue),
-                            fontWeight: FontWeight.w900,
-                            fontSize: 17,
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 220),
+                child: bus == null
+                    ? Icon(
+                        Icons.add_rounded,
+                        key: ValueKey('empty-$index'),
+                        color: const Color(0xFF566982),
+                        size: 18,
+                      )
+                    : Row(
+                        key: ValueKey('${bus.id}-${bus.loaded}'),
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            bus.route.symbol,
+                            style: TextStyle(
+                              color: Color(bus.route.colorValue),
+                              fontWeight: FontWeight.w900,
+                              fontSize: 17,
+                            ),
                           ),
-                        ),
-                        const SizedBox(width: 5),
-                        Text(
-                          '${bus.loaded}/${bus.capacity}',
-                          style: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
+                          const SizedBox(width: 5),
+                          Text(
+                            '${bus.loaded}/${bus.capacity}',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w800,
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
+                        ],
+                      ),
+              ),
             ),
           );
         }),
@@ -523,6 +699,7 @@ class _BayPanel extends StatelessWidget {
 
 class _ActionBar extends StatelessWidget {
   const _ActionBar({
+    required this.compact,
     required this.canUndo,
     required this.isWon,
     required this.isStuck,
@@ -532,6 +709,7 @@ class _ActionBar extends StatelessWidget {
     required this.onRetry,
   });
 
+  final bool compact;
   final bool canUndo;
   final bool isWon;
   final bool isStuck;
@@ -545,7 +723,7 @@ class _ActionBar extends StatelessWidget {
     if (isWon || isStuck) {
       return SizedBox(
         width: double.infinity,
-        height: 52,
+        height: compact ? 46 : 52,
         child: FilledButton.icon(
           onPressed: isWon ? onNext : onRetry,
           icon: Icon(
@@ -559,6 +737,7 @@ class _ActionBar extends StatelessWidget {
               fontWeight: FontWeight.w900,
               letterSpacing: 1,
             ),
+            minimumSize: Size.fromHeight(compact ? 42 : 48),
           ),
         ),
       );
@@ -571,6 +750,10 @@ class _ActionBar extends StatelessWidget {
             onPressed: canUndo ? onUndo : null,
             icon: const Icon(Icons.undo_rounded, size: 19),
             label: const Text('UNDO'),
+            style: OutlinedButton.styleFrom(
+              minimumSize: Size.fromHeight(compact ? 40 : 48),
+              padding: EdgeInsets.symmetric(horizontal: compact ? 8 : 16),
+            ),
           ),
         ),
         const SizedBox(width: 9),
@@ -582,6 +765,8 @@ class _ActionBar extends StatelessWidget {
             style: FilledButton.styleFrom(
               backgroundColor: const Color(0xFF243A59),
               foregroundColor: const Color(0xFFFFD36F),
+              minimumSize: Size.fromHeight(compact ? 40 : 48),
+              padding: EdgeInsets.symmetric(horizontal: compact ? 8 : 16),
             ),
           ),
         ),
@@ -589,6 +774,11 @@ class _ActionBar extends StatelessWidget {
         IconButton.filledTonal(
           onPressed: onRetry,
           tooltip: 'Restart level',
+          constraints: compact
+              ? const BoxConstraints.tightFor(width: 40, height: 40)
+              : null,
+          padding: compact ? EdgeInsets.zero : null,
+          iconSize: compact ? 20 : null,
           icon: const Icon(Icons.replay_rounded),
         ),
       ],

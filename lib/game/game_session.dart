@@ -18,6 +18,7 @@ class GameSession extends ChangeNotifier {
   String? _hintedBusId;
   DispatchAnimation? _lastDispatchAnimation;
   int _animationSerial = 0;
+  bool _isPaused = false;
 
   LevelSpec get level => _levels[_levelIndex];
   BoardState get state => _state;
@@ -27,10 +28,12 @@ class GameSession extends ChangeNotifier {
   String? get hintedBusId => _hintedBusId;
   DispatchAnimation? get lastDispatchAnimation => _lastDispatchAnimation;
   int get animationSerial => _animationSerial;
+  bool get isPaused => _isPaused;
   GameReplayRecord get replayRecord =>
       GameReplayRecord(levelId: level.id, dispatches: _dispatchLog);
 
   void dispatch(String busId) {
+    if (_isPaused) return;
     _hintedBusId = null;
     final path = GameRules.routeToExit(level, _state, busId);
     final result = GameRules.dispatch(level, _state, busId);
@@ -50,7 +53,7 @@ class GameSession extends ChangeNotifier {
       );
       _animationSerial++;
     }
-    _message = result.message;
+    _message = _dispatchFeedback(busId, path, result);
     if (_state.status != GameStatus.won &&
         LevelSolver.findSolution(level, start: _state) == null) {
       _state = _state.copyWith(status: GameStatus.stuck);
@@ -60,7 +63,7 @@ class GameSession extends ChangeNotifier {
   }
 
   void showHint() {
-    if (_state.status != GameStatus.playing) return;
+    if (_isPaused || _state.status != GameStatus.playing) return;
     final solution = LevelSolver.findSolution(level, start: _state);
     if (solution == null || solution.isEmpty) {
       _message = 'No route found. Undo a dispatch or retry the depot.';
@@ -74,7 +77,7 @@ class GameSession extends ChangeNotifier {
   }
 
   void undo() {
-    if (_history.isEmpty) return;
+    if (_isPaused || _history.isEmpty) return;
     _hintedBusId = null;
     _lastDispatchAnimation = null;
     _animationSerial++;
@@ -93,6 +96,52 @@ class GameSession extends ChangeNotifier {
     _dispatchLog.clear();
     _message = 'Send the right buses to the gate. Follow the rider queue.';
     notifyListeners();
+  }
+
+  void pause() {
+    if (_isPaused) return;
+    _isPaused = true;
+    notifyListeners();
+  }
+
+  void resume() {
+    if (!_isPaused) return;
+    _isPaused = false;
+    notifyListeners();
+  }
+
+  String _dispatchFeedback(
+    String busId,
+    List<GridPoint>? path,
+    DispatchResult result,
+  ) {
+    final route = level.busById(busId).route;
+    final details = <String>[
+      if (_state.status == GameStatus.won)
+        'Depot clear!'
+      else if (path != null && path.length == 1)
+        '${route.label} entered a bay.'
+      else
+        '${route.label} sent.',
+    ];
+    final boardedCount = result.boardedRiders.length;
+    if (boardedCount > 0) {
+      details.add(
+        '$boardedCount ${boardedCount == 1 ? 'rider' : 'riders'} boarded',
+      );
+    }
+    final departedCount = result.departedBusIds.length;
+    if (departedCount > 0) {
+      details.add(
+        '$departedCount ${departedCount == 1 ? 'bus' : 'buses'} left the depot',
+      );
+    }
+    if (_state.status != GameStatus.won &&
+        boardedCount == 0 &&
+        departedCount == 0) {
+      details.add('No riders matched; bus waits in a bay');
+    }
+    return details.join(' · ');
   }
 
   void nextLevel() {
