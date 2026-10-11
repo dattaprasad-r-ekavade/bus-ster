@@ -1,85 +1,107 @@
 # Bus-ster
 
-Bus-ster is a Flutter Android puzzle game in development. The current app opens an original bright parking-jam prototype with directional vehicles, a visible passenger queue, boarding bays, and a solver-generated hint. It replaces the earlier road-network design, which the owner rejected. The replacement rules and artwork are still provisional; see the [design review](docs/DESIGN_REVIEW_2026-10-11.md) and [staged plan](GAME_PLAN.md).
+Bus-ster is an original bus-jam puzzle game for Android, built with Flutter. It is a work-in-progress rebuild: the rules, 30 levels, home/level select, settings, audio and full bus choreography are in place, but the owner has not yet accepted the feel, and nothing has been tested on a physical phone or with players. See [docs/REBUILD_PLAN.md](docs/REBUILD_PLAN.md) for why the game was rebuilt and [GAME_PLAN.md](GAME_PLAN.md) for the roadmap.
 
-The rules live in a UI-independent [Dart model](lib/game/parking_jam_model.dart), connected to the Flutter screen in [`parking_jam_screen.dart`](lib/game/parking_jam_screen.dart). The first level is an eight-vehicle guided release chain; the second uses a dense 12-vehicle lot. Both have bounded-solver solutions. Movement, queue, capacity, and bay behavior remain hypotheses until direct reference play and owner review.
+## How it plays
 
-## Run the prototype
+- A parking lot is packed with chunky buses. Each bus has a colour and points one way.
+- Tap a bus. If nothing stands between its nose and the edge of the lot, it drives out and parks in the lowest free **bay**. If another bus is in the way, it lurches toward the blocker and stays put.
+- A crowd of passengers waits in a queue, in colour groups. Whenever the person at the front matches a parked bus with free seats, they walk over and board.
+- A full bus leaves and frees its bay. Seats per colour exactly match riders per colour, so every bus must eventually fill.
+- **Win** when every passenger has boarded. **Lose** when all bays are full and nobody at the front can board (or no bus can move while people still wait).
+- Undo, Retry and Hint (solver-backed, free, unlimited) are available while playing; Undo also works after a loss.
 
-Install Flutter and the Android SDK, then run:
+The exact rules contract is in [docs/REBUILD_PLAN.md](docs/REBUILD_PLAN.md#rules-contract-v2--single-source-of-truth).
+
+The game is fully offline. There are no ads, purchases, accounts, or analytics network calls. Progress is saved locally in `busster-progress.json` (with a `.bak` last-good copy) and settings in SharedPreferences.
+
+## Run and build
+
+Requires Flutter 3.41.6 stable (Dart 3.11.4) and the Android SDK (target API 36).
 
 ```sh
 flutter pub get
-flutter run
+flutter run                     # on a connected device or emulator
+flutter build apk --debug
+flutter build appbundle --release   # validation only, see "Open gates"
 ```
 
-Release-profile validation builds:
+## Check
 
 ```sh
-flutter build apk --release
-flutter build appbundle --release
-```
-
-The current Android Gradle release variant uses the debug signing key. These artifacts are for local validation only and must not be uploaded to Play Console.
-
-Tap a vehicle to send it out of the lot along its facing direction when its forward lane is clear. Buses wait in boarding bays and load riders from the visible matching queue. A blocked tap identifies the vehicle in the way. Use **Undo**, **Retry**, or **Hint** to recover. The demo is playable, but it is not a complete level pack and its exact rules still need review.
-
-The new screen uses original Flutter-drawn vehicle and board artwork. Emulator captures show the [guided tutorial](docs/evidence/busster_parking_jam_stage1_api35_2026-10-11.png), [crowded second lot](docs/evidence/busster_parking_jam_level2_api35_2026-10-11.png), and [boarding move](docs/evidence/busster_parking_jam_move_api35_2026-10-11.png). The earlier evening-depot art remains on the legacy regression screen and is not used by the current launch path. The asset sources are tracked in [`docs/ASSET_LEDGER.md`](docs/ASSET_LEDGER.md).
-
-The parking-jam demo runs offline. Its current play session is in memory and does not yet use the older local progress/settings system. Save/resume, level selection, persistent hints, and sound/haptic settings must be integrated into this screen before those existing systems count as current-game features.
-
-The current parking-jam screen does not show ads or purchases. The repository retains an older consent-gated rewarded-ad integration for the superseded depot screen; keep production ads disabled until the new game has retention evidence and its ad flow is reviewed. Debug test ads stay off by default; to exercise the legacy integration with Google's official test IDs, run:
-
-```sh
-flutter run --dart-define=BUSSTER_ENABLE_TEST_ADS=true
-```
-
-The default release configuration does not request consent or load ads. The ads SDK remains in the Android package and contributes network, advertising-ID, and Privacy Sandbox permissions, so final Play ads/Data safety declarations and privacy disclosures must account for the configured SDK behavior. Production IDs and consent messages are not set up; never publish the validation APK/AAB as-is. See Stage 5 and Stage 6 in [`GAME_PLAN.md`](GAME_PLAN.md) for the full configuration and release gates.
-
-When a publisher account exists, the Android manifest app ID comes from the `BUSSTER_ADMOB_APP_ID` environment variable. The release Dart build must receive the same app ID through `--dart-define=BUSSTER_ADMOB_APP_ID=...`, plus `BUSSTER_REWARDED_AD_UNIT_ID=...` and `BUSSTER_ENABLE_PRODUCTION_ADS=true`. Keep the manifest and Dart app IDs identical. Production ads are not configured in this repository.
-
-The new screen does not yet expose the older sound, haptic, or reduced-motion settings. Integrate those only after the basic vehicle and passenger feedback is accepted.
-
-The legacy depot UI uses Flutter localization with English source copy in [`lib/l10n/app_en.arb`](lib/l10n/app_en.arb). The new parking-jam slice is currently English-only; localize it with the new level schema after the core screen and instructions are reviewed.
-
-## Check the project
-
-```sh
-dart format lib test tools integration_test
+dart format --output=none --set-exit-if-changed lib test tools integration_test
 flutter gen-l10n
 flutter analyze
 flutter test
-dart run tools/validate_levels.dart
-dart run tools/preview_levels.dart
-flutter build apk --debug
+dart run tools/validate_jam_levels.dart          # schema, solvability, difficulty, hint speed
 ```
 
-The current `assets/levels/levels.json`, validator, HTML preview, queue-order generator, and mirror helper belong to the superseded road-network model. Keep them for regression checks during the redesign; **do not author or generate more old-schema levels**. Replace the schema and tools after the new parking-jam rules are implemented.
+CI ([.github/workflows/flutter.yml](.github/workflows/flutter.yml)) runs the same steps plus a debug APK build on every push to `main` and every pull request. It does not run the integration test.
 
-With an Android emulator or device connected, run the first-dispatch smoke test:
+Integration smoke test (home → settings → play → tap a bus → back to levels), on a connected emulator or phone:
 
 ```sh
-flutter test integration_test/first_dispatch_test.dart -d <device-id>
+flutter test integration_test/app_smoke_test.dart -d <device-id>
 ```
 
-After installing a release APK on an emulator, collect repeatable process-launch time, one-second post-launch PSS, and artifact-size samples with:
+## Levels
 
-```powershell
-.\tools\measure_android_emulator.ps1 -DeviceId emulator-5554 -Samples 5
+The pack lives in [assets/levels/jam_levels.json](assets/levels/jam_levels.json) (schema v2): 3 hand-made tutorials plus 27 generated levels whose measured random-playout fail rate rises from about 0.26 to 0.87, with easier "breather" levels and three four-bay spikes. Regenerate or tune with:
+
+```sh
+dart run tools/generate_jam_levels.dart --dry-run      # print metrics only
+dart run tools/generate_jam_levels.dart                # rewrite levels 4–30
+dart run tools/validate_jam_levels.dart                # always run afterwards
 ```
 
-The JSON report is written under the ignored `build/android-metrics/` folder. `am start -W` and emulator memory readings are diagnostics; they do not measure first-input latency or replace physical-device frame-time, thermal, and touch testing.
+Format, generator flags and validation rules: [docs/LEVEL_SCHEMA.md](docs/LEVEL_SCHEMA.md).
 
-## Project documents
+## Project layout
 
-- [Step-by-step game plan](GAME_PLAN.md)
-- [Design review and replacement acceptance brief](docs/DESIGN_REVIEW_2026-10-11.md)
-- [Preliminary phone-scale screen concepts](docs/concepts/parking-jam-direction.html)
-- [Stage 0 research and playtest workbook](docs/STAGE_0_FIELDWORK.md)
-- [Level schema and authoring workflow](docs/LEVEL_SCHEMA.md)
-- [Asset and license ledger](docs/ASSET_LEDGER.md)
-- [Level validation tool](tools/validate_levels.dart)
-- [Gameplay analytics event schema](docs/ANALYTICS_EVENT_SCHEMA.md)
-- [Internal privacy-policy draft (not release-ready)](docs/PRIVACY_POLICY_DRAFT.md)
+```text
+lib/
+  main.dart                    app entry; MaterialApp + localisation
+  jam/                         pure-Dart game core (no Flutter imports in rules)
+    jam_model.dart             rules v2: vehicles, bays, boarding, undo, events
+    jam_solver.dart            tri-state solver + random-playout difficulty analysis
+    jam_level_codec.dart       JSON schema v2 reader/writer
+    jam_generator.dart         seeded level generator
+    jam_progress*.dart         progress model + atomic file store with .bak recovery
+    jam_app_controller.dart    shared state: level pack, progress, settings
+    ui/                        home, settings and game screens; CustomPainter art,
+                               layout, choreography (drive → bay → board → depart)
+  game/                        settings store, audio adapter, no-op telemetry
+  l10n/                        English ARB source + generated localisations
+assets/levels/jam_levels.json  the 30-level pack
+assets/audio/*.wav             4 synthesized sound cues
+tools/                         level generator/validator, audio generator,
+                               emulator launch/memory sampler (PowerShell)
+test/                          unit and widget tests
+integration_test/              on-device smoke test
+docs/                          plans, schema, privacy draft, asset ledger
+```
 
-The game and all eventual store assets must use original art, level layouts, sounds, and copy. The plan tracks playtest, production, monetization, and release gates.
+## Current status and open gates
+
+Done on emulator and in tests: rules v2 with exhaustive tests, solver, 30 validated levels, rebuilt screen with full choreography, level select and progress save, settings (sound, vibration, reduced motion), audio cues, English localisation, compact 320×568 layout.
+
+Still open — do not treat the build as release-ready:
+
+- **Owner acceptance of feel** (visuals, motion, difficulty) is pending.
+- **Physical-device testing** has not happened (touch, frame time, haptics, audio latency, backup/restore). Emulator results are interim.
+- **Player testing** has not happened; see [docs/STAGE_0_FIELDWORK.md](docs/STAGE_0_FIELDWORK.md).
+- **Release signing:** the release build type still uses the debug key. Never upload these artifacts to Play.
+- **No store setup:** no Play Console app, listing, Data safety form, published privacy policy, or name/trademark clearance ("Busster" is already taken on Play by an unrelated app).
+
+QA screenshots belong in pull-request descriptions, not the repository (`docs/evidence/` is git-ignored).
+
+## Documents
+
+- [GAME_PLAN.md](GAME_PLAN.md) — roadmap and next steps
+- [docs/REBUILD_PLAN.md](docs/REBUILD_PLAN.md) — rebuild rationale, rules contract, phase status
+- [docs/LEVEL_SCHEMA.md](docs/LEVEL_SCHEMA.md) — level format and authoring workflow
+- [docs/ANALYTICS_EVENT_SCHEMA.md](docs/ANALYTICS_EVENT_SCHEMA.md) — gameplay events (no-op only)
+- [docs/PRIVACY_POLICY_DRAFT.md](docs/PRIVACY_POLICY_DRAFT.md) — internal data-inventory draft
+- [docs/ASSET_LEDGER.md](docs/ASSET_LEDGER.md) — art/audio provenance
+- [docs/STAGE_0_FIELDWORK.md](docs/STAGE_0_FIELDWORK.md) — competitor teardown and playtest workbook
+- [docs/archive/](docs/archive/) — superseded design notes and October 2026 desk research

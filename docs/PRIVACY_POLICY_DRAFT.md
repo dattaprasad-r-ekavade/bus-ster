@@ -1,38 +1,48 @@
 # Bus-ster privacy policy draft
 
-> **Internal draft, not ready to publish.** This records the current prototype's data flows as inspected on 11 October 2026. It is not legal advice or a release policy. Recheck the final signed AAB, all SDK behavior, Android backup and restore on supported devices, launch markets, and publisher details before using it publicly.
+> **Internal draft, not ready to publish, and not legal advice.** It records the data handling of the current build as inspected on 11 October 2026 (branch `rebuild/bus-jam-core`). Before any public use: recheck the final signed AAB's merged manifest and every SDK, verify Android backup/restore on real devices, fill in publisher details, and have the text reviewed for the actual publisher and launch regions.
 
 ## App and publisher details to complete
 
-- App: Bus-ster
-- Android application ID: `com.busster.busster` (prototype ID; confirm before first Play release)
-- Publisher/legal entity: **[add publisher name]**
+- App: Bus-ster (working title; name check pending)
+- Android application ID: `com.busster.busster` (confirm before first Play release)
+- Publisher / legal entity: **[add publisher name]**
 - Privacy and support contact: **[add a monitored email or public support URL]**
 - Effective date: **[set for release]**
 
-## Current prototype data handling
+## Data inventory (current build)
 
-Bus-ster does not have an account system or a game server. Gameplay events use a no-op telemetry adapter and are not sent or saved. The Google Mobile Ads SDK and UMP are now runtime dependencies, but the release build gate is off unless explicit production IDs and a build flag are supplied. In the default release configuration, the Dart ad controller does not request consent information, initialize Mobile Ads, or load ads. The Google Mobile Ads startup provider is removed so it cannot initialize the SDK before the UMP consent check.
+Bus-ster is an offline puzzle game. It has no account system, no game server, no ads, no in-app purchases, and no analytics or crash-reporting SDK. The main Android manifest requests no permissions; `INTERNET` appears only in the debug and profile manifests that Flutter uses for development tooling. Gameplay events go to a no-op adapter and are discarded (see [ANALYTICS_EVENT_SCHEMA.md](ANALYTICS_EVENT_SCHEMA.md)).
 
-The SDK is still packaged in Android release artifacts. The merged release manifest adds `INTERNET`, `ACCESS_NETWORK_STATE`, `com.google.android.gms.permission.AD_ID`, and Android Privacy Sandbox ad permissions (`ACCESS_ADSERVICES_AD_ID`, `ACCESS_ADSERVICES_ATTRIBUTION`, `ACCESS_ADSERVICES_TOPICS`). The APK/AAB currently uses the debug signing key and is a validation artifact, not a store-ready build. Recheck the final signed AAB and every SDK's runtime behavior before answering Play's ads and Data safety forms. If production ads are enabled, UMP consent requests and ad requests become network data flows and must be described accurately in the public policy and disclosures.
+The game asks for no name, email, contacts, location, photos or other personal information.
 
-The game stores the following in the app's private storage:
+It stores only the following, in the app's private storage on the device:
 
-- Progress: current depot ID, the sequence of bus dispatches needed to resume an attempt, completed depot IDs, and the Route Tip balance. The validated current save and its last-good recovery copy are stored in Android's private files directory.
-- Preferences: whether haptics, sound effects, and reduced motion are enabled. The current Android `SharedPreferencesAsync` backend uses DataStore Preferences in the app's private `files/datastore/FlutterSharedPreferences.preferences_pb` file.
+| Data | Where | Contents |
+| --- | --- | --- |
+| Progress | `files/busster-progress.json`, plus a last-good copy `busster-progress.json.bak` (a short-lived `.tmp` exists only during a save) | Schema version, highest unlocked level index, list of completed level ids. |
+| Settings | `files/datastore/FlutterSharedPreferences.preferences_pb` (SharedPreferences, DataStore backend) | Three on/off switches: sound, haptics (vibration), reduced motion. |
 
-The game does not ask for a name, email address, contacts, location, photos, or other personal information. It does not operate an account or game server.
+Nothing else is persisted: the in-level state, undo history and hints live in memory only.
 
-The Android manifest explicitly enables system backup and limits it to the current progress file, its last-good recovery copy, and the DataStore preferences file. Android Auto Backup can save eligible app data to the user's configured backup transport, such as Google backup, and Android supports direct device-to-device transfer. Whether backup or transfer runs depends on the device, Android version, and the user's settings. Bus-ster does not receive or control the backup copy. Temporary progress writes and damaged-save quarantine files are not included by these allow-list rules.
+## Android backup and device transfer
 
-The game has no server-side gameplay records to delete. A player can remove local app data through Android Settings or uninstall the app; any separately retained system backup is managed by the Android backup provider and the user's device/account settings. Physical-device backup and restore testing remains open because the project currently has no test phones.
+The manifest enables Android backup (`allowBackup="true"`) with explicit allow-lists in `res/xml/backup_rules.xml` (Android 11 and below) and `res/xml/data_extraction_rules.xml` (Android 12+). Only three files are included, for both cloud backup and device-to-device transfer: `busster-progress.json`, `busster-progress.json.bak`, and the DataStore preferences file. Whether a backup or transfer happens depends on the device, Android version and the user's own settings; the copy is held by the user's backup provider (for example Google), and Bus-ster neither receives nor controls it. Restore has not yet been tested on a physical device.
 
-## Third-party services in this build
+## Deletion
 
-The runtime dependencies are Flutter, Flame, `path_provider`, `shared_preferences`, `audioplayers`, and `google_mobile_ads` 9.1.0. The audio plugin plays four bundled local WAV effects. Firebase Analytics, Crashlytics, Play Billing, and a game server are not configured. Debug test ads are available only with `--dart-define=BUSSTER_ENABLE_TEST_ADS=true`, using Google's official sample app and rewarded unit IDs. Production ads need the publisher's app ID and unit ID, an explicit release build flag, configured UMP messages, an approved audience/content setup, and a policy review; none is configured. The owner has confirmed adults/general audience and worldwide reach as the product direction. This does not settle Play Console age-group selections: those must match the finished game's features and store creative. If children are included in the target audience, the project must review Families policy, eligible ads SDK use, mixed-audience age screening, and applicable regional law. Worldwide is a long-term ambition; first soft-launch countries, localization, support coverage, content rating, and legal/privacy review remain open.
+There is no server-side data. A player can delete everything by clearing the app's data in Android Settings or uninstalling the app. Any separately retained system backup is managed through the user's device / Google account backup settings.
+
+## Third-party components
+
+Runtime dependencies: Flutter SDK, `flutter_localizations` / `intl`, `path_provider` (locates the private files directory), `shared_preferences` (settings), and `audioplayers` 6.7.1 (plays four bundled local WAV files). None of these is used to send data off the device in this build. Re-inspect the merged release manifest for permissions contributed by plugins before answering Play's Data safety form.
+
+## Audience
+
+Owner direction: adults / general audience. This is not yet a Play Console age-group declaration. If any child age group is ever selected, the Families policy and applicable regional law must be reviewed first.
 
 ## Required release updates
 
-This draft must be rewritten if analytics, crash reporting, ads, billing, remote configuration, cloud saves, account features, or other data-processing services are added. Review the data practices of every SDK, implement required disclosures and consent, and keep the privacy policy and Play Console Data safety answers consistent. Google Play requires an accurate privacy policy and Data safety disclosure; its policy also specifies publisher/contact details and access from both Play Console and the app. See [Google Play User Data policy](https://support.google.com/googleplay/android-developer/answer/10144311) and [Data safety guidance](https://support.google.com/googleplay/android-developer/answer/10787469).
+Rewrite this draft before adding analytics, crash reporting, ads, purchases, remote configuration, cloud saves, accounts or any other data-processing service. Keep the public policy, the in-app link and the Play Data safety answers consistent with the build actually shipped. Google Play requires an accurate privacy policy linked from both the store listing and the app; see the [User Data policy](https://support.google.com/googleplay/android-developer/answer/10144311) and [Data safety guidance](https://support.google.com/googleplay/android-developer/answer/10787469).
 
-Before release, replace every bracketed field, choose a stable public non-PDF URL, add an in-app route to the policy, verify backup and restore on supported Android versions, and have the final text reviewed for the actual publisher and launch regions. Revisit the backup allow-list whenever the progress or settings storage implementation changes.
+Before release: replace every bracketed field, choose a stable public non-PDF URL, add an in-app link to the policy, verify backup and restore on supported Android versions, and revisit the backup allow-list whenever the storage implementation changes.

@@ -30,3 +30,6 @@ service-account*.json
 # Generated private diagnostics
 *.hprof
 *.heapdump
+
+# QA screenshots belong in PR descriptions, not the repository
+docs/evidence/

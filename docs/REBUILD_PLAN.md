@@ -39,3 +39,16 @@ Supersedes the "seven-bay loop" spike (snapshot commit `54bd914`). Owner feedbac
 6. **Verification & docs** — full tests, analyze, integration test on API 35 emulator, screenshots; replace stale docs with a concise current-state README + backlog; CI updated.
 
 Owner acceptance of feel, physical-device checks and player tests remain open gates; emulator results are interim.
+
+## Status (2026-10-11)
+
+| Phase | Outcome |
+|-------|---------|
+| 1. Cleanup | **Done** (`d7ad09b`). Legacy depot game, Flame, AdMob, old levels/tools/tests removed. |
+| 2. Core rules v2 | **Done** (`d5c5cb6`). `jam_model`, tri-state `jam_solver`, schema-v2 `jam_level_codec`, exhaustive tests. |
+| 3. Content | **Done** (`f9a4911`). Seeded generator + validator (in CI); 3 tutorials + 27 generated levels, measured random-playout fail rate ~0.26 → ~0.87. |
+| 4. Screen rebuild | **Done** (`51fcaf2`). Board-dominant layout, drawn buses/crowd, full choreography, blocked-tap lurch + haptic, win/lose overlays, 320×568. |
+| 5. Integration | **Done** (uncommitted at time of writing). Home/level select, progress save with `.bak` recovery, settings screen, audio cues, l10n strings, integration smoke test rewritten. |
+| 6. Verification & docs | **Docs done**: README, GAME_PLAN roadmap, LEVEL_SCHEMA, analytics, privacy draft and asset ledger rewritten; superseded docs moved to `docs/archive/`; rejected-design screenshots removed. **Verification pending** the final test / analyze / validator / emulator integration run. |
+
+Open gates are unchanged: owner acceptance of feel, physical-device checks, player tests.

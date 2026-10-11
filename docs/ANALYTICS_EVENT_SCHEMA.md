@@ -1,29 +1,32 @@
 # Gameplay analytics event schema
 
-The game emits a small, versionable set of gameplay events through `GameTelemetry`. The production app currently injects `NoopGameTelemetry`, so no events leave the device, enter local storage, or reach an analytics provider. This schema prepares the adapter boundary; it does not authorize data collection.
+The game screen emits a small set of gameplay events through the `GameTelemetry` interface in [`lib/game/game_telemetry.dart`](../lib/game/game_telemetry.dart). The app only ever uses `NoopGameTelemetry`: **events are discarded immediately.** Nothing is stored, logged or sent, and no analytics SDK is in the app. This schema defines the adapter boundary; it does not authorize data collection.
 
-| Event | Parameters | Emitted when |
+## Events
+
+Every event carries:
+
+| Parameter | Type | Meaning |
 | --- | --- | --- |
-| `level_started` | `level_id`, one-based `level_index`, `entry_source` (`new_run`, `next`, `selection`) | A new run, depot selection, or next depot begins. |
-| `level_resumed` | `level_id`, `move_count` | A saved route is restored. |
-| `dispatch_rejected` | `level_id`, `move_number`, `reason` (`level_finished`, `inactive_bus`, `blocked_path`, `bays_full`, `rule_rejected`) | A dispatch attempt cannot change the board. |
-| `bus_dispatched` | `level_id`, `move_number`, `route`, `riders_boarded`, `buses_parked` | A bus move changes the board. |
-| `route_tip_used` | `level_id`, `route`, `remaining` | A solver tip is shown and spent. |
-| `route_tip_unavailable` | `level_id`, `reason` (`empty_balance`, `no_solution`) | A player asks for a tip that cannot be shown. |
-| `ad_offer` | `level_id`, `placement` (`route_tip`), `reward` (`one_route_tip`) | The eligible post-intro player sees the opt-in rewarded Route Tip offer. |
-| `ad_reward` | `level_id`, `placement` (`route_tip`), `reward` (`one_route_tip`) | The app receives the rewarded SDK callback and grants one tip. Closing an ad without this callback emits no reward event. |
-| `move_undone` | `level_id`, `move_count` | The player undoes a move. |
-| `level_restarted` | `level_id`, `moves_discarded` | The player restarts the current depot. |
-| `level_completed` | `level_id`, `move_count`, integer `first_clear` (0 or 1) | All riders are delivered and buses leave. |
-| `level_stuck` | `level_id`, `move_count`, `buses_parked` | A move leaves no solver path. |
+| `level_id` | string | Stable level id from the pack, e.g. `tutorial-1`, `level-012`. |
+| `level_index` | int | Zero-based position of the level in the current pack. |
 
-## Collection rules for a future provider
+| Event (`GameEventNames`) | Extra parameters | Emitted when |
+| --- | --- | --- |
+| `level_start` | — | A level opens (from home or level select, or Next after a win). Retry does not emit it. |
+| `level_win` | `moves` (int) | Every passenger has boarded, after the final animation. |
+| `level_lose` | `moves` (int) | The level is lost (bays full with no boarding possible, or no bus can move). |
+| `undo` | — | The player taps Undo and a move is actually undone. |
+| `retry` | — | The player restarts the level (HUD, pause menu or lose overlay). |
+| `hint_used` | — | The player asks for a hint (emitted before the solver runs). |
 
-- Keep stable event names and level IDs. Add schema changes deliberately so release cohorts can be compared.
-- Do not attach player names, email, advertising IDs, free-form UI text, precise location, or device fingerprints. Route names and coarse move counts are the only gameplay details recorded here.
-- Keep the no-op adapter as the default. Before enabling Firebase or another provider, add the appropriate consent flow, disclose the exact SDK behavior in the privacy policy and Play Data safety form, and verify the app remains playable offline when collection is unavailable.
-- Ad offer/reward events currently go only to the no-op adapter. They are not proof of a view, impression, revenue, or consent; use the ad SDK's reporting for those measures after publisher setup. Never attach advertising IDs or personal data to gameplay events.
-- Catch provider failures outside game rules. Analytics must never delay a move, block progress, or make a puzzle unavailable.
-- Add version/source fields at the provider boundary after release identity and consent are configured. Do not use Remote Config to change core puzzle rules until its values have safe bundled defaults and validation.
+`moves` is the current state's move count (successful taps, net of undos) when the result is announced. Win/lose is emitted once per result.
 
-The fake adapter tests event names, rejection reasons, first-clear accuracy, resume behavior, rewarded offer/reward gating, and resilience to provider errors. Firebase dashboards, crash reporting, live gameplay-event delivery, and dashboards remain Stage 4 work.
+## Rules for any future provider
+
+- The no-op adapter stays the default. Before wiring Firebase or any other provider: add a consent flow where required, update [PRIVACY_POLICY_DRAFT.md](PRIVACY_POLICY_DRAFT.md) and the Play Data safety answers to match the SDK's real behaviour, and confirm the game stays fully playable offline.
+- Never attach names, emails, advertising IDs, free-form text, location or device fingerprints. Level ids, indices and move counts are the only gameplay details.
+- Providers must be best-effort: `record` must never throw into gameplay, delay a move, or block progress. The screen already wraps each call in a `try`.
+- Change event names or parameters deliberately and record the change here so release cohorts stay comparable. Add app version / build fields at the provider boundary, not per event.
+
+`test/game_telemetry_test.dart` pins the event-name set and checks that the default adapter is a no-op.
