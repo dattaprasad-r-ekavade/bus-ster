@@ -9,6 +9,7 @@ import 'package:flutter/material.dart' show Color, Colors;
 import 'package:flutter/painting.dart' show TextPainter, TextSpan, TextStyle;
 
 import 'game_model.dart';
+import 'game_palette.dart';
 import 'game_session.dart';
 import 'route_symbol.dart';
 
@@ -285,7 +286,7 @@ class DepotBoard extends PositionComponent with TapCallbacks {
     LevelSpec level,
   ) {
     final roadPaint = ui.Paint()
-      ..color = const Color(0xFF526B80)
+      ..color = GamePalette.roadSurface
       ..strokeWidth = cellSize * 0.5
       ..strokeCap = ui.StrokeCap.round;
     final markingPaint = ui.Paint()
@@ -431,9 +432,9 @@ class DepotBoard extends PositionComponent with TapCallbacks {
     canvas.drawRRect(
       busBody,
       ui.Paint()
-        ..color = const Color(0xFF162C40).withValues(alpha: 0.92 * opacity)
+        ..color = GamePalette.busOutlineInk.withValues(alpha: opacity)
         ..style = ui.PaintingStyle.stroke
-        ..strokeWidth = math.max(1.2, cellSize * 0.025),
+        ..strokeWidth = math.max(1.8, cellSize * 0.04),
     );
     canvas.drawRRect(
       ui.RRect.fromRectAndRadius(
@@ -504,7 +505,7 @@ class DepotBoard extends PositionComponent with TapCallbacks {
       ui.Offset(0, cellSize * 0.095),
       cellSize * 0.29,
       route,
-      const Color(0xFF18263A).withValues(alpha: opacity),
+      GamePalette.routeSymbolInk.withValues(alpha: opacity),
     );
     if (highlighted) {
       canvas.drawRRect(

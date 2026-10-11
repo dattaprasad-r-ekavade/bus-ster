@@ -2,6 +2,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/widgets.dart';
 
+import 'game_palette.dart';
 import 'game_model.dart';
 
 /// Draws route identity with vector geometry so it does not depend on a font.
@@ -106,7 +107,7 @@ class _MiniBusPainter extends CustomPainter {
     canvas.drawRRect(
       rrect,
       ui.Paint()
-        ..color = const Color(0xFF162C40)
+        ..color = GamePalette.busOutlineInk
         ..style = ui.PaintingStyle.stroke
         ..strokeWidth = size.shortestSide * 0.06,
     );
@@ -127,7 +128,7 @@ class _MiniBusPainter extends CustomPainter {
       ui.Offset(size.width / 2, size.height * 0.65),
       size.shortestSide * 0.39,
       route,
-      const Color(0xFF18263A),
+      GamePalette.routeSymbolInk,
     );
   }
 

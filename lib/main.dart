@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'game/depot_game.dart';
 import 'game/game_audio.dart';
 import 'game/game_model.dart';
+import 'game/game_palette.dart';
 import 'game/level_loader.dart';
 import 'game/game_progress.dart';
 import 'game/game_session.dart';
@@ -1115,9 +1116,16 @@ class _RouteToken extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           children: [
-            RouteSymbol(route: route, color: const Color(0xFF101A2A), size: 15),
+            RouteSymbol(
+              route: route,
+              color: GamePalette.routeSymbolInk,
+              size: 15,
+            ),
             const ExcludeSemantics(
-              child: PassengerMark(color: Color(0xFF17283C), size: 11),
+              child: PassengerMark(
+                color: GamePalette.passengerMarkInk,
+                size: 11,
+              ),
             ),
           ],
         ),
