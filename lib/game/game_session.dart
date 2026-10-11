@@ -107,7 +107,7 @@ class GameSession extends ChangeNotifier {
       _hintedBusId = bus.id;
       _message =
           'Route tip ($_earnedHints left): dispatch the '
-          '${bus.route.label} bus (${bus.route.symbol}).';
+          '${bus.route.label} bus.';
     }
     notifyListeners();
   }

@@ -13,6 +13,7 @@ import 'game/game_progress.dart';
 import 'game/game_session.dart';
 import 'game/game_settings.dart';
 import 'game/progress_store.dart';
+import 'game/route_symbol.dart';
 import 'game/settings_store.dart';
 
 Future<void> main({
@@ -1031,12 +1032,14 @@ class _RouteToken extends StatelessWidget {
             ? const [BoxShadow(color: Color(0x40FFFFFF), blurRadius: 8)]
             : null,
       ),
-      child: Text(
-        route.symbol,
-        style: const TextStyle(
-          color: Color(0xFF101A2A),
-          fontSize: 16,
-          fontWeight: FontWeight.w900,
+      child: Semantics(
+        label: isNext
+            ? 'Next rider, ${route.label}'
+            : 'Queued rider, ${route.label}',
+        child: RouteSymbol(
+          route: route,
+          color: const Color(0xFF101A2A),
+          size: 17,
         ),
       ),
     );
@@ -1092,27 +1095,29 @@ class _BayPanel extends StatelessWidget {
                         color: const Color(0xFF566982),
                         size: 18,
                       )
-                    : Row(
-                        key: ValueKey('${bus.id}-${bus.loaded}'),
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            bus.route.symbol,
-                            style: TextStyle(
+                    : Semantics(
+                        label:
+                            'Parked ${bus.route.label} bus with ${bus.loaded} of ${bus.capacity} riders',
+                        excludeSemantics: true,
+                        child: Row(
+                          key: ValueKey('${bus.id}-${bus.loaded}'),
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            RouteSymbol(
+                              route: bus.route,
                               color: Color(bus.route.colorValue),
-                              fontWeight: FontWeight.w900,
-                              fontSize: 17,
+                              size: 18,
                             ),
-                          ),
-                          const SizedBox(width: 5),
-                          Text(
-                            '${bus.loaded}/${bus.capacity}',
-                            style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w800,
+                            const SizedBox(width: 5),
+                            Text(
+                              '${bus.loaded}/${bus.capacity}',
+                              style: const TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
               ),
             ),

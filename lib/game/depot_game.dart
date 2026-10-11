@@ -10,6 +10,7 @@ import 'package:flutter/painting.dart' show TextPainter, TextSpan, TextStyle;
 
 import 'game_model.dart';
 import 'game_session.dart';
+import 'route_symbol.dart';
 
 class DepotGame extends FlameGame {
   DepotGame(
@@ -357,13 +358,12 @@ class DepotBoard extends PositionComponent with TapCallbacks {
       frontWindow,
       ui.Paint()..color = const Color(0xFF24374D).withValues(alpha: opacity),
     );
-    _drawText(
+    drawRouteSymbol(
       canvas,
-      route.symbol,
       ui.Offset(center.dx, center.dy + cellSize * 0.12),
       cellSize * 0.31,
+      route,
       const Color(0xFF18263A).withValues(alpha: opacity),
-      bold: true,
     );
     canvas.drawCircle(
       ui.Offset(body.left + cellSize * 0.12, body.bottom - cellSize * 0.09),

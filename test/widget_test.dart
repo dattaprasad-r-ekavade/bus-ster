@@ -5,6 +5,7 @@ import 'package:busster/game/game_model.dart';
 import 'package:busster/game/level_bundle.dart';
 import 'package:busster/game/game_progress.dart';
 import 'package:busster/game/game_settings.dart';
+import 'package:busster/game/route_symbol.dart';
 import 'package:busster/main.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
@@ -192,6 +193,14 @@ void main() {
     expect(find.textContaining('DEPOT 01'), findsOneWidget);
     expect(find.text('NEXT RIDERS'), findsOneWidget);
     expect(find.text('FIFO QUEUE'), findsOneWidget);
+    expect(find.byType(RouteSymbol), findsNWidgets(6));
+    final semantics = tester.ensureSemantics();
+    try {
+      expect(find.bySemanticsLabel('Next rider, Coral'), findsOneWidget);
+      expect(find.bySemanticsLabel('Queued rider, Mint'), findsNWidgets(2));
+    } finally {
+      semantics.dispose();
+    }
     expect(find.textContaining('ROUTE TIP · 3'), findsOneWidget);
     expect(find.textContaining('Tap a bus with a clear road'), findsOneWidget);
 
