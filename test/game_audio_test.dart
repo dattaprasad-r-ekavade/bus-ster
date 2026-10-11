@@ -31,10 +31,23 @@ void main() {
     await audio.stopAll();
     await audio.dispose();
   });
+
+  test('switchable audio drops cues while sound is off', () async {
+    final inner = _RecordingAudio();
+    final audio = SwitchableGameAudio(inner);
+    await audio.playTap();
+    audio.enabled = false;
+    await audio.playWin();
+    expect(inner.stops, 1);
+    audio.enabled = true;
+    await audio.playLose();
+    expect(inner.cues, [GameAudioCue.tap, GameAudioCue.lose]);
+  });
 }
 
 class _RecordingAudio extends GameAudio {
   final List<GameAudioCue> cues = [];
+  int stops = 0;
 
   @override
   Future<void> initialize() async {}
@@ -43,7 +56,7 @@ class _RecordingAudio extends GameAudio {
   Future<void> play(GameAudioCue cue) async => cues.add(cue);
 
   @override
-  Future<void> stopAll() async {}
+  Future<void> stopAll() async => stops++;
 
   @override
   Future<void> dispose() async {}

@@ -5,7 +5,7 @@ void main() {
   test('event parameters are immutable snapshots', () {
     final source = <String, Object>{'level_id': 'jam-01'};
     final event = GameEvent(
-      name: GameEventNames.levelStarted,
+      name: GameEventNames.levelStart,
       parameters: source,
     );
     source['level_id'] = 'changed';
@@ -14,11 +14,22 @@ void main() {
     expect(() => event.parameters['extra'] = 1, throwsUnsupportedError);
   });
 
+  test('event names are the v2 set', () {
+    expect({
+      GameEventNames.levelStart,
+      GameEventNames.levelWin,
+      GameEventNames.levelLose,
+      GameEventNames.undo,
+      GameEventNames.retry,
+      GameEventNames.hintUsed,
+    }, hasLength(6));
+  });
+
   test('the default adapter keeps gameplay offline', () {
     const telemetry = NoopGameTelemetry();
     expect(
       () => telemetry.record(
-        GameEvent(name: GameEventNames.levelCompleted, parameters: const {}),
+        GameEvent(name: GameEventNames.levelWin, parameters: const {}),
       ),
       returnsNormally,
     );

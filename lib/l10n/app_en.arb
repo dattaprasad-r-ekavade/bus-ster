@@ -1,18 +1,112 @@
 {
   "@@locale": "en",
   "appTitle": "Bus-ster",
-  "settingsCouldNotBeSaved": "Settings could not be saved.",
-  "cancel": "CANCEL",
-  "howToPlayTitle": "How to play",
-  "gotIt": "GOT IT",
-  "paused": "PAUSED",
-  "haptics": "Haptics",
-  "hapticsDescription": "A light pulse on a valid move",
+  "@appTitle": {"description": "App name shown in the task switcher and on the home screen."},
+
+  "loadingLevels": "Loading levels",
+  "@loadingLevels": {"description": "Semantics label for the startup spinner."},
+  "loadLevelsFailed": "Could not load levels.",
+  "@loadLevelsFailed": {"description": "Shown if the bundled level pack fails to load."},
+
+  "homeTagline": "Clear the jam. Fill every bus.",
+  "@homeTagline": {"description": "Short line under the title on the home screen."},
+  "homeProgress": "{completed} of {total} cleared",
+  "@homeProgress": {
+    "description": "Progress pill on the home screen.",
+    "placeholders": {"completed": {"type": "int"}, "total": {"type": "int"}}
+  },
+  "homeAllCleared": "Every level cleared!",
+  "@homeAllCleared": {"description": "Progress pill when all levels are completed."},
+  "homePlay": "Play",
+  "@homePlay": {"description": "Main button on the home screen; continues at the next uncompleted level."},
+  "homePlayLevel": "Play level {number}",
+  "@homePlayLevel": {
+    "description": "Main home button; continues at the next uncompleted level.",
+    "placeholders": {"number": {"type": "int"}}
+  },
+  "homeChooseLevel": "Levels",
+  "@homeChooseLevel": {"description": "Heading above the level grid."},
+  "levelTileSemantics": "Level {number}, {status, select, locked{locked} completed{completed} current{up next} other{open}}",
+  "@levelTileSemantics": {
+    "description": "Screen-reader label for a level tile.",
+    "placeholders": {"number": {"type": "int"}, "status": {"type": "String"}}
+  },
+
+  "settingsTitle": "Settings",
+  "@settingsTitle": {"description": "Settings screen title and pause-menu entry."},
+  "back": "Back",
+  "@back": {"description": "Back button label (semantics and tooltip)."},
   "soundEffects": "Sound effects",
-  "soundEffectsDescription": "Short sounds for game events",
+  "@soundEffects": {"description": "Settings toggle."},
+  "soundEffectsDescription": "Engine toots, boarding pops and cheers",
+  "@soundEffectsDescription": {"description": "Explains the sound toggle."},
+  "haptics": "Vibration",
+  "@haptics": {"description": "Settings toggle for haptic feedback."},
+  "hapticsDescription": "A light buzz when buses move or get blocked",
+  "@hapticsDescription": {"description": "Explains the haptics toggle."},
   "reduceMotion": "Reduce motion",
-  "reduceMotionDescription": "Skip moving bus animations",
-  "resume": "RESUME",
-  "tryAgain": "TRY AGAIN",
-  "undo": "UNDO"
+  "@reduceMotion": {"description": "Settings toggle."},
+  "reduceMotionDescription": "Buses jump straight to their bay, no confetti",
+  "@reduceMotionDescription": {"description": "Explains the reduce-motion toggle."},
+
+  "levelNumber": "Level {number}",
+  "@levelNumber": {
+    "description": "Level pill in the game HUD.",
+    "placeholders": {"number": {"type": "int"}}
+  },
+  "passengersLeft": "{count, plural, =0{Nobody waiting} =1{1 passenger waiting} other{{count} passengers waiting}}",
+  "@passengersLeft": {
+    "description": "Screen-reader label for the passengers-left counter.",
+    "placeholders": {"count": {"type": "int"}}
+  },
+  "busSemantics": "{color, select, red{Red} blue{Blue} green{Green} yellow{Yellow} purple{Purple} orange{Orange} other{Grey}} bus, facing {facing, select, up{up} right{right} down{down} left{left} other{ahead}}, length {length}",
+  "@busSemantics": {
+    "description": "Screen-reader label for a bus on the lot.",
+    "placeholders": {
+      "color": {"type": "String"},
+      "facing": {"type": "String"},
+      "length": {"type": "int"}
+    }
+  },
+
+  "tutorialTapToPark": "Tap a bus to send it to a bay!",
+  "@tutorialTapToPark": {"description": "Tutorial bubble on level 1."},
+  "tutorialClearBlocker": "Blocked? Move the bus in front first.",
+  "@tutorialClearBlocker": {"description": "Tutorial bubble on level 2."},
+  "tutorialWatchTheBays": "Bays are limited. Pick buses the crowd needs!",
+  "@tutorialWatchTheBays": {"description": "Tutorial bubble on level 3."},
+
+  "winTitle": "All aboard!",
+  "@winTitle": {"description": "Win overlay title."},
+  "winBody": "Every passenger found a seat.",
+  "@winBody": {"description": "Win overlay body."},
+  "nextLevel": "Next level",
+  "@nextLevel": {"description": "Win overlay button."},
+  "loseTitle": "No room left",
+  "@loseTitle": {"description": "Lose overlay title."},
+  "loseBaysFull": "Every bay is full and nobody can board.",
+  "@loseBaysFull": {"description": "Lose reason: bays full."},
+  "loseStuck": "No bus can drive out.",
+  "@loseStuck": {"description": "Lose reason: no tappable bus."},
+
+  "undo": "Undo",
+  "@undo": {"description": "Undo the last move."},
+  "retry": "Retry",
+  "@retry": {"description": "Restart the level."},
+  "hint": "Hint",
+  "@hint": {"description": "Ask for a hint."},
+  "menu": "Menu",
+  "@menu": {"description": "Open the pause menu."},
+  "paused": "Paused",
+  "@paused": {"description": "Pause menu title."},
+  "resume": "Resume",
+  "@resume": {"description": "Close the pause menu."},
+  "levels": "Levels",
+  "@levels": {"description": "Pause-menu entry returning to the level select screen."},
+  "skipLevel": "Skip level",
+  "@skipLevel": {"description": "Debug-only pause-menu entry."},
+  "hintUnsolvable": "No way out from here. Try Undo!",
+  "@hintUnsolvable": {"description": "Hint toast when the position cannot be won."},
+  "hintUnknown": "Too tricky to tell. Trust your gut!",
+  "@hintUnknown": {"description": "Hint toast when the solver gave up."}
 }

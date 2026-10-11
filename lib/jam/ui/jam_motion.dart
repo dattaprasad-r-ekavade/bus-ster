@@ -92,6 +92,16 @@ double trapezoidProgress(double t, {double accel = 0.18, double decel = 0.22}) {
   return 1 - 0.5 * vMax / decel * r * r;
 }
 
+/// How a leg's size morph is shaped over its distance window.
+enum MotionSizeCurve {
+  /// Classic smoothstep: still at both ends, quickest in the middle.
+  smooth,
+
+  /// Half linear, half smoothstep: a lower peak rate so a long morph is
+  /// barely noticeable at any instant.
+  gentle,
+}
+
 /// One continuous stretch of travel along [path].
 class MotionLeg {
   MotionLeg({
@@ -105,6 +115,7 @@ class MotionLeg {
     this.decel = 0.22,
     this.sizeFrom = 0.1,
     this.sizeTo = 0.75,
+    this.sizeCurve = MotionSizeCurve.smooth,
   }) : _metric = _firstMetric(path) {
     length = _metric?.length ?? 0;
   }
@@ -131,6 +142,7 @@ class MotionLeg {
   /// Distance-fraction window over which the size morphs.
   final double sizeFrom;
   final double sizeTo;
+  final MotionSizeCurve sizeCurve;
 
   double get end => start + duration;
 
@@ -151,13 +163,21 @@ class MotionLeg {
       angle = math.atan2(tangent.vector.dy, tangent.vector.dx);
       if (reverse) angle += math.pi;
     }
-    final s = _smooth(sizeFrom, sizeTo, f);
+    final s = sizeMix(f);
     return BusPose(
       center: pos,
       angle: angle,
       length: lerpDouble(fromSize.width, toSize.width, s)!,
       width: lerpDouble(fromSize.height, toSize.height, s)!,
     );
+  }
+
+  /// 0..1 size blend at distance fraction [f].
+  double sizeMix(double f) {
+    final sm = _smooth(sizeFrom, sizeTo, f);
+    if (sizeCurve == MotionSizeCurve.smooth || sizeTo <= sizeFrom) return sm;
+    final lin = ((f - sizeFrom) / (sizeTo - sizeFrom)).clamp(0.0, 1.0);
+    return 0.5 * (lin + sm);
   }
 
   static double _smooth(double a, double b, double x) {

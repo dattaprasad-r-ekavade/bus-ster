@@ -163,3 +163,33 @@ class AudioplayersGameAudio extends GameAudio {
     }
   }
 }
+
+/// Wraps another [GameAudio] and drops every cue while [enabled] is false,
+/// so the sound setting can change at any time without rebuilding players.
+class SwitchableGameAudio extends GameAudio {
+  SwitchableGameAudio(this.inner, {bool enabled = true}) : _enabled = enabled;
+
+  final GameAudio inner;
+  bool _enabled;
+
+  bool get enabled => _enabled;
+  set enabled(bool value) {
+    if (value == _enabled) return;
+    _enabled = value;
+    if (!value) unawaited(inner.stopAll());
+  }
+
+  @override
+  Future<void> initialize() => inner.initialize();
+
+  @override
+  Future<void> play(GameAudioCue cue) async {
+    if (_enabled) await inner.play(cue);
+  }
+
+  @override
+  Future<void> stopAll() => inner.stopAll();
+
+  @override
+  Future<void> dispose() => inner.dispose();
+}

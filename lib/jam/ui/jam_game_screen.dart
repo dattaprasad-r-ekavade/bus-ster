@@ -13,6 +13,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:flutter/services.dart';
 
 import '../../game/game_audio.dart';
+import '../../game/game_telemetry.dart';
 import '../jam_model.dart';
 import '../jam_solver.dart';
 import 'board_painter.dart';
@@ -44,6 +45,9 @@ class JamGameScreen extends StatefulWidget {
     this.audio = const SilentGameAudio(),
     this.solver = computeJamSolve,
     this.hapticsEnabled = true,
+    this.telemetry = const NoopGameTelemetry(),
+    this.onExitToLevels,
+    this.onOpenSettings,
   });
 
   final List<JamLevel> levels;
@@ -52,6 +56,14 @@ class JamGameScreen extends StatefulWidget {
   final GameAudio audio;
   final JamSolver solver;
   final bool hapticsEnabled;
+  final GameTelemetry telemetry;
+
+  /// Pause-menu "Levels" entry; hidden when null.
+  final VoidCallback? onExitToLevels;
+
+  /// Pause-menu "Settings" entry; hidden when null. The game stays paused
+  /// while settings are open.
+  final VoidCallback? onOpenSettings;
 
   @override
   State<JamGameScreen> createState() => JamGameScreenState();
@@ -95,6 +107,24 @@ class JamGameScreenState extends State<JamGameScreen>
     _session = JamSession(widget.levels[_levelIndex]);
     _passengersLeft.value = level.passengers.length;
     _refreshTutorial();
+    _track(GameEventNames.levelStart);
+  }
+
+  void _track(String name, [Map<String, Object> extra = const {}]) {
+    try {
+      widget.telemetry.record(
+        GameEvent(
+          name: name,
+          parameters: {
+            'level_id': level.id,
+            'level_index': _levelIndex,
+            ...extra,
+          },
+        ),
+      );
+    } on Object {
+      // Telemetry is best-effort and must never break play.
+    }
   }
 
   @override
@@ -198,11 +228,13 @@ class JamGameScreenState extends State<JamGameScreen>
 
   void _undo() {
     if (_paused || !_session.undo()) return;
+    _track(GameEventNames.undo);
     _resetVisuals();
   }
 
   void _retry() {
     _session.retry();
+    _track(GameEventNames.retry);
     _paused = false;
     _resetVisuals();
   }
@@ -213,6 +245,7 @@ class JamGameScreenState extends State<JamGameScreen>
     _layout = null;
     _chor = null;
     _paused = false;
+    _track(GameEventNames.levelStart);
     _resetVisuals();
   }
 
@@ -246,6 +279,7 @@ class JamGameScreenState extends State<JamGameScreen>
     final chor = _chor;
     if (chor == null || _hintRunning || !_session.state.isPlaying) return;
     _hintRunning = true;
+    _track(GameEventNames.hintUsed);
     final gen = _generation;
     SolveResult result;
     try {
@@ -266,9 +300,9 @@ class JamGameScreenState extends State<JamGameScreen>
       case Solvable():
         break;
       case Unsolvable():
-        _showToast(JamStrings.hintUnsolvable);
+        _showToast(context.l10n.hintUnsolvable);
       case Unknown():
-        _showToast(JamStrings.hintUnknown);
+        _showToast(context.l10n.hintUnknown);
     }
   }
 
@@ -308,6 +342,12 @@ class JamGameScreenState extends State<JamGameScreen>
     final status = _session.state.status;
     if (status == JamStatus.playing) return;
     _resultAnnounced = true;
+    _track(
+      status == JamStatus.won
+          ? GameEventNames.levelWin
+          : GameEventNames.levelLose,
+      {'moves': _session.state.moveCount},
+    );
     if (status == JamStatus.won) {
       unawaited(widget.audio.playWin());
       widget.onLevelComplete?.call(_levelIndex, level);
@@ -394,7 +434,9 @@ class JamGameScreenState extends State<JamGameScreen>
               JamPauseOverlay(
                 onResume: _togglePause,
                 onRetry: _retry,
-                onSkip: _nextLevel,
+                onLevels: widget.onExitToLevels,
+                onSettings: widget.onOpenSettings,
+                onSkip: kDebugMode ? _nextLevel : null,
               ),
           ],
         ),
@@ -432,7 +474,7 @@ class JamGameScreenState extends State<JamGameScreen>
             rect: layout.footprint(v),
             child: Semantics(
               button: true,
-              label: JamStrings.busLabel(v),
+              label: context.l10n.busLabel(v),
               excludeSemantics: true,
               onTap: () => _onBusTap(v.id),
               child: GestureDetector(
@@ -443,7 +485,7 @@ class JamGameScreenState extends State<JamGameScreen>
           ),
     ];
 
-    final bubbleText = JamStrings.hint(level.hint);
+    final bubbleText = context.l10n.tutorialHint(level.hint);
     final target = _tutorialTarget;
     if (bubbleText != null &&
         target != null &&

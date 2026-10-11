@@ -77,17 +77,27 @@ class JamScenePainter extends CustomPainter {
       for (final s in active) {
         if (s.isMovingAt(t) != moving) continue;
         final seats = t >= s.arriveAt - 0.12;
+        final pose = s.poseAt(t);
         paintBus(
           canvas,
-          s.poseAt(t),
+          pose,
           s.vehicle.color,
           BusLook(
             seatsFilled: seats ? s.loadedAt(t) : null,
             capacity: seats ? s.vehicle.capacity : null,
             squash: s.bumpAt(t),
+            pop: s.popAt(t),
           ),
         );
       }
+    }
+
+    // Sparkle bursts over freshly filled buses (they stay put while the
+    // burst plays, so it is drawn at the parked pose).
+    for (final s in active) {
+      final k = s.sparkleAt(t);
+      if (k == null) continue;
+      paintSparkles(canvas, s.parked, k, s.vehicle.color, s.slot + 1);
     }
 
     // Walking riders.
@@ -134,6 +144,9 @@ class JamScenePainter extends CustomPainter {
     final limit = hasMore ? cap - 1 : cap;
     final front = chor.frontAt(t);
     final s = layout.riderSpacing;
+    // Subtle bob on the front rider while the scene is alive; it fades to
+    // rest exactly when the clock stops.
+    final live = chor.liveliness(t);
     final visible = <(int, double)>[];
     for (var i = first; i < passengers.length; i++) {
       final u = i - front;
@@ -143,6 +156,8 @@ class JamScenePainter extends CustomPainter {
     // Back of the queue first so the front row overlaps the rows behind.
     for (final (i, u) in visible.reversed) {
       final fadeIn = (limit - u).clamp(0.0, 1.0);
+      final front = (1 - u.abs()).clamp(0.0, 1.0);
+      final bob = live * front * (math.sin(t * math.pi * 2 / 0.7)).abs();
       paintRider(
         canvas,
         layout.queuePoint(u),
@@ -151,6 +166,7 @@ class JamScenePainter extends CustomPainter {
         i,
         opacity: fadeIn,
         scale: 0.85 + 0.15 * fadeIn,
+        lift: bob * s * 0.1,
       );
     }
     if (hasMore) {

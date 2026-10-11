@@ -24,24 +24,36 @@ void paintStall(Canvas canvas, JamLayout layout, int slot) {
     ..style = PaintingStyle.stroke
     ..strokeCap = StrokeCap.round;
   final inset = line.strokeWidth * 1.4;
+  // U-shaped stall lines with a gate in the top edge: riders walk in
+  // through the gate, never across a line.
+  final gate = layout.gateWidth / 2;
+  final cx0 = r.center.dx;
+  final top = r.top + inset;
+  final corner = radius.x * 0.4;
   final u = Path()
     ..moveTo(r.left + inset, r.bottom - 1)
-    ..lineTo(r.left + inset, r.top + inset + radius.x * 0.4)
-    ..quadraticBezierTo(
-      r.left + inset,
-      r.top + inset,
-      r.left + inset + radius.x * 0.4,
-      r.top + inset,
-    )
-    ..lineTo(r.right - inset - radius.x * 0.4, r.top + inset)
-    ..quadraticBezierTo(
-      r.right - inset,
-      r.top + inset,
-      r.right - inset,
-      r.top + inset + radius.x * 0.4,
-    )
+    ..lineTo(r.left + inset, top + corner)
+    ..quadraticBezierTo(r.left + inset, top, r.left + inset + corner, top)
+    ..lineTo(cx0 - gate, top)
+    ..moveTo(cx0 + gate, top)
+    ..lineTo(r.right - inset - corner, top)
+    ..quadraticBezierTo(r.right - inset, top, r.right - inset, top + corner)
     ..lineTo(r.right - inset, r.bottom - 1);
   canvas.drawPath(u, line);
+  // Gate posts.
+  final postR = line.strokeWidth * 0.95;
+  for (final x in [cx0 - gate, cx0 + gate]) {
+    canvas.drawCircle(
+      Offset(x, top + 0.6),
+      postR * 1.15,
+      Paint()..color = JamPalette.plazaEdge,
+    );
+    canvas.drawCircle(
+      Offset(x, top),
+      postR,
+      Paint()..color = JamPalette.accent,
+    );
+  }
 
   // Yellow entry chevron on the stall floor.
   final cx = r.center.dx;

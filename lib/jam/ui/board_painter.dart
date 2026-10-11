@@ -19,7 +19,6 @@ class JamBoardPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final l = layout;
     final w = size.width;
-    final h = size.height;
 
     // Grass everywhere first.
     canvas.drawRect(
@@ -105,9 +104,139 @@ class JamBoardPainter extends CustomPainter {
       paintStall(canvas, l, i);
     }
 
-    // Bushes in the grass corners.
-    _bush(canvas, Offset(4, h - 6), l.roadW * 0.6);
-    _bush(canvas, Offset(w - 4, h - 6), l.roadW * 0.6);
+    // Park dressing on the spare grass.
+    for (final item in l.scenery) {
+      switch (item.kind) {
+        case JamSceneryKind.tree:
+          _tree(canvas, item.center, item.radius, item.seed);
+        case JamSceneryKind.bush:
+          _bush(canvas, item.center, item.radius);
+        case JamSceneryKind.bench:
+          _bench(canvas, item.center, item.radius, item.seed);
+        case JamSceneryKind.flowers:
+          _flowers(canvas, item.center, item.radius, item.seed);
+        case JamSceneryKind.pond:
+          _pond(canvas, item.center, item.radius, item.seed);
+      }
+    }
+  }
+
+  void _tree(Canvas canvas, Offset c, double r, int seed) {
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: c + Offset(r * 0.25, r * 0.55),
+        width: r * 2.1,
+        height: r * 1.3,
+      ),
+      Paint()..color = const Color(0x30000000),
+    );
+    final dark = seed.isEven ? JamPalette.bush : const Color(0xFF358A3A);
+    canvas.drawCircle(c, r, Paint()..color = dark);
+    // Lumpy canopy.
+    for (var i = 0; i < 5; i++) {
+      final a = i * math.pi * 2 / 5 + (seed % 7) * 0.3;
+      canvas.drawCircle(
+        c + Offset(math.cos(a), math.sin(a)) * r * 0.55,
+        r * 0.5,
+        Paint()..color = dark,
+      );
+    }
+    canvas.drawCircle(
+      c + Offset(-r * 0.22, -r * 0.25),
+      r * 0.62,
+      Paint()..color = JamPalette.bushLight,
+    );
+    canvas.drawCircle(
+      c + Offset(-r * 0.38, -r * 0.42),
+      r * 0.22,
+      Paint()..color = const Color(0x55FFFFFF),
+    );
+  }
+
+  void _pond(Canvas canvas, Offset c, double r, int seed) {
+    final rect = Rect.fromCenter(center: c, width: r * 3, height: r * 1.7);
+    // Sandy rim, water, a highlight and a couple of lily pads.
+    canvas.drawOval(rect.inflate(r * 0.14), Paint()..color = JamPalette.plaza);
+    canvas.drawOval(
+      rect,
+      Paint()
+        ..shader = const RadialGradient(
+          center: Alignment(-0.3, -0.4),
+          colors: [Color(0xFF8ED8F8), Color(0xFF4FAFE0)],
+        ).createShader(rect),
+    );
+    canvas.drawArc(
+      rect.deflate(r * 0.25),
+      math.pi * 1.1,
+      math.pi * 0.45,
+      false,
+      Paint()
+        ..color = const Color(0x99FFFFFF)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = math.max(1.5, r * 0.08)
+        ..strokeCap = StrokeCap.round,
+    );
+    final pad = Paint()..color = const Color(0xFF4CB04A);
+    for (var i = 0; i < 2; i++) {
+      final a = (seed % 6) * 0.9 + i * 2.4;
+      final pc = c + Offset(math.cos(a) * r * 0.85, math.sin(a) * r * 0.4);
+      canvas.drawArc(
+        Rect.fromCircle(center: pc, radius: r * 0.14),
+        a,
+        math.pi * 1.75,
+        true,
+        pad,
+      );
+    }
+  }
+
+  void _bench(Canvas canvas, Offset c, double r, int seed) {
+    final rect = Rect.fromCenter(center: c, width: r * 2, height: r * 0.62);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        rect.shift(Offset(r * 0.06, r * 0.16)),
+        Radius.circular(r * 0.12),
+      ),
+      Paint()..color = const Color(0x33000000),
+    );
+    // Legs/frame.
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(rect, Radius.circular(r * 0.12)),
+      Paint()..color = const Color(0xFF6B4A2E),
+    );
+    final slat = Paint()..color = const Color(0xFFC98A4B);
+    final sh = rect.height / 3.6;
+    for (var i = 0; i < 3; i++) {
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(
+            rect.left + r * 0.06,
+            rect.top + sh * 0.3 + i * sh * 1.1,
+            rect.width - r * 0.12,
+            sh * 0.85,
+          ),
+          Radius.circular(sh * 0.3),
+        ),
+        slat,
+      );
+    }
+  }
+
+  void _flowers(Canvas canvas, Offset c, double r, int seed) {
+    canvas.drawCircle(c, r * 0.9, Paint()..color = JamPalette.grassDark);
+    const petals = [
+      Color(0xFFFFFFFF),
+      Color(0xFFFFD54A),
+      Color(0xFFFF8FB1),
+      Color(0xFFB79CFF),
+    ];
+    final colour = petals[seed % petals.length];
+    for (var i = 0; i < 4; i++) {
+      final a = i * math.pi / 2 + (seed % 5) * 0.4;
+      final p = c + Offset(math.cos(a), math.sin(a)) * r * 0.5;
+      canvas.drawCircle(p, r * 0.28, Paint()..color = colour);
+      canvas.drawCircle(p, r * 0.1, Paint()..color = const Color(0xFFFFB300));
+    }
   }
 
   void _tiles(Canvas canvas, Rect r) {
@@ -156,7 +285,10 @@ class JamBoardPainter extends CustomPainter {
       ..strokeWidth = 1.4
       ..strokeCap = StrokeCap.round;
     final rnd = math.Random(7);
-    for (var i = 0; i < 60; i++) {
+    final count = (size.width * (size.height - layout.streetTop) / 3200)
+        .clamp(20, 90)
+        .toInt();
+    for (var i = 0; i < count; i++) {
       final p = Offset(
         rnd.nextDouble() * size.width,
         layout.streetTop + rnd.nextDouble() * (size.height - layout.streetTop),

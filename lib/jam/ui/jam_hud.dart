@@ -29,6 +29,7 @@ class JamHud extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return LayoutBuilder(
       builder: (context, c) {
         final narrow = c.maxWidth < 360;
@@ -53,7 +54,7 @@ class JamHud extends StatelessWidget {
                             key: const ValueKey('jam-level-pill'),
                             color: JamPalette.hud,
                             child: Text(
-                              JamStrings.level(levelNumber),
+                              l10n.levelNumber(levelNumber),
                               maxLines: 1,
                               softWrap: false,
                               style: TextStyle(
@@ -67,7 +68,7 @@ class JamHud extends StatelessWidget {
                           ValueListenableBuilder<int>(
                             valueListenable: passengersLeft,
                             builder: (context, n, _) => Semantics(
-                              label: JamStrings.passengersLeft(n),
+                              label: l10n.passengersLeft(n),
                               excludeSemantics: true,
                               child: _Pill(
                                 key: const ValueKey('jam-passenger-counter'),
@@ -100,36 +101,36 @@ class JamHud extends StatelessWidget {
                   ),
                 ),
                 SizedBox(width: gap),
-                _RoundButton(
+                JamRoundButton(
                   key: const ValueKey('jam-undo'),
                   icon: Icons.undo_rounded,
-                  label: JamStrings.undo,
+                  label: l10n.undo,
                   size: button,
                   enabled: canUndo,
                   onTap: onUndo,
                 ),
                 SizedBox(width: gap),
-                _RoundButton(
+                JamRoundButton(
                   key: const ValueKey('jam-retry'),
                   icon: Icons.refresh_rounded,
-                  label: JamStrings.retry,
+                  label: l10n.retry,
                   size: button,
                   onTap: onRetry,
                 ),
                 SizedBox(width: gap),
-                _RoundButton(
+                JamRoundButton(
                   key: const ValueKey('jam-hint'),
                   icon: Icons.lightbulb_rounded,
-                  label: JamStrings.hintLabel,
+                  label: l10n.hint,
                   size: button,
                   accent: true,
                   onTap: onHint,
                 ),
                 SizedBox(width: gap),
-                _RoundButton(
+                JamRoundButton(
                   key: const ValueKey('jam-menu'),
                   icon: Icons.pause_rounded,
-                  label: JamStrings.menu,
+                  label: l10n.menu,
                   size: button,
                   onTap: onMenu,
                 ),
@@ -166,8 +167,9 @@ class _Pill extends StatelessWidget {
   }
 }
 
-class _RoundButton extends StatelessWidget {
-  const _RoundButton({
+/// Chunky circular icon button used by the HUD, home and settings screens.
+class JamRoundButton extends StatelessWidget {
+  const JamRoundButton({
     super.key,
     required this.icon,
     required this.label,
@@ -192,6 +194,7 @@ class _RoundButton extends StatelessWidget {
       enabled: enabled,
       label: label,
       excludeSemantics: true,
+      onTap: enabled ? onTap : null,
       child: Tooltip(
         message: label,
         child: GestureDetector(

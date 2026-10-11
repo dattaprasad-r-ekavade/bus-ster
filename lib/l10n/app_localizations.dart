@@ -94,95 +94,245 @@ abstract class AppLocalizations {
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[Locale('en')];
 
-  /// No description provided for @appTitle.
+  /// App name shown in the task switcher and on the home screen.
   ///
   /// In en, this message translates to:
   /// **'Bus-ster'**
   String get appTitle;
 
-  /// No description provided for @settingsCouldNotBeSaved.
+  /// Semantics label for the startup spinner.
   ///
   /// In en, this message translates to:
-  /// **'Settings could not be saved.'**
-  String get settingsCouldNotBeSaved;
+  /// **'Loading levels'**
+  String get loadingLevels;
 
-  /// No description provided for @cancel.
+  /// Shown if the bundled level pack fails to load.
   ///
   /// In en, this message translates to:
-  /// **'CANCEL'**
-  String get cancel;
+  /// **'Could not load levels.'**
+  String get loadLevelsFailed;
 
-  /// No description provided for @howToPlayTitle.
+  /// Short line under the title on the home screen.
   ///
   /// In en, this message translates to:
-  /// **'How to play'**
-  String get howToPlayTitle;
+  /// **'Clear the jam. Fill every bus.'**
+  String get homeTagline;
 
-  /// No description provided for @gotIt.
+  /// Progress pill on the home screen.
   ///
   /// In en, this message translates to:
-  /// **'GOT IT'**
-  String get gotIt;
+  /// **'{completed} of {total} cleared'**
+  String homeProgress(int completed, int total);
 
-  /// No description provided for @paused.
+  /// Progress pill when all levels are completed.
   ///
   /// In en, this message translates to:
-  /// **'PAUSED'**
-  String get paused;
+  /// **'Every level cleared!'**
+  String get homeAllCleared;
 
-  /// No description provided for @haptics.
+  /// Main button on the home screen; continues at the next uncompleted level.
   ///
   /// In en, this message translates to:
-  /// **'Haptics'**
-  String get haptics;
+  /// **'Play'**
+  String get homePlay;
 
-  /// No description provided for @hapticsDescription.
+  /// Main home button; continues at the next uncompleted level.
   ///
   /// In en, this message translates to:
-  /// **'A light pulse on a valid move'**
-  String get hapticsDescription;
+  /// **'Play level {number}'**
+  String homePlayLevel(int number);
 
-  /// No description provided for @soundEffects.
+  /// Heading above the level grid.
+  ///
+  /// In en, this message translates to:
+  /// **'Levels'**
+  String get homeChooseLevel;
+
+  /// Screen-reader label for a level tile.
+  ///
+  /// In en, this message translates to:
+  /// **'Level {number}, {status, select, locked{locked} completed{completed} current{up next} other{open}}'**
+  String levelTileSemantics(int number, String status);
+
+  /// Settings screen title and pause-menu entry.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settingsTitle;
+
+  /// Back button label (semantics and tooltip).
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get back;
+
+  /// Settings toggle.
   ///
   /// In en, this message translates to:
   /// **'Sound effects'**
   String get soundEffects;
 
-  /// No description provided for @soundEffectsDescription.
+  /// Explains the sound toggle.
   ///
   /// In en, this message translates to:
-  /// **'Short sounds for game events'**
+  /// **'Engine toots, boarding pops and cheers'**
   String get soundEffectsDescription;
 
-  /// No description provided for @reduceMotion.
+  /// Settings toggle for haptic feedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Vibration'**
+  String get haptics;
+
+  /// Explains the haptics toggle.
+  ///
+  /// In en, this message translates to:
+  /// **'A light buzz when buses move or get blocked'**
+  String get hapticsDescription;
+
+  /// Settings toggle.
   ///
   /// In en, this message translates to:
   /// **'Reduce motion'**
   String get reduceMotion;
 
-  /// No description provided for @reduceMotionDescription.
+  /// Explains the reduce-motion toggle.
   ///
   /// In en, this message translates to:
-  /// **'Skip moving bus animations'**
+  /// **'Buses jump straight to their bay, no confetti'**
   String get reduceMotionDescription;
 
-  /// No description provided for @resume.
+  /// Level pill in the game HUD.
   ///
   /// In en, this message translates to:
-  /// **'RESUME'**
+  /// **'Level {number}'**
+  String levelNumber(int number);
+
+  /// Screen-reader label for the passengers-left counter.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =0{Nobody waiting} =1{1 passenger waiting} other{{count} passengers waiting}}'**
+  String passengersLeft(int count);
+
+  /// Screen-reader label for a bus on the lot.
+  ///
+  /// In en, this message translates to:
+  /// **'{color, select, red{Red} blue{Blue} green{Green} yellow{Yellow} purple{Purple} orange{Orange} other{Grey}} bus, facing {facing, select, up{up} right{right} down{down} left{left} other{ahead}}, length {length}'**
+  String busSemantics(String color, String facing, int length);
+
+  /// Tutorial bubble on level 1.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap a bus to send it to a bay!'**
+  String get tutorialTapToPark;
+
+  /// Tutorial bubble on level 2.
+  ///
+  /// In en, this message translates to:
+  /// **'Blocked? Move the bus in front first.'**
+  String get tutorialClearBlocker;
+
+  /// Tutorial bubble on level 3.
+  ///
+  /// In en, this message translates to:
+  /// **'Bays are limited. Pick buses the crowd needs!'**
+  String get tutorialWatchTheBays;
+
+  /// Win overlay title.
+  ///
+  /// In en, this message translates to:
+  /// **'All aboard!'**
+  String get winTitle;
+
+  /// Win overlay body.
+  ///
+  /// In en, this message translates to:
+  /// **'Every passenger found a seat.'**
+  String get winBody;
+
+  /// Win overlay button.
+  ///
+  /// In en, this message translates to:
+  /// **'Next level'**
+  String get nextLevel;
+
+  /// Lose overlay title.
+  ///
+  /// In en, this message translates to:
+  /// **'No room left'**
+  String get loseTitle;
+
+  /// Lose reason: bays full.
+  ///
+  /// In en, this message translates to:
+  /// **'Every bay is full and nobody can board.'**
+  String get loseBaysFull;
+
+  /// Lose reason: no tappable bus.
+  ///
+  /// In en, this message translates to:
+  /// **'No bus can drive out.'**
+  String get loseStuck;
+
+  /// Undo the last move.
+  ///
+  /// In en, this message translates to:
+  /// **'Undo'**
+  String get undo;
+
+  /// Restart the level.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get retry;
+
+  /// Ask for a hint.
+  ///
+  /// In en, this message translates to:
+  /// **'Hint'**
+  String get hint;
+
+  /// Open the pause menu.
+  ///
+  /// In en, this message translates to:
+  /// **'Menu'**
+  String get menu;
+
+  /// Pause menu title.
+  ///
+  /// In en, this message translates to:
+  /// **'Paused'**
+  String get paused;
+
+  /// Close the pause menu.
+  ///
+  /// In en, this message translates to:
+  /// **'Resume'**
   String get resume;
 
-  /// No description provided for @tryAgain.
+  /// Pause-menu entry returning to the level select screen.
   ///
   /// In en, this message translates to:
-  /// **'TRY AGAIN'**
-  String get tryAgain;
+  /// **'Levels'**
+  String get levels;
 
-  /// No description provided for @undo.
+  /// Debug-only pause-menu entry.
   ///
   /// In en, this message translates to:
-  /// **'UNDO'**
-  String get undo;
+  /// **'Skip level'**
+  String get skipLevel;
+
+  /// Hint toast when the position cannot be won.
+  ///
+  /// In en, this message translates to:
+  /// **'No way out from here. Try Undo!'**
+  String get hintUnsolvable;
+
+  /// Hint toast when the solver gave up.
+  ///
+  /// In en, this message translates to:
+  /// **'Too tricky to tell. Trust your gut!'**
+  String get hintUnknown;
 }
 
 class _AppLocalizationsDelegate

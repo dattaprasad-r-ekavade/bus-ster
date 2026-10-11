@@ -1,15 +1,27 @@
 import 'dart:io';
 
+import 'package:busster/game/game_telemetry.dart';
+
 import 'package:busster/jam/jam_level_codec.dart';
 import 'package:busster/jam/jam_model.dart';
 import 'package:busster/jam/jam_solver.dart';
 import 'package:busster/jam/ui/jam_game_screen.dart';
+import 'package:busster/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 final List<JamLevel> levels = JamLevelCodec.decodeBundle(
   File('assets/levels/jam_levels.json').readAsStringSync(),
 );
+
+class RecordingTelemetry implements GameTelemetry {
+  final events = <GameEvent>[];
+
+  List<String> get names => [for (final e in events) e.name];
+
+  @override
+  void record(GameEvent event) => events.add(event);
+}
 
 int indexOf(String id) => levels.indexWhere((l) => l.id == id);
 
@@ -25,12 +37,17 @@ Future<void> pumpScreen(
   int index = 0,
   bool disableAnimations = false,
   JamLevelCompleteCallback? onLevelComplete,
+  GameTelemetry telemetry = const NoopGameTelemetry(),
+  VoidCallback? onExitToLevels,
+  VoidCallback? onOpenSettings,
 }) async {
   tester.view.physicalSize = size;
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
   await tester.pumpWidget(
     MaterialApp(
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
       home: MediaQuery(
         data: MediaQueryData(size: size, disableAnimations: disableAnimations),
         child: JamGameScreen(
@@ -39,6 +56,9 @@ Future<void> pumpScreen(
           initialLevelIndex: index,
           solver: syncSolver,
           onLevelComplete: onLevelComplete,
+          telemetry: telemetry,
+          onExitToLevels: onExitToLevels,
+          onOpenSettings: onOpenSettings,
         ),
       ),
     ),
@@ -300,5 +320,89 @@ void main() {
     await tester.pumpAndSettle();
     expect(screen(tester).levelIndex, 1 % levels.length);
     expect(find.byKey(const ValueKey('jam-pause-overlay')), findsNothing);
+  });
+
+  testWidgets('pause menu offers Levels and Settings when wired', (
+    tester,
+  ) async {
+    var levelsTapped = 0;
+    var settingsTapped = 0;
+    await pumpScreen(
+      tester,
+      onExitToLevels: () => levelsTapped++,
+      onOpenSettings: () => settingsTapped++,
+    );
+    await tester.tap(find.byKey(const ValueKey('jam-menu')));
+    await tester.pumpAndSettle();
+    expect(find.text('Levels'), findsOneWidget);
+    expect(find.text('Settings'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('jam-pause-settings')));
+    await tester.tap(find.byKey(const ValueKey('jam-pause-levels')));
+    expect(settingsTapped, 1);
+    expect(levelsTapped, 1);
+  });
+
+  testWidgets('pause menu hides Levels and Settings when not wired', (
+    tester,
+  ) async {
+    await pumpScreen(tester);
+    await tester.tap(find.byKey(const ValueKey('jam-menu')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('jam-pause-levels')), findsNothing);
+    expect(find.byKey(const ValueKey('jam-pause-settings')), findsNothing);
+  });
+
+  testWidgets('screen fires the v2 telemetry events', (tester) async {
+    final telemetry = RecordingTelemetry();
+    final index = indexOf('tutorial-1');
+    await pumpScreen(tester, index: index, telemetry: telemetry);
+    expect(telemetry.names, [GameEventNames.levelStart]);
+    expect(telemetry.events.first.parameters['level_id'], 'tutorial-1');
+
+    final path = (solveJam(levels[index]) as Solvable).path;
+    await tapBus(tester, path.first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('jam-undo')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('jam-hint')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('jam-retry')));
+    await tester.pumpAndSettle();
+    for (final id in path) {
+      await tapBus(tester, id);
+      await tester.pump(const Duration(milliseconds: 150));
+    }
+    await tester.pumpAndSettle();
+    expect(telemetry.names, [
+      GameEventNames.levelStart,
+      GameEventNames.undo,
+      GameEventNames.hintUsed,
+      GameEventNames.retry,
+      GameEventNames.levelWin,
+    ]);
+    expect(telemetry.events.last.parameters['moves'], path.length);
+
+    await tester.tap(find.byKey(const ValueKey('jam-next')));
+    await tester.pumpAndSettle();
+    expect(telemetry.names.last, GameEventNames.levelStart);
+  });
+
+  testWidgets('losing fires levelLose', (tester) async {
+    final telemetry = RecordingTelemetry();
+    final index = indexOf('tutorial-3');
+    await pumpScreen(tester, index: index, telemetry: telemetry);
+    for (final id in losingLine(levels[index])!) {
+      await tapBus(tester, id);
+      await tester.pump(const Duration(milliseconds: 200));
+    }
+    await tester.pumpAndSettle();
+    expect(telemetry.names.last, GameEventNames.levelLose);
+  });
+
+  testWidgets('HUD semantics use the localized plural', (tester) async {
+    await pumpScreen(tester, index: indexOf('tutorial-1'));
+    final n = levels[indexOf('tutorial-1')].passengers.length;
+    expect(find.bySemanticsLabel('$n passengers waiting'), findsOneWidget);
+    expect(find.text('Level ${indexOf('tutorial-1') + 1}'), findsOneWidget);
   });
 }

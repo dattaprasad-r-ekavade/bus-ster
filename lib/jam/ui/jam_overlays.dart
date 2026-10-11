@@ -2,6 +2,7 @@
 // tutorial speech bubble and toast.
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../jam_model.dart';
@@ -47,6 +48,7 @@ class _JamWinOverlayState extends State<JamWinOverlay>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return _Scrim(
       child: Stack(
         alignment: Alignment.center,
@@ -70,12 +72,12 @@ class _JamWinOverlayState extends State<JamWinOverlay>
               key: const ValueKey('jam-win-overlay'),
               icon: Icons.emoji_events_rounded,
               iconColor: JamPalette.accent,
-              title: JamStrings.winTitle,
-              body: JamStrings.winBody,
+              title: l10n.winTitle,
+              body: l10n.winBody,
               actions: [
-                _ChunkyButton(
+                JamChunkyButton(
                   key: const ValueKey('jam-next'),
-                  label: JamStrings.nextLevel,
+                  label: l10n.nextLevel,
                   color: const Color(0xFF2EC05E),
                   onTap: widget.onNext,
                 ),
@@ -102,23 +104,24 @@ class JamLoseOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return _Scrim(
       child: _Card(
         key: const ValueKey('jam-lose-overlay'),
         icon: Icons.no_crash_rounded,
         iconColor: const Color(0xFFEF4444),
-        title: JamStrings.loseTitle,
-        body: baysFull ? JamStrings.loseBaysFull : JamStrings.loseStuck,
+        title: l10n.loseTitle,
+        body: baysFull ? l10n.loseBaysFull : l10n.loseStuck,
         actions: [
-          _ChunkyButton(
+          JamChunkyButton(
             key: const ValueKey('jam-lose-undo'),
-            label: JamStrings.undo,
+            label: l10n.undo,
             color: const Color(0xFF2F86F0),
             onTap: onUndo,
           ),
-          _ChunkyButton(
+          JamChunkyButton(
             key: const ValueKey('jam-lose-retry'),
-            label: JamStrings.retry,
+            label: l10n.retry,
             color: const Color(0xFFFF8A1F),
             onTap: onRetry,
           ),
@@ -133,40 +136,82 @@ class JamPauseOverlay extends StatelessWidget {
     super.key,
     required this.onResume,
     required this.onRetry,
-    required this.onSkip,
+    this.onLevels,
+    this.onSettings,
+    this.onSkip,
   });
 
   final VoidCallback onResume;
   final VoidCallback onRetry;
-  final VoidCallback onSkip;
+
+  /// Back to the level select screen; hidden when null.
+  final VoidCallback? onLevels;
+
+  /// Opens settings; hidden when null.
+  final VoidCallback? onSettings;
+
+  /// Debug-only shortcut; never shown in release builds.
+  final VoidCallback? onSkip;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final secondary = [
+      if (onLevels != null)
+        JamChunkyButton(
+          key: const ValueKey('jam-pause-levels'),
+          label: l10n.levels,
+          icon: Icons.grid_view_rounded,
+          color: const Color(0xFF2F86F0),
+          compact: true,
+          onTap: onLevels!,
+        ),
+      if (onSettings != null)
+        JamChunkyButton(
+          key: const ValueKey('jam-pause-settings'),
+          label: l10n.settingsTitle,
+          icon: Icons.settings_rounded,
+          color: const Color(0xFF9B5DE5),
+          compact: true,
+          onTap: onSettings!,
+        ),
+    ];
     return _Scrim(
       child: _Card(
         key: const ValueKey('jam-pause-overlay'),
         icon: Icons.pause_circle_filled_rounded,
         iconColor: JamPalette.hud,
-        title: JamStrings.paused,
+        title: l10n.paused,
         actions: [
-          _ChunkyButton(
+          JamChunkyButton(
             key: const ValueKey('jam-resume'),
-            label: JamStrings.resume,
+            label: l10n.resume,
             color: const Color(0xFF2EC05E),
             onTap: onResume,
           ),
-          _ChunkyButton(
+          JamChunkyButton(
             key: const ValueKey('jam-pause-retry'),
-            label: JamStrings.retry,
+            label: l10n.retry,
             color: const Color(0xFFFF8A1F),
             onTap: onRetry,
           ),
-          _ChunkyButton(
-            key: const ValueKey('jam-skip'),
-            label: JamStrings.skipLevel,
-            color: const Color(0xFF8D96A8),
-            onTap: onSkip,
-          ),
+          if (secondary.isNotEmpty)
+            Row(
+              children: [
+                for (var i = 0; i < secondary.length; i++) ...[
+                  if (i > 0) const SizedBox(width: 10),
+                  Expanded(child: secondary[i]),
+                ],
+              ],
+            ),
+          if (kDebugMode && onSkip != null)
+            JamChunkyButton(
+              key: const ValueKey('jam-skip'),
+              label: l10n.skipLevel,
+              color: const Color(0xFF8D96A8),
+              compact: true,
+              onTap: onSkip!,
+            ),
         ],
       ),
     );
@@ -256,30 +301,43 @@ class _Card extends StatelessWidget {
   }
 }
 
-class _ChunkyButton extends StatelessWidget {
-  const _ChunkyButton({
+/// Big toy-like pill button with a hard drop shadow.
+class JamChunkyButton extends StatelessWidget {
+  const JamChunkyButton({
     super.key,
     required this.label,
     required this.color,
     required this.onTap,
+    this.icon,
+    this.compact = false,
+    this.height,
+    this.fontSize,
   });
 
   final String label;
   final Color color;
   final VoidCallback onTap;
+  final IconData? icon;
+  final bool compact;
+  final double? height;
+  final double? fontSize;
 
   @override
   Widget build(BuildContext context) {
+    final size = fontSize ?? (compact ? 17.0 : 20.0);
+    const shadows = [Shadow(color: Color(0x66000000), offset: Offset(0, 2))];
     return Semantics(
       button: true,
       label: label,
       excludeSemantics: true,
+      onTap: onTap,
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: onTap,
         child: Container(
-          height: 52,
+          height: height ?? (compact ? 46 : 52),
           alignment: Alignment.center,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
           decoration: BoxDecoration(
             color: color,
             borderRadius: BorderRadius.circular(18),
@@ -288,13 +346,31 @@ class _ChunkyButton extends StatelessWidget {
               BoxShadow(color: JamPalette.hud, offset: Offset(0, 4)),
             ],
           ),
-          child: Text(
-            label,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.w900,
-              shadows: [Shadow(color: Color(0x66000000), offset: Offset(0, 2))],
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (icon != null) ...[
+                  Icon(
+                    icon,
+                    color: Colors.white,
+                    size: size + 2,
+                    shadows: shadows,
+                  ),
+                  const SizedBox(width: 6),
+                ],
+                Text(
+                  label,
+                  maxLines: 1,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: size,
+                    fontWeight: FontWeight.w900,
+                    shadows: shadows,
+                  ),
+                ),
+              ],
             ),
           ),
         ),

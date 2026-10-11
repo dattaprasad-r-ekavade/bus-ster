@@ -27,3 +27,20 @@ abstract interface class GameSettingsStore {
   Future<GameSettings> load();
   Future<void> save(GameSettings settings);
 }
+
+/// Non-persistent store for tests and previews.
+class MemoryGameSettingsStore implements GameSettingsStore {
+  MemoryGameSettingsStore([this.settings = GameSettings.defaults]);
+
+  GameSettings settings;
+  int saveCount = 0;
+
+  @override
+  Future<GameSettings> load() async => settings;
+
+  @override
+  Future<void> save(GameSettings settings) async {
+    this.settings = settings;
+    saveCount++;
+  }
+}

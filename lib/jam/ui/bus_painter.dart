@@ -20,6 +20,7 @@ class BusLook {
     this.glow = 0,
     this.squash = 0,
     this.dim = 0,
+    this.pop = 0,
   });
 
   /// When non-null the roof shows a seat grid instead of a big badge.
@@ -37,14 +38,18 @@ class BusLook {
 
   /// 0..1 darkening (unused buses while a modal is up, etc.).
   final double dim;
+
+  /// Uniform scale bump (the "full!" pop); 0 = natural size.
+  final double pop;
 }
 
 final Paint _shadowPaint = Paint()..color = const Color(0x47000000);
 
 void paintBus(Canvas canvas, BusPose pose, JamColor color, BusLook look) {
   final shade = JamPalette.of(color);
-  final l = pose.length * (1 + look.squash * 0.6);
-  final w = pose.width * (1 + look.squash);
+  final grow = 1 + look.pop;
+  final l = pose.length * (1 + look.squash * 0.6) * grow;
+  final w = pose.width * (1 + look.squash) * grow;
   final halfL = l / 2;
   final halfW = w / 2;
 
@@ -342,4 +347,92 @@ void _paintSeats(
       k++;
     }
   }
+}
+
+/// Burst of little four-point stars flying out of a bus that just filled.
+/// [progress] runs 0..1; the pattern is fixed per [seed].
+void paintSparkles(
+  Canvas canvas,
+  BusPose pose,
+  double progress,
+  JamColor color,
+  int seed,
+) {
+  if (progress <= 0 || progress >= 1) return;
+  final shade = JamPalette.of(color);
+  final ease = 1 - math.pow(1 - progress, 3).toDouble();
+  final fade = progress < 0.6 ? 1.0 : 1 - (progress - 0.6) / 0.4;
+  // Stars fly out on an ellipse that wraps the bus body (local frame:
+  // x along the nose, y across), from just inside the outline outwards.
+  final rx = pose.length * 0.5 + pose.width * (0.15 + 0.55 * ease);
+  final ry = pose.width * (0.45 + 0.7 * ease);
+  final ca = math.cos(pose.angle);
+  final sa = math.sin(pose.angle);
+  const count = 9;
+  for (var i = 0; i < count; i++) {
+    final jitter = ((seed * 7 + i * 13) % 17) / 17.0;
+    final a = (i / count) * math.pi * 2 + jitter * 0.5;
+    final lx = math.cos(a) * rx;
+    final ly = math.sin(a) * ry;
+    final c = pose.center + Offset(lx * ca - ly * sa, lx * sa + ly * ca);
+    final r = pose.width * (0.27 + 0.13 * jitter) * (1 - progress * 0.55);
+    final colour = i.isEven ? const Color(0xFFFFF3A0) : shade.light;
+    _star(
+      canvas,
+      c,
+      r,
+      colour.withValues(alpha: fade),
+      shade.dark.withValues(alpha: fade * 0.85),
+      progress * 2 + i,
+    );
+  }
+  // Soft ring flash right at the start.
+  if (progress < 0.4) {
+    final k = progress / 0.4;
+    canvas.save();
+    canvas.translate(pose.center.dx, pose.center.dy);
+    canvas.rotate(pose.angle);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(
+          center: Offset.zero,
+          width: pose.length * (1.05 + 0.35 * k),
+          height: pose.width * (1.1 + 0.6 * k),
+        ),
+        Radius.circular(pose.width * 0.6),
+      ),
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = math.max(1.5, pose.width * 0.12 * (1 - k))
+        ..color = const Color(0xFFFFFFFF).withValues(alpha: 0.8 * (1 - k)),
+    );
+    canvas.restore();
+  }
+}
+
+void _star(
+  Canvas canvas,
+  Offset c,
+  double r,
+  Color color,
+  Color outline,
+  double spin,
+) {
+  final path = Path();
+  for (var i = 0; i < 8; i++) {
+    final rr = i.isEven ? r : r * 0.32;
+    final a = spin * 0.6 + i * math.pi / 4;
+    final p = c + Offset(math.cos(a) * rr, math.sin(a) * rr);
+    i == 0 ? path.moveTo(p.dx, p.dy) : path.lineTo(p.dx, p.dy);
+  }
+  path.close();
+  canvas.drawPath(path, Paint()..color = color);
+  canvas.drawPath(
+    path,
+    Paint()
+      ..color = outline
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = math.max(0.8, r * 0.16)
+      ..strokeJoin = StrokeJoin.round,
+  );
 }

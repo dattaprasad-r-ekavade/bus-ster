@@ -66,6 +66,33 @@ class BusSprite {
   int loadedAt(double t) =>
       baseLoaded + boardArrivals.where((a) => a <= t).length;
 
+  /// When the last free seat was taken (null while seats remain).
+  double? get fullAt {
+    if (boardArrivals.isEmpty) return null;
+    if (baseLoaded + boardArrivals.length < vehicle.capacity) return null;
+    return lastArrival;
+  }
+
+  /// "Full!" pop: a quick overshooting scale bounce once the bus fills.
+  double popAt(double t) {
+    final f = fullAt;
+    if (f == null) return 0;
+    final d = t - f;
+    if (d < 0 || d >= JamChoreographer.popTime) return 0;
+    final u = d / JamChoreographer.popTime;
+    return math.sin(u * math.pi) * (1 - u * 0.5) * 0.16 -
+        math.sin(u * math.pi * 2) * 0.03 * u;
+  }
+
+  /// 0..1 progress of the sparkle burst around a freshly filled bus.
+  double? sparkleAt(double t) {
+    final f = fullAt;
+    if (f == null) return null;
+    final d = t - f;
+    if (d < 0 || d >= JamChoreographer.sparkleTime) return null;
+    return d / JamChoreographer.sparkleTime;
+  }
+
   /// Little squash-and-stretch each time a rider climbs aboard.
   double bumpAt(double t) {
     var b = 0.0;
@@ -115,6 +142,12 @@ class JamChoreographer {
   static const double shuffleTime = 0.3;
   static const double lurchTime = 0.5;
   static const double hintTime = 2.6;
+  static const double popTime = 0.32;
+  static const double sparkleTime = 0.6;
+
+  /// Pause between the last rider boarding and the bus backing out, long
+  /// enough for the full pop to read.
+  static const double departDelay = 0.36;
 
   final List<BusSprite> sprites = [];
   final Map<String, BusSprite> _byVehicle = {};
@@ -141,6 +174,14 @@ class JamChoreographer {
 
   /// Whether anything (choreography or effects) still animates at [t].
   bool animatingAt(double t) => _endTime > t || _effectsEnd > t;
+
+  /// 0..1 envelope for idle flourishes (front-rider bob). It only rises
+  /// while the clock is running anyway and reaches 0 exactly when the clock
+  /// stops, so it never keeps the ticker alive or freezes mid-pose.
+  double liveliness(double t) {
+    final until = math.max(_endTime, _effectsEnd);
+    return ((until - t) / 0.35).clamp(0.0, 1.0);
+  }
 
   /// Discards every scheduled motion and rebuilds the resting picture of
   /// [state]. Effects are cleared too.
@@ -202,14 +243,21 @@ class JamChoreographer {
     final start = math.max(now, _slotFreeAt[slot] - duration + 0.12);
     final parked = layout.parkedPose(slot, v.length);
     final sprite = BusSprite(vehicle: v, slot: slot, parked: parked);
+    // Shrink progressively from the moment the bus leaves the asphalt until
+    // it turns off the street, so the change is spread over the whole ring.
+    final (exit, turn, total) = layout.routeMilestones(route);
+    final scale = probe.length / math.max(1e-6, total);
+    final sizeFrom = (exit * scale / probe.length).clamp(0.0, 0.6);
+    final sizeTo = (turn * scale / probe.length).clamp(sizeFrom + 0.1, 0.97);
     final leg = MotionLeg(
       path: path,
       start: start,
       duration: duration,
       fromSize: layout.lotBusSize(v),
       toSize: layout.parkedBusSize(v.length),
-      sizeFrom: 0.3,
-      sizeTo: 0.85,
+      sizeFrom: sizeFrom,
+      sizeTo: sizeTo,
+      sizeCurve: MotionSizeCurve.gentle,
       accel: 0.2,
       decel: 0.28,
     );
@@ -231,9 +279,16 @@ class JamChoreographer {
       sprite.arriveAt + 0.04,
       _lastBoardStart + boardStagger,
     ].reduce(math.max);
-    final from = layout.queuePoint(0);
-    final to = layout.doorPoint(sprite.slot, sprite.vehicle.length);
-    final duration = (0.22 + (to - from).distance / 900).clamp(0.26, 0.5);
+    final route = layout.riderRoute(
+      layout.queuePoint(0),
+      sprite.slot,
+      sprite.vehicle.length,
+    );
+    var dist = 0.0;
+    for (var i = 1; i < route.length; i++) {
+      dist += (route[i] - route[i - 1]).distance;
+    }
+    final duration = (0.22 + dist / 1150).clamp(0.28, 0.5);
     final walk = RiderWalk(
       index: index,
       color: level.passengers[index],
@@ -252,7 +307,7 @@ class JamChoreographer {
   void _depart(String vehicleId, int slot, double now) {
     final sprite = _byVehicle.remove(vehicleId);
     if (sprite == null) return;
-    final start = math.max(now, sprite.lastArrival + 0.2);
+    final start = math.max(now, sprite.lastArrival + departDelay);
     sprite.departAt = start;
     final p = sprite.parked;
     final sx = p.center.dx;
@@ -323,17 +378,52 @@ class JamChoreographer {
       queueBase + _boardStarts.where((s) => s <= t).length;
 
   /// Where [walk]'s rider is at [t] (feet), plus hop lift and scale.
+  ///
+  /// Riders hop along [JamLayout.riderRoute]: each hop eases forward while
+  /// airborne and lands on a short pause, so the motion reads as a series of
+  /// little arcs rather than a slide.
   (Offset, double, double, double) walkPose(RiderWalk walk, double t) {
     final from = layout.queuePoint(walk.index - frontAt(walk.start));
-    final to = layout.doorPoint(walk.bus.slot, walk.bus.vehicle.length);
+    final route = layout.riderRoute(
+      from,
+      walk.bus.slot,
+      walk.bus.vehicle.length,
+    );
     final p = ((t - walk.start) / (walk.end - walk.start)).clamp(0.0, 1.0);
-    final e = p < 0.5 ? 2 * p * p : 1 - math.pow(-2 * p + 2, 2) / 2;
-    final pos = Offset.lerp(from, to, e.toDouble())!;
     final s = layout.riderSpacing;
-    final lift = (math.sin(p * math.pi * 2)).abs() * s * 0.22;
-    final scale = p < 0.75 ? 1.0 : 1 - (p - 0.75) / 0.25 * 0.45;
-    final opacity = p < 0.85 ? 1.0 : 1 - (p - 0.85) / 0.15;
+    final length = _polyLength(route);
+    final hops = math.max(2, (length / (s * 1.3)).round());
+    final h = (p * hops).clamp(0.0, hops - 1e-9);
+    final i = h.floor();
+    final u = h - i;
+    // Airborne for 86% of each hop, a brief touch-down for the rest.
+    final air = (u / 0.86).clamp(0.0, 1.0);
+    final along = (i + smoothstep(0, 1, air)) / hops;
+    final pos = _pointAlong(route, along * length);
+    final hopH = s * (0.26 + 0.06 * math.min(1.0, length / (s * 6)));
+    final lift = math.sin(air * math.pi) * hopH;
+    final scale = p < 0.8 ? 1.0 : 1 - (p - 0.8) / 0.2 * 0.45;
+    final opacity = p < 0.88 ? 1.0 : 1 - (p - 0.88) / 0.12;
     return (pos, lift, scale, opacity);
+  }
+
+  static double _polyLength(List<Offset> pts) {
+    var len = 0.0;
+    for (var i = 1; i < pts.length; i++) {
+      len += (pts[i] - pts[i - 1]).distance;
+    }
+    return len;
+  }
+
+  static Offset _pointAlong(List<Offset> pts, double d) {
+    for (var i = 1; i < pts.length; i++) {
+      final seg = (pts[i] - pts[i - 1]).distance;
+      if (d <= seg) {
+        return Offset.lerp(pts[i - 1], pts[i], seg == 0 ? 0 : d / seg)!;
+      }
+      d -= seg;
+    }
+    return pts.last;
   }
 
   // ---- Effects -----------------------------------------------------------

@@ -7,7 +7,8 @@ class GameEvent {
   final Map<String, Object> parameters;
 }
 
-/// Adapter boundary for analytics providers. Implementations must be best-effort.
+/// Adapter boundary for analytics providers. Implementations must be
+/// best-effort and must never throw into gameplay.
 abstract interface class GameTelemetry {
   void record(GameEvent event);
 }
@@ -20,15 +21,13 @@ class NoopGameTelemetry implements GameTelemetry {
   void record(GameEvent event) {}
 }
 
+/// Event names fired by the bus-jam screen. Every event carries `level_id`
+/// and `level_index`; outcome events also carry `moves`.
 abstract final class GameEventNames {
-  static const levelStarted = 'level_started';
-  static const dispatchRejected = 'dispatch_rejected';
-  static const busDispatched = 'bus_dispatched';
-  static const routeTipUsed = 'route_tip_used';
-  static const routeTipUnavailable = 'route_tip_unavailable';
-  static const moveUndone = 'move_undone';
-  static const levelRestarted = 'level_restarted';
-  static const levelResumed = 'level_resumed';
-  static const levelCompleted = 'level_completed';
-  static const levelStuck = 'level_stuck';
+  static const levelStart = 'level_start';
+  static const levelWin = 'level_win';
+  static const levelLose = 'level_lose';
+  static const undo = 'undo';
+  static const retry = 'retry';
+  static const hintUsed = 'hint_used';
 }
