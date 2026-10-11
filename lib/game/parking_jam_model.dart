@@ -352,6 +352,8 @@ class JamSession {
   final List<JamState> _history = [];
   JamState state;
 
+  bool get canUndo => _history.isNotEmpty;
+
   JamMove release(String vehicleId) {
     final move = rules.release(state, vehicleId);
     if (move.moved) {

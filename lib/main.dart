@@ -11,7 +11,6 @@ import 'game/depot_game.dart';
 import 'game/game_audio.dart';
 import 'game/game_model.dart';
 import 'game/game_palette.dart';
-import 'game/level_loader.dart';
 import 'game/game_progress.dart';
 import 'game/game_session.dart';
 import 'game/rewarded_hint_ads.dart';
@@ -20,6 +19,7 @@ import 'game/game_telemetry.dart';
 import 'game/progress_store.dart';
 import 'game/route_symbol.dart';
 import 'game/settings_store.dart';
+import 'game/parking_jam_screen.dart';
 import 'l10n/app_localizations.dart';
 
 enum StorageNotice {
@@ -33,63 +33,9 @@ enum StorageNotice {
   damagedBoth,
 }
 
-Future<void> main({
-  bool loadSavedProgress = true,
-  ProgressFileStore? progressStoreOverride,
-  GameSettingsStore? settingsStoreOverride,
-  GameTelemetry? telemetryOverride,
-  GameAudio? audioOverride,
-  RewardedHintAds? rewardedHintAdsOverride,
-}) async {
+void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  final levelList = await loadBundledLevels();
-  if (!loadSavedProgress) {
-    runApp(
-      BussterApp(
-        levelList: levelList,
-        progressStore: progressStoreOverride,
-        settingsStore: settingsStoreOverride,
-        telemetry: telemetryOverride,
-        audio: audioOverride ?? AudioplayersGameAudio(),
-        rewardedHintAds: rewardedHintAdsOverride,
-      ),
-    );
-    return;
-  }
-
-  ProgressFileStore? progressStore;
-  GameProgress? savedProgress;
-  StorageNotice? startupWarning;
-  try {
-    progressStore =
-        progressStoreOverride ?? await ProgressFileStore.inApplicationSupport();
-    savedProgress = await progressStore.load();
-    startupWarning = switch (progressStore.loadWarningKind) {
-      null => null,
-      ProgressLoadWarning.damagedPrimary => StorageNotice.damaged,
-      ProgressLoadWarning.recoveredBackup => StorageNotice.recoveredBackup,
-      ProgressLoadWarning.damagedBoth => StorageNotice.damagedBoth,
-    };
-  } on Object {
-    startupWarning = progressStore == null
-        ? StorageNotice.unavailable
-        : progressStore.canWrite
-        ? StorageNotice.unreadable
-        : StorageNotice.newerVersion;
-  }
-
-  runApp(
-    BussterApp(
-      levelList: levelList,
-      progressStore: progressStore,
-      initialProgress: savedProgress,
-      startupWarning: startupWarning,
-      settingsStore: settingsStoreOverride,
-      telemetry: telemetryOverride,
-      audio: audioOverride ?? AudioplayersGameAudio(),
-      rewardedHintAds: rewardedHintAdsOverride,
-    ),
-  );
+  runApp(const BussterApp(levelList: [], useParkingJamPrototype: true));
 }
 
 class BussterApp extends StatelessWidget {
@@ -103,6 +49,7 @@ class BussterApp extends StatelessWidget {
     this.telemetry,
     this.audio,
     this.rewardedHintAds,
+    this.useParkingJamPrototype = false,
   });
 
   final List<LevelSpec> levelList;
@@ -113,6 +60,7 @@ class BussterApp extends StatelessWidget {
   final GameTelemetry? telemetry;
   final GameAudio? audio;
   final RewardedHintAds? rewardedHintAds;
+  final bool useParkingJamPrototype;
 
   @override
   Widget build(BuildContext context) {
@@ -126,26 +74,39 @@ class BussterApp extends StatelessWidget {
         GlobalCupertinoLocalizations.delegate,
       ],
       supportedLocales: AppLocalizations.supportedLocales,
-      theme: ThemeData(
-        brightness: Brightness.dark,
-        scaffoldBackgroundColor: const Color(0xFF101A2A),
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFFFFC857),
-          brightness: Brightness.dark,
-          surface: const Color(0xFF1B2940),
-        ),
-        useMaterial3: true,
-      ),
-      home: DepotScreen(
-        levelList: levelList,
-        progressStore: progressStore,
-        initialProgress: initialProgress,
-        startupWarning: startupWarning,
-        settingsStore: settingsStore,
-        telemetry: telemetry,
-        audio: audio ?? const SilentGameAudio(),
-        rewardedHintAds: rewardedHintAds,
-      ),
+      theme: useParkingJamPrototype
+          ? ThemeData(
+              brightness: Brightness.light,
+              scaffoldBackgroundColor: const Color(0xFFF7F4E8),
+              colorScheme: ColorScheme.fromSeed(
+                seedColor: const Color(0xFFF1BE4E),
+                brightness: Brightness.light,
+                surface: const Color(0xFFFFFCF1),
+              ),
+              useMaterial3: true,
+            )
+          : ThemeData(
+              brightness: Brightness.dark,
+              scaffoldBackgroundColor: const Color(0xFF101A2A),
+              colorScheme: ColorScheme.fromSeed(
+                seedColor: const Color(0xFFFFC857),
+                brightness: Brightness.dark,
+                surface: const Color(0xFF1B2940),
+              ),
+              useMaterial3: true,
+            ),
+      home: useParkingJamPrototype
+          ? const ParkingJamScreen()
+          : DepotScreen(
+              levelList: levelList,
+              progressStore: progressStore,
+              initialProgress: initialProgress,
+              startupWarning: startupWarning,
+              settingsStore: settingsStore,
+              telemetry: telemetry,
+              audio: audio ?? const SilentGameAudio(),
+              rewardedHintAds: rewardedHintAds,
+            ),
     );
   }
 }

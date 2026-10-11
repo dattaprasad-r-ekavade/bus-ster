@@ -1,8 +1,8 @@
 # Bus-ster
 
-Bus-ster is a Flutter/Flame Android game in development. The intended product is an original, bright parking-jam puzzle with direction-marked vehicles, visible passengers, and boarding spaces. **The runnable build below is a superseded road-network technical prototype:** its gameplay and visual style were rejected in the owner review. See the [design review and replacement brief](docs/DESIGN_REVIEW_2026-10-11.md) and the [revised staged plan](GAME_PLAN.md) before adding content or art.
+Bus-ster is a Flutter Android puzzle game in development. The current app opens an original bright parking-jam prototype with directional vehicles, a visible passenger queue, boarding bays, and a solver-generated hint. It replaces the earlier road-network design, which the owner rejected. The replacement rules and artwork are still provisional; see the [design review](docs/DESIGN_REVIEW_2026-10-11.md) and [staged plan](GAME_PLAN.md).
 
-A separate [provisional parking-jam rules spike](lib/game/parking_jam_model.dart) has begun. It is tested in plain Dart but is not yet connected to the runnable Flutter screen.
+The rules live in a UI-independent [Dart model](lib/game/parking_jam_model.dart), connected to the Flutter screen in [`parking_jam_screen.dart`](lib/game/parking_jam_screen.dart). The first level is an eight-vehicle guided release chain; the second uses a dense 12-vehicle lot. Both have bounded-solver solutions. Movement, queue, capacity, and bay behavior remain hypotheses until direct reference play and owner review.
 
 ## Run the prototype
 
@@ -22,14 +22,13 @@ flutter build appbundle --release
 
 The current Android Gradle release variant uses the debug signing key. These artifacts are for local validation only and must not be uploaded to Play Console.
 
-The ten historical depots are playable for technical inspection only. Tap a bus on the road to send it toward the exit. If it cannot board the next riders, it waits in a departure bay. Use **Route Tip** for a solver hint or **Undo** to reverse a dispatch. These mechanics are being replaced and the ten levels do not count toward launch content.
-Open **How to play** in the top bar for the core rules.
+Tap a vehicle to send it out of the lot along its facing direction when its forward lane is clear. Buses wait in boarding bays and load riders from the visible matching queue. A blocked tap identifies the vehicle in the way. Use **Undo**, **Retry**, or **Hint** to recover. The demo is playable, but it is not a complete level pack and its exact rules still need review.
 
-The technical prototype uses original vector artwork and four original synthesized sound effects. The owner rejected its evening-depot visual direction; the assets are recorded in [`docs/ASSET_LEDGER.md`](docs/ASSET_LEDGER.md) and may be replaced or adapted after the new layout review.
+The new screen uses original Flutter-drawn vehicle and board artwork. Emulator captures show the [guided tutorial](docs/evidence/busster_parking_jam_stage1_api35_2026-10-11.png), [crowded second lot](docs/evidence/busster_parking_jam_level2_api35_2026-10-11.png), and [boarding move](docs/evidence/busster_parking_jam_move_api35_2026-10-11.png). The earlier evening-depot art remains on the legacy regression screen and is not used by the current launch path. The asset sources are tracked in [`docs/ASSET_LEDGER.md`](docs/ASSET_LEDGER.md).
 
-Progress, unlocked depots, and earned Route Tips save locally on Android; the core game works offline. Android system backup can transfer the allow-listed progress and settings files when enabled in the user's device/account settings. Players start with three tips, earn one on each depot’s first clear (up to five), and unlock depots in order. Switching away from an unfinished attempt asks first. The progress format is versioned and tested for migration and recovery.
+The parking-jam demo runs offline. Its current play session is in memory and does not yet use the older local progress/settings system. Save/resume, level selection, persistent hints, and sound/haptic settings must be integrated into this screen before those existing systems count as current-game features.
 
-The first 10 depots have no ads. Later, if free Route Tips are exhausted and a consent-approved rewarded ad is ready, a player can explicitly opt in to earn one tip. Closing the ad without its reward callback grants nothing. Debug test ads stay off by default; to exercise Google's official test IDs on an Android emulator/device, run:
+The current parking-jam screen does not show ads or purchases. The repository retains an older consent-gated rewarded-ad integration for the superseded depot screen; keep production ads disabled until the new game has retention evidence and its ad flow is reviewed. Debug test ads stay off by default; to exercise the legacy integration with Google's official test IDs, run:
 
 ```sh
 flutter run --dart-define=BUSSTER_ENABLE_TEST_ADS=true
@@ -39,9 +38,9 @@ The default release configuration does not request consent or load ads. The ads 
 
 When a publisher account exists, the Android manifest app ID comes from the `BUSSTER_ADMOB_APP_ID` environment variable. The release Dart build must receive the same app ID through `--dart-define=BUSSTER_ADMOB_APP_ID=...`, plus `BUSSTER_REWARDED_AD_UNIT_ID=...` and `BUSSTER_ENABLE_PRODUCTION_ADS=true`. Keep the manifest and Dart app IDs identical. Production ads are not configured in this repository.
 
-Pause the game to control sound effects and haptics independently, or enable reduced motion. These preferences save locally; haptics accompany successful bus dispatches only. Audio mix and haptic feel still need physical-device testing.
+The new screen does not yet expose the older sound, haptic, or reduced-motion settings. Integrate those only after the basic vehicle and passenger feedback is accepted.
 
-The UI uses Flutter's generated localization support with English source copy in [`lib/l10n/app_en.arb`](lib/l10n/app_en.arb). Level titles and tutorial prompts use locale-keyed content in schema version 2; the codec still reads version 1. Only English is currently shipped. Add a locale only after translating both the UI and level copy and checking text fit and gameplay instructions for that language.
+The legacy depot UI uses Flutter localization with English source copy in [`lib/l10n/app_en.arb`](lib/l10n/app_en.arb). The new parking-jam slice is currently English-only; localize it with the new level schema after the core screen and instructions are reviewed.
 
 ## Check the project
 
