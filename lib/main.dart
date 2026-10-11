@@ -1068,10 +1068,14 @@ class _RouteToken extends StatelessWidget {
         label: isNext
             ? 'Next rider, ${route.label}'
             : 'Queued rider, ${route.label}',
-        child: RouteSymbol(
-          route: route,
-          color: const Color(0xFF101A2A),
-          size: 17,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            RouteSymbol(route: route, color: const Color(0xFF101A2A), size: 15),
+            const ExcludeSemantics(
+              child: PassengerMark(color: Color(0xFF17283C), size: 11),
+            ),
+          ],
         ),
       ),
     );
@@ -1121,11 +1125,14 @@ class _BayPanel extends StatelessWidget {
               child: AnimatedSwitcher(
                 duration: const Duration(milliseconds: 220),
                 child: bus == null
-                    ? Icon(
-                        Icons.add_rounded,
-                        key: ValueKey('empty-$index'),
-                        color: const Color(0xFF566982),
-                        size: 18,
+                    ? Semantics(
+                        label: 'Empty departure bay ${index + 1}',
+                        child: Icon(
+                          Icons.local_parking_rounded,
+                          key: ValueKey('empty-$index'),
+                          color: const Color(0xFF71879B),
+                          size: 18,
+                        ),
                       )
                     : Semantics(
                         label:
@@ -1135,11 +1142,7 @@ class _BayPanel extends StatelessWidget {
                           key: ValueKey('${bus.id}-${bus.loaded}'),
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            RouteSymbol(
-                              route: bus.route,
-                              color: Color(bus.route.colorValue),
-                              size: 18,
-                            ),
+                            MiniBusMark(route: bus.route, size: 22),
                             const SizedBox(width: 5),
                             Text(
                               '${bus.loaded}/${bus.capacity}',

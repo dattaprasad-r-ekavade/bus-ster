@@ -23,6 +23,8 @@ The current Android Gradle release variant uses the debug signing key. These art
 The first 10 depots are playable. Tap a bus on the road to send it toward the exit. If it cannot board the next riders, it waits in a departure bay. Use **Route Tip** for a solver hint or **Undo** to reverse a dispatch.
 Open **How to play** in the top bar for the core rules.
 
+The depot board, buses, route markers, rider marks, and bay indicators use original vector artwork drawn in the app. This first art direction is still awaiting player review; the asset sources and release checks are tracked in [`docs/ASSET_LEDGER.md`](docs/ASSET_LEDGER.md).
+
 Progress, unlocked depots, and earned Route Tips save locally on Android; the core game works offline. Android system backup can transfer the allow-listed progress and settings files when enabled in the user's device/account settings. Players start with three tips, earn one on each depot’s first clear (up to five), and unlock depots in order. Switching away from an unfinished attempt asks first. The progress format is versioned and tested for migration and recovery.
 
 Pause the game to turn haptics on or off and enable reduced motion. These preferences save locally; haptics accompany successful bus dispatches only. Their feel still needs physical-device testing.
