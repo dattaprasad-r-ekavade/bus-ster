@@ -1,25 +1,34 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flame/game.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'game/depot_game.dart';
 import 'game/game_model.dart';
 import 'game/level_loader.dart';
 import 'game/game_progress.dart';
 import 'game/game_session.dart';
+import 'game/game_settings.dart';
 import 'game/progress_store.dart';
+import 'game/settings_store.dart';
 
 Future<void> main({
   bool loadSavedProgress = true,
   ProgressFileStore? progressStoreOverride,
+  GameSettingsStore? settingsStoreOverride,
 }) async {
   WidgetsFlutterBinding.ensureInitialized();
   final levelList = await loadBundledLevels();
   if (!loadSavedProgress) {
     runApp(
-      BussterApp(levelList: levelList, progressStore: progressStoreOverride),
+      BussterApp(
+        levelList: levelList,
+        progressStore: progressStoreOverride,
+        settingsStore: settingsStoreOverride,
+      ),
     );
     return;
   }
@@ -46,6 +55,7 @@ Future<void> main({
       progressStore: progressStore,
       initialProgress: savedProgress,
       startupWarning: startupWarning,
+      settingsStore: settingsStoreOverride,
     ),
   );
 }
@@ -57,12 +67,14 @@ class BussterApp extends StatelessWidget {
     this.progressStore,
     this.initialProgress,
     this.startupWarning,
+    this.settingsStore,
   });
 
   final List<LevelSpec> levelList;
   final ProgressFileStore? progressStore;
   final GameProgress? initialProgress;
   final String? startupWarning;
+  final GameSettingsStore? settingsStore;
 
   @override
   Widget build(BuildContext context) {
@@ -84,6 +96,7 @@ class BussterApp extends StatelessWidget {
         progressStore: progressStore,
         initialProgress: initialProgress,
         startupWarning: startupWarning,
+        settingsStore: settingsStore,
       ),
     );
   }
@@ -96,12 +109,14 @@ class DepotScreen extends StatefulWidget {
     this.progressStore,
     this.initialProgress,
     this.startupWarning,
+    this.settingsStore,
   });
 
   final List<LevelSpec> levelList;
   final ProgressFileStore? progressStore;
   final GameProgress? initialProgress;
   final String? startupWarning;
+  final GameSettingsStore? settingsStore;
 
   @override
   State<DepotScreen> createState() => _DepotScreenState();
@@ -110,6 +125,9 @@ class DepotScreen extends StatefulWidget {
 class _DepotScreenState extends State<DepotScreen> with WidgetsBindingObserver {
   late final GameSession _session;
   late final DepotGame _game;
+  late final GameSettingsStore _settingsStore;
+  GameSettings _settings = GameSettings.defaults;
+  int _settingsChanges = 0;
   String? _storageNotice;
   String? _lastSavedProgress;
   String? _lastQueuedProgress;
@@ -119,8 +137,15 @@ class _DepotScreenState extends State<DepotScreen> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _settingsStore =
+        widget.settingsStore ?? SharedPreferencesGameSettingsStore();
     _session = GameSession(levelList: widget.levelList);
-    _game = DepotGame(_session);
+    _game = DepotGame(
+      _session,
+      onSuccessfulDispatch: _onSuccessfulDispatch,
+      reduceMotion: _settings.reduceMotion,
+    );
+    unawaited(_loadSettings());
     _storageNotice = widget.startupWarning;
     if (widget.initialProgress != null) {
       try {
@@ -133,6 +158,47 @@ class _DepotScreenState extends State<DepotScreen> with WidgetsBindingObserver {
       }
     }
     _session.addListener(_queueProgressSave);
+  }
+
+  Future<void> _loadSettings() async {
+    final changesBeforeLoad = _settingsChanges;
+    try {
+      final loaded = await _settingsStore.load();
+      if (!mounted || changesBeforeLoad != _settingsChanges) return;
+      setState(() => _settings = loaded);
+      _game.reduceMotion = loaded.reduceMotion;
+    } on Object {
+      // Settings are optional; the game remains playable with defaults.
+    }
+  }
+
+  Future<void> _updateSettings(GameSettings settings) async {
+    _settingsChanges++;
+    setState(() {
+      _settings = settings;
+      _game.reduceMotion = settings.reduceMotion;
+    });
+    try {
+      await _settingsStore.save(settings);
+    } on Object {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Settings could not be saved.')),
+        );
+      }
+    }
+  }
+
+  void _onSuccessfulDispatch() {
+    if (_settings.hapticsEnabled) unawaited(_sendSuccessHaptic());
+  }
+
+  Future<void> _sendSuccessHaptic() async {
+    try {
+      await HapticFeedback.lightImpact();
+    } on Object {
+      // Haptics are an optional enhancement and may be unavailable.
+    }
   }
 
   @override
@@ -442,7 +508,17 @@ class _DepotScreenState extends State<DepotScreen> with WidgetsBindingObserver {
                     ),
                     if (_session.isPaused)
                       Positioned.fill(
-                        child: _PauseOverlay(onResume: _resumeGame),
+                        child: _PauseOverlay(
+                          onResume: _resumeGame,
+                          hapticsEnabled: _settings.hapticsEnabled,
+                          reduceMotion: _settings.reduceMotion,
+                          onHapticsChanged: (enabled) => _updateSettings(
+                            _settings.copyWith(hapticsEnabled: enabled),
+                          ),
+                          onReduceMotionChanged: (enabled) => _updateSettings(
+                            _settings.copyWith(reduceMotion: enabled),
+                          ),
+                        ),
                       ),
                   ],
                 );
@@ -492,38 +568,80 @@ class _StorageNotice extends StatelessWidget {
 }
 
 class _PauseOverlay extends StatelessWidget {
-  const _PauseOverlay({required this.onResume});
+  const _PauseOverlay({
+    required this.onResume,
+    required this.hapticsEnabled,
+    required this.reduceMotion,
+    required this.onHapticsChanged,
+    required this.onReduceMotionChanged,
+  });
 
   final VoidCallback onResume;
+  final bool hapticsEnabled;
+  final bool reduceMotion;
+  final ValueChanged<bool> onHapticsChanged;
+  final ValueChanged<bool> onReduceMotionChanged;
 
   @override
   Widget build(BuildContext context) {
     return ColoredBox(
       color: const Color(0xE6101A2A),
       child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.pause_circle_filled_rounded,
-              size: 64,
-              color: Color(0xFFFFC857),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'PAUSED',
-              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w900,
-                letterSpacing: 2,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.pause_circle_filled_rounded,
+                size: 64,
+                color: Color(0xFFFFC857),
               ),
-            ),
-            const SizedBox(height: 20),
-            FilledButton.icon(
-              onPressed: onResume,
-              icon: const Icon(Icons.play_arrow_rounded),
-              label: const Text('RESUME'),
-            ),
-          ],
+              const SizedBox(height: 12),
+              Text(
+                'PAUSED',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 2,
+                ),
+              ),
+              const SizedBox(height: 20),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 380),
+                child: Card(
+                  color: const Color(0xFF1B2940),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SwitchListTile.adaptive(
+                        key: const ValueKey('haptics-setting'),
+                        secondary: const Icon(Icons.vibration_rounded),
+                        title: const Text('Haptics'),
+                        subtitle: const Text('A light pulse on a valid move'),
+                        value: hapticsEnabled,
+                        onChanged: onHapticsChanged,
+                      ),
+                      const Divider(height: 1),
+                      SwitchListTile.adaptive(
+                        key: const ValueKey('reduce-motion-setting'),
+                        secondary: const Icon(Icons.motion_photos_off_rounded),
+                        title: const Text('Reduce motion'),
+                        subtitle: const Text('Skip moving bus animations'),
+                        value: reduceMotion,
+                        onChanged: onReduceMotionChanged,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              FilledButton.icon(
+                onPressed: onResume,
+                icon: const Icon(Icons.play_arrow_rounded),
+                label: const Text('RESUME'),
+              ),
+            ],
+          ),
         ),
       ),
     );

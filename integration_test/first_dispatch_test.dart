@@ -3,6 +3,7 @@ import 'dart:math' as math;
 
 import 'package:busster/game/depot_game.dart';
 import 'package:busster/game/game_progress.dart';
+import 'package:busster/game/game_settings.dart';
 import 'package:busster/main.dart' as app;
 import 'package:busster/game/progress_store.dart';
 import 'package:flame/game.dart';
@@ -24,6 +25,7 @@ void main() {
         'busster-integration-progress.json',
       ),
     );
+    final settingsStore = _MemoryGameSettingsStore();
     final testFiles = [
       store.file,
       File('${store.file.path}.bak'),
@@ -39,7 +41,10 @@ void main() {
       }
     });
 
-    await app.main(progressStoreOverride: store);
+    await app.main(
+      progressStoreOverride: store,
+      settingsStoreOverride: settingsStore,
+    );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 900));
 
@@ -66,6 +71,17 @@ void main() {
     await tester.pump();
     expect(game.paused, isFalse);
 
+    await tester.tap(find.byTooltip('Pause game'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+    await tester.tap(find.text('Reduce motion'));
+    await tester.pump();
+    expect(game.reduceMotion, isTrue);
+    expect(settingsStore.value.reduceMotion, isTrue);
+    await tester.tap(find.text('RESUME'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 200));
+
     final boardRect = tester.getRect(board);
     final component = game.firstChild<DepotBoard>()!;
     final level = game.session.level;
@@ -88,6 +104,7 @@ void main() {
     await tester.pump(const Duration(milliseconds: 500));
 
     expect(game.session.state.moveCount, 1);
+    expect(game.firstChild<DepotBoard>()!.dispatchAnimationProgress, 1);
     expect(find.textContaining('Blue sent'), findsOneWidget);
     expect(find.textContaining('No riders matched'), findsOneWidget);
     expect(find.text('0/2'), findsOneWidget);
@@ -100,4 +117,16 @@ void main() {
     expect(savedProgress?.dispatches, ['blue']);
     expect(savedProgress?.earnedHints, GameProgress.initialHintCredits);
   });
+}
+
+class _MemoryGameSettingsStore implements GameSettingsStore {
+  GameSettings value = GameSettings.defaults;
+
+  @override
+  Future<GameSettings> load() async => value;
+
+  @override
+  Future<void> save(GameSettings settings) async {
+    value = settings;
+  }
 }

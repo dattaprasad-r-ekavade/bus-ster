@@ -4,6 +4,7 @@ import 'dart:ui' as ui;
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
+import 'package:flutter/foundation.dart' show VoidCallback;
 import 'package:flutter/material.dart' show Color, Colors;
 import 'package:flutter/painting.dart' show TextPainter, TextSpan, TextStyle;
 
@@ -11,9 +12,15 @@ import 'game_model.dart';
 import 'game_session.dart';
 
 class DepotGame extends FlameGame {
-  DepotGame(this.session);
+  DepotGame(
+    this.session, {
+    this.onSuccessfulDispatch,
+    this.reduceMotion = false,
+  });
 
   final GameSession session;
+  final VoidCallback? onSuccessfulDispatch;
+  bool reduceMotion;
 
   @override
   Color backgroundColor() => const Color(0xFF152238);
@@ -21,17 +28,27 @@ class DepotGame extends FlameGame {
   @override
   Future<void> onLoad() async {
     await super.onLoad();
-    add(DepotBoard(session));
+    add(DepotBoard(session, reduceMotion: () => reduceMotion, game: this));
   }
 }
 
 class DepotBoard extends PositionComponent with TapCallbacks {
-  DepotBoard(this.session) : super(anchor: Anchor.topLeft);
+  DepotBoard(
+    this.session, {
+    required bool Function() reduceMotion,
+    required DepotGame game,
+  }) : _reduceMotion = reduceMotion,
+       _game = game,
+       super(anchor: Anchor.topLeft);
 
   final GameSession session;
+  final bool Function() _reduceMotion;
+  final DepotGame _game;
   static const double _dispatchDuration = 0.42;
   int _observedAnimationSerial = 0;
   double _dispatchProgress = 1;
+
+  double get dispatchAnimationProgress => _dispatchProgress;
 
   @override
   void onGameResize(Vector2 size) {
@@ -43,6 +60,11 @@ class DepotBoard extends PositionComponent with TapCallbacks {
   @override
   void update(double dt) {
     super.update(dt);
+    if (_reduceMotion()) {
+      _dispatchProgress = 1;
+      _observedAnimationSerial = session.animationSerial;
+      return;
+    }
     if (session.animationSerial != _observedAnimationSerial) {
       _observedAnimationSerial = session.animationSerial;
       _dispatchProgress = 0;
@@ -115,7 +137,11 @@ class DepotBoard extends PositionComponent with TapCallbacks {
     for (final bus in level.buses) {
       if (bus.position == GridPoint(x, y) &&
           session.state.activeBusIds.contains(bus.id)) {
+        final previousMoveCount = session.state.moveCount;
         session.dispatch(bus.id);
+        if (session.state.moveCount > previousMoveCount) {
+          _game.onSuccessfulDispatch?.call();
+        }
         return;
       }
     }

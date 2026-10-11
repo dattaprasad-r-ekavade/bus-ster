@@ -1,9 +1,12 @@
 import 'dart:io';
 
+import 'package:busster/game/depot_game.dart';
 import 'package:busster/game/game_model.dart';
-import 'package:busster/main.dart';
 import 'package:busster/game/level_bundle.dart';
 import 'package:busster/game/game_progress.dart';
+import 'package:busster/game/game_settings.dart';
+import 'package:busster/main.dart';
+import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -57,6 +60,54 @@ void main() {
     await tester.pump(const Duration(milliseconds: 200));
     expect(find.text('PAUSED'), findsNothing);
     expect(find.byTooltip('Pause game'), findsOneWidget);
+  });
+
+  testWidgets('settings load, save, and update reduced motion live', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(430, 932);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final store = _MemoryGameSettingsStore(
+      const GameSettings(hapticsEnabled: false, reduceMotion: true),
+    );
+    await tester.pumpWidget(
+      BussterApp(levelList: levels, settingsStore: store),
+    );
+    await tester.pump(const Duration(milliseconds: 100));
+    final game = tester
+        .widget<GameWidget<DepotGame>>(find.byType(GameWidget<DepotGame>))
+        .game!;
+    expect(game.reduceMotion, isTrue);
+
+    await tester.tap(find.byTooltip('Pause game'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(
+      tester
+          .widget<SwitchListTile>(find.byKey(const ValueKey('haptics-setting')))
+          .value,
+      isFalse,
+    );
+    expect(
+      tester
+          .widget<SwitchListTile>(
+            find.byKey(const ValueKey('reduce-motion-setting')),
+          )
+          .value,
+      isTrue,
+    );
+
+    await tester.tap(find.text('Reduce motion'));
+    await tester.pump();
+    expect(game.reduceMotion, isFalse);
+    await tester.tap(find.text('Haptics'));
+    await tester.pump();
+    expect(store.value.hapticsEnabled, isTrue);
+    expect(store.value.reduceMotion, isFalse);
+    expect(store.saveCount, 2);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets(
@@ -162,4 +213,20 @@ void main() {
     expect(find.textContaining('blue: 2 tiles'), findsOneWidget);
     expect(find.textContaining('Solver: blue → coral → mint'), findsOneWidget);
   });
+}
+
+class _MemoryGameSettingsStore implements GameSettingsStore {
+  _MemoryGameSettingsStore(this.value);
+
+  GameSettings value;
+  int saveCount = 0;
+
+  @override
+  Future<GameSettings> load() async => value;
+
+  @override
+  Future<void> save(GameSettings settings) async {
+    value = settings;
+    saveCount++;
+  }
 }

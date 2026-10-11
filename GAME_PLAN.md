@@ -179,7 +179,8 @@ Estimated elapsed time for a small team: **12–16 weeks**, with art/content run
 ### Stage 3 — production feel and accessibility (weeks 6–8)
 
 - [ ] Replace placeholders with owned original assets: buses, passenger groups, bays, roads, motion cues, icon, and typography. Export optimized atlases; document sources/licenses.
-- [ ] Add animation, audio mix, haptics, win/lose feedback, reduced-motion option, sound/haptic toggles, and text scaling where applicable.
+- [x] Add a pause-screen settings panel with persisted Haptics and Reduce motion switches. Haptics fire only after successful dispatch; reduced motion skips bus travel animations. Widget tests cover preference loading/saving and live motion changes; Android emulator integration confirms the reduced-motion path. Physical haptic feel and device-matrix checks remain open because no test phones are available.
+- [ ] Replace prototype motion with polished win/lose feedback; add an original, licensed audio mix with separate sound and haptic controls, then check text scaling and audio latency on the device matrix.
 - [ ] Verify color-blind readability using symbols/patterns, contrast, grayscale screenshots, and real testers. Add text or shape cues to every rule-critical object.
 - [ ] Build help, settings, privacy link placeholder, support contact, and localization-ready strings; ship at least clear English, then localize only markets that can be QA'd.
 - [ ] Measure frame times, memory, battery/thermal behavior, cold start, and AAB size on the device matrix; optimize overdraw and oversized textures.

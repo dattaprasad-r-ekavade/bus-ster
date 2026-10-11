@@ -16,6 +16,8 @@ Open **How to play** in the top bar for the core rules.
 
 Progress, unlocked depots, and earned Route Tips save locally on Android; the core game works offline. Players start with three tips, earn one on each depot’s first clear (up to five), and unlock depots in order. Switching away from an unfinished attempt asks first. The progress format is versioned and tested for migration and recovery.
 
+Pause the game to turn haptics on or off and enable reduced motion. These preferences save locally; haptics accompany successful bus dispatches only. Their feel still needs physical-device testing.
+
 ## Check the project
 
 ```sh
