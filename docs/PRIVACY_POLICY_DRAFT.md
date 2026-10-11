@@ -12,7 +12,9 @@
 
 ## Current prototype data handling
 
-Bus-ster does not have an account system or a game server. The gameplay code does not send game data to an analytics, advertising, crash-reporting, or billing provider. The telemetry adapter is a no-op. A local release-profile APK built on 11 October 2026 targets API 36, has minimum API 24, and its merged manifest does not declare `INTERNET`; the debug manifest does include that development permission. The release-profile APK is signed with the repository's debug key and is not a store-ready artifact. Recheck the final signed AAB and all merged SDK permissions before publication.
+Bus-ster does not have an account system or a game server. Gameplay events use a no-op telemetry adapter and are not sent or saved. The Google Mobile Ads SDK and UMP are now runtime dependencies, but the release build gate is off unless explicit production IDs and a build flag are supplied. In the default release configuration, the Dart ad controller does not request consent information, initialize Mobile Ads, or load ads. The Google Mobile Ads startup provider is removed so it cannot initialize the SDK before the UMP consent check.
+
+The SDK is still packaged in Android release artifacts. The merged release manifest adds `INTERNET`, `ACCESS_NETWORK_STATE`, `com.google.android.gms.permission.AD_ID`, and Android Privacy Sandbox ad permissions (`ACCESS_ADSERVICES_AD_ID`, `ACCESS_ADSERVICES_ATTRIBUTION`, `ACCESS_ADSERVICES_TOPICS`). The APK/AAB currently uses the debug signing key and is a validation artifact, not a store-ready build. Recheck the final signed AAB and every SDK's runtime behavior before answering Play's ads and Data safety forms. If production ads are enabled, UMP consent requests and ad requests become network data flows and must be described accurately in the public policy and disclosures.
 
 The game stores the following in the app's private storage:
 
@@ -27,7 +29,7 @@ The game has no server-side gameplay records to delete. A player can remove loca
 
 ## Third-party services in this build
 
-The runtime dependencies are Flutter, Flame, `path_provider`, `shared_preferences`, and `audioplayers`. The audio plugin plays four bundled local WAV effects; the prototype has no streaming, account, analytics, or ad service configured. Firebase, Google Mobile Ads, Play Billing, and a crash-reporting SDK are not integrated. Recheck the complete dependency and merged-manifest inventory in the release artifact before publication.
+The runtime dependencies are Flutter, Flame, `path_provider`, `shared_preferences`, `audioplayers`, and `google_mobile_ads` 9.1.0. The audio plugin plays four bundled local WAV effects. Firebase Analytics, Crashlytics, Play Billing, and a game server are not configured. Debug test ads are available only with `--dart-define=BUSSTER_ENABLE_TEST_ADS=true`, using Google's official sample app and rewarded unit IDs. Production ads need the publisher's app ID and unit ID, an explicit release build flag, configured UMP messages, an approved audience/content setup, and a policy review; none is configured. The intended store audience is adults/general audience and the intended market is worldwide, as directed by the owner. Final Play age groups, content rating, first soft-launch countries, and any underage-user treatment remain to be settled from the finished product and its legal review.
 
 ## Required release updates
 

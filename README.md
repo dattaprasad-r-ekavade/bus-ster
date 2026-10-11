@@ -27,6 +27,16 @@ The depot board, buses, route markers, rider marks, and bay indicators use origi
 
 Progress, unlocked depots, and earned Route Tips save locally on Android; the core game works offline. Android system backup can transfer the allow-listed progress and settings files when enabled in the user's device/account settings. Players start with three tips, earn one on each depot’s first clear (up to five), and unlock depots in order. Switching away from an unfinished attempt asks first. The progress format is versioned and tested for migration and recovery.
 
+The first 10 depots have no ads. Later, if free Route Tips are exhausted and a consent-approved rewarded ad is ready, a player can explicitly opt in to earn one tip. Closing the ad without its reward callback grants nothing. Debug test ads stay off by default; to exercise Google's official test IDs on an Android emulator/device, run:
+
+```sh
+flutter run --dart-define=BUSSTER_ENABLE_TEST_ADS=true
+```
+
+The default release configuration does not request consent or load ads. The ads SDK remains in the Android package and contributes network, advertising-ID, and Privacy Sandbox permissions, so final Play ads/Data safety declarations and privacy disclosures must account for the configured SDK behavior. Production IDs and consent messages are not set up; never publish the validation APK/AAB as-is. See Stage 5 and Stage 6 in [`GAME_PLAN.md`](GAME_PLAN.md) for the full configuration and release gates.
+
+When a publisher account exists, the Android manifest app ID comes from the `BUSSTER_ADMOB_APP_ID` environment variable. The release Dart build must receive the same app ID through `--dart-define=BUSSTER_ADMOB_APP_ID=...`, plus `BUSSTER_REWARDED_AD_UNIT_ID=...` and `BUSSTER_ENABLE_PRODUCTION_ADS=true`. Keep the manifest and Dart app IDs identical. Production ads are not configured in this repository.
+
 Pause the game to control sound effects and haptics independently, or enable reduced motion. These preferences save locally; haptics accompany successful bus dispatches only. Audio mix and haptic feel still need physical-device testing.
 
 ## Check the project

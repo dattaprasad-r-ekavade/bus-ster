@@ -26,6 +26,8 @@ abstract final class GameEventNames {
   static const busDispatched = 'bus_dispatched';
   static const routeTipUsed = 'route_tip_used';
   static const routeTipUnavailable = 'route_tip_unavailable';
+  static const adOffer = 'ad_offer';
+  static const adReward = 'ad_reward';
   static const moveUndone = 'move_undone';
   static const levelRestarted = 'level_restarted';
   static const levelResumed = 'level_resumed';

@@ -92,6 +92,38 @@ void main() {
     expect(session.state.moveCount, 1);
     expect(session.state.activeBusIds, isNot(contains('blue')));
   });
+
+  test('rewarded hint offer and reward events stay gated by live play', () {
+    final telemetry = _RecordingTelemetry();
+    final session = GameSession(levelList: levels, telemetry: telemetry);
+    session.restoreProgress(
+      GameProgress(
+        currentLevelId: 'depot-01',
+        dispatches: const [],
+        earnedHints: 0,
+      ),
+    );
+
+    session
+      ..recordRewardedHintOffer()
+      ..pause();
+    expect(session.grantRewardedHint(), isFalse);
+    expect(session.earnedHints, 0);
+
+    session.resume();
+    session.recordRewardedHintOffer();
+    expect(session.grantRewardedHint(), isTrue);
+    expect(session.earnedHints, 1);
+    expect(
+      telemetry.events.where((event) => event.name == GameEventNames.adOffer),
+      hasLength(2),
+    );
+    expect(
+      telemetry.events.where((event) => event.name == GameEventNames.adReward),
+      hasLength(1),
+    );
+    expect(telemetry.events.last.parameters['reward'], 'one_route_tip');
+  });
 }
 
 class _RecordingTelemetry implements GameTelemetry {

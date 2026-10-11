@@ -13,6 +13,7 @@ import 'game/game_palette.dart';
 import 'game/level_loader.dart';
 import 'game/game_progress.dart';
 import 'game/game_session.dart';
+import 'game/rewarded_hint_ads.dart';
 import 'game/game_settings.dart';
 import 'game/game_telemetry.dart';
 import 'game/progress_store.dart';
@@ -25,6 +26,7 @@ Future<void> main({
   GameSettingsStore? settingsStoreOverride,
   GameTelemetry? telemetryOverride,
   GameAudio? audioOverride,
+  RewardedHintAds? rewardedHintAdsOverride,
 }) async {
   WidgetsFlutterBinding.ensureInitialized();
   final levelList = await loadBundledLevels();
@@ -36,6 +38,7 @@ Future<void> main({
         settingsStore: settingsStoreOverride,
         telemetry: telemetryOverride,
         audio: audioOverride ?? AudioplayersGameAudio(),
+        rewardedHintAds: rewardedHintAdsOverride,
       ),
     );
     return;
@@ -66,6 +69,7 @@ Future<void> main({
       settingsStore: settingsStoreOverride,
       telemetry: telemetryOverride,
       audio: audioOverride ?? AudioplayersGameAudio(),
+      rewardedHintAds: rewardedHintAdsOverride,
     ),
   );
 }
@@ -80,6 +84,7 @@ class BussterApp extends StatelessWidget {
     this.settingsStore,
     this.telemetry,
     this.audio,
+    this.rewardedHintAds,
   });
 
   final List<LevelSpec> levelList;
@@ -89,6 +94,7 @@ class BussterApp extends StatelessWidget {
   final GameSettingsStore? settingsStore;
   final GameTelemetry? telemetry;
   final GameAudio? audio;
+  final RewardedHintAds? rewardedHintAds;
 
   @override
   Widget build(BuildContext context) {
@@ -113,6 +119,7 @@ class BussterApp extends StatelessWidget {
         settingsStore: settingsStore,
         telemetry: telemetry,
         audio: audio ?? const SilentGameAudio(),
+        rewardedHintAds: rewardedHintAds,
       ),
     );
   }
@@ -128,6 +135,7 @@ class DepotScreen extends StatefulWidget {
     this.settingsStore,
     this.telemetry,
     this.audio,
+    this.rewardedHintAds,
   });
 
   final List<LevelSpec> levelList;
@@ -137,22 +145,27 @@ class DepotScreen extends StatefulWidget {
   final GameSettingsStore? settingsStore;
   final GameTelemetry? telemetry;
   final GameAudio? audio;
+  final RewardedHintAds? rewardedHintAds;
 
   @override
   State<DepotScreen> createState() => _DepotScreenState();
 }
 
 class _DepotScreenState extends State<DepotScreen> with WidgetsBindingObserver {
+  static const _adFreeIntroLevelCount = 10;
+
   late final GameSession _session;
   late final DepotGame _game;
   late final GameSettingsStore _settingsStore;
   late final GameAudio _audio;
+  late final RewardedHintAds _rewardedHintAds;
   GameSettings _settings = GameSettings.defaults;
   int _settingsChanges = 0;
   String? _storageNotice;
   String? _lastSavedProgress;
   String? _lastQueuedProgress;
   Future<void> _saveQueue = Future<void>.value();
+  bool _rewardedHintFlowInProgress = false;
 
   @override
   void initState() {
@@ -161,6 +174,9 @@ class _DepotScreenState extends State<DepotScreen> with WidgetsBindingObserver {
     _settingsStore =
         widget.settingsStore ?? SharedPreferencesGameSettingsStore();
     _audio = widget.audio ?? const SilentGameAudio();
+    _rewardedHintAds =
+        widget.rewardedHintAds ?? AdMobRewardedHintAds.fromEnvironment();
+    _rewardedHintAds.addListener(_onRewardedHintAdsChanged);
     _session = GameSession(
       levelList: widget.levelList,
       telemetry: widget.telemetry ?? const NoopGameTelemetry(),
@@ -184,6 +200,11 @@ class _DepotScreenState extends State<DepotScreen> with WidgetsBindingObserver {
       }
     }
     _session.addListener(_queueProgressSave);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _rewardedHintAds.isEnabled) {
+        unawaited(_rewardedHintAds.initialize());
+      }
+    });
   }
 
   Future<void> _loadSettings() async {
@@ -244,6 +265,7 @@ class _DepotScreenState extends State<DepotScreen> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       if (!_session.isPaused) _game.resumeEngine();
+      unawaited(_rewardedHintAds.retryLoad());
     } else {
       _game.pauseEngine();
       _queueProgressSave();
@@ -255,8 +277,10 @@ class _DepotScreenState extends State<DepotScreen> with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _session.removeListener(_queueProgressSave);
+    _rewardedHintAds.removeListener(_onRewardedHintAdsChanged);
     _session.dispose();
     unawaited(_audio.dispose());
+    unawaited(_rewardedHintAds.close());
     super.dispose();
   }
 
@@ -287,6 +311,75 @@ class _DepotScreenState extends State<DepotScreen> with WidgetsBindingObserver {
         }
       }
     });
+  }
+
+  void _onRewardedHintAdsChanged() {
+    if (mounted) setState(() {});
+  }
+
+  Future<void> _onHintPressed() async {
+    if (_session.earnedHints > 0) {
+      _session.showHint();
+      return;
+    }
+    if (_rewardedHintFlowInProgress) return;
+    final rewardedAdsAllowed =
+        _session.levelIndex >= _adFreeIntroLevelCount &&
+        _rewardedHintAds.isEnabled;
+    if (!rewardedAdsAllowed || !_rewardedHintAds.isReady) {
+      if (rewardedAdsAllowed) {
+        unawaited(_rewardedHintAds.retryLoad());
+      }
+      _session.showHint();
+      return;
+    }
+
+    _session.recordRewardedHintOffer();
+    final accepted = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Need a Route Tip?'),
+        content: const Text(
+          'Watch a short ad to earn 1 Route Tip. You receive it only after '
+          'the ad confirms the reward; closing early may earn nothing.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('NOT NOW'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('WATCH AD'),
+          ),
+        ],
+      ),
+    );
+    if (!mounted || accepted != true) return;
+
+    setState(() => _rewardedHintFlowInProgress = true);
+    try {
+      var rewardGranted = false;
+      final earned = await _rewardedHintAds.showRewardedHint(
+        onRewardEarned: () {
+          if (!mounted || rewardGranted) return;
+          rewardGranted = _session.grantRewardedHint();
+          if (rewardGranted) _session.showHint();
+        },
+      );
+      if (!mounted) return;
+      if (!earned || !rewardGranted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'No Route Tip was earned. The game is still free to play.',
+            ),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _rewardedHintFlowInProgress = false);
+    }
   }
 
   void _pauseGame() {
@@ -542,7 +635,7 @@ class _DepotScreenState extends State<DepotScreen> with WidgetsBindingObserver {
                             isWon: state.status == GameStatus.won,
                             isStuck: state.status == GameStatus.stuck,
                             onUndo: _session.undo,
-                            onHint: _session.showHint,
+                            onHint: _onHintPressed,
                             onNext: _session.nextLevel,
                             onRetry: _session.restart,
                           ),
@@ -556,6 +649,10 @@ class _DepotScreenState extends State<DepotScreen> with WidgetsBindingObserver {
                           hapticsEnabled: _settings.hapticsEnabled,
                           soundEnabled: _settings.soundEnabled,
                           reduceMotion: _settings.reduceMotion,
+                          showPrivacyOptions:
+                              _rewardedHintAds.privacyOptionsRequired,
+                          onPrivacyOptions: () =>
+                              unawaited(_rewardedHintAds.showPrivacyOptions()),
                           onHapticsChanged: (enabled) => _updateSettings(
                             _settings.copyWith(hapticsEnabled: enabled),
                           ),
@@ -620,6 +717,8 @@ class _PauseOverlay extends StatelessWidget {
     required this.hapticsEnabled,
     required this.soundEnabled,
     required this.reduceMotion,
+    required this.showPrivacyOptions,
+    required this.onPrivacyOptions,
     required this.onHapticsChanged,
     required this.onSoundChanged,
     required this.onReduceMotionChanged,
@@ -629,6 +728,8 @@ class _PauseOverlay extends StatelessWidget {
   final bool hapticsEnabled;
   final bool soundEnabled;
   final bool reduceMotion;
+  final bool showPrivacyOptions;
+  final VoidCallback onPrivacyOptions;
   final ValueChanged<bool> onHapticsChanged;
   final ValueChanged<bool> onSoundChanged;
   final ValueChanged<bool> onReduceMotionChanged;
@@ -695,6 +796,14 @@ class _PauseOverlay extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 16),
+              if (showPrivacyOptions) ...[
+                TextButton.icon(
+                  onPressed: onPrivacyOptions,
+                  icon: const Icon(Icons.privacy_tip_outlined),
+                  label: const Text('PRIVACY OPTIONS'),
+                ),
+                const SizedBox(height: 8),
+              ],
               FilledButton.icon(
                 onPressed: onResume,
                 icon: const Icon(Icons.play_arrow_rounded),

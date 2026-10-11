@@ -7,6 +7,7 @@ import 'package:busster/game/game_model.dart';
 import 'package:busster/game/level_bundle.dart';
 import 'package:busster/game/game_progress.dart';
 import 'package:busster/game/game_settings.dart';
+import 'package:busster/game/rewarded_hint_ads.dart';
 import 'package:busster/game/route_symbol.dart';
 import 'package:busster/main.dart';
 import 'package:flame/game.dart';
@@ -243,6 +244,123 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('rewarded Route Tip requires opt-in and confirmed reward', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(430, 932);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final postIntroLevels = [...levels, _copyLevelAs(levels.last, 'depot-11')];
+    final ads = _FakeRewardedHintAds(rewardEarned: true);
+    await tester.pumpWidget(
+      BussterApp(
+        levelList: postIntroLevels,
+        initialProgress: GameProgress(
+          currentLevelId: 'depot-11',
+          dispatches: const [],
+          completedLevelIds: levels.map((level) => level.id),
+          earnedHints: 0,
+        ),
+        rewardedHintAds: ads,
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 100));
+
+    await tester.tap(find.text('ROUTE TIP · 0'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
+    expect(find.text('WATCH AD'), findsOneWidget);
+    expect(ads.showCount, 0);
+
+    await tester.tap(find.text('WATCH AD'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
+
+    expect(ads.showCount, 1);
+    expect(find.textContaining('Route tip (0 left)'), findsOneWidget);
+    expect(
+      tester
+          .widget<GameWidget<DepotGame>>(find.byType(GameWidget<DepotGame>))
+          .game!
+          .session
+          .earnedHints,
+      0,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('closing a rewarded ad without reward grants no hint', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(430, 932);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final postIntroLevels = [...levels, _copyLevelAs(levels.last, 'depot-11')];
+    final ads = _FakeRewardedHintAds(rewardEarned: false);
+    await tester.pumpWidget(
+      BussterApp(
+        levelList: postIntroLevels,
+        initialProgress: GameProgress(
+          currentLevelId: 'depot-11',
+          dispatches: const [],
+          completedLevelIds: levels.map((level) => level.id),
+          earnedHints: 0,
+        ),
+        rewardedHintAds: ads,
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 100));
+
+    await tester.tap(find.text('ROUTE TIP · 0'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
+    await tester.tap(find.text('WATCH AD'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
+
+    expect(ads.showCount, 1);
+    expect(find.textContaining('No Route Tip was earned'), findsOneWidget);
+    expect(
+      tester
+          .widget<GameWidget<DepotGame>>(find.byType(GameWidget<DepotGame>))
+          .game!
+          .session
+          .earnedHints,
+      0,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('the first ten depots never show an ad offer', (tester) async {
+    tester.view.physicalSize = const Size(430, 932);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final ads = _FakeRewardedHintAds(rewardEarned: true);
+    await tester.pumpWidget(
+      BussterApp(
+        levelList: levels,
+        initialProgress: GameProgress(
+          currentLevelId: 'depot-01',
+          dispatches: const [],
+          earnedHints: 0,
+        ),
+        rewardedHintAds: ads,
+      ),
+    );
+    await tester.pump(const Duration(milliseconds: 100));
+
+    await tester.tap(find.text('ROUTE TIP · 0'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
+
+    expect(find.text('WATCH AD'), findsNothing);
+    expect(ads.showCount, 0);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets(
     'depot picker exposes unlocked depots and keeps locked ones shut',
     (tester) async {
@@ -409,6 +527,63 @@ class _RecordingGameAudio implements GameAudio {
   @override
   Future<void> dispose() async {}
 }
+
+class _FakeRewardedHintAds extends RewardedHintAds {
+  _FakeRewardedHintAds({required this.rewardEarned});
+
+  final bool rewardEarned;
+  bool ready = true;
+  int showCount = 0;
+
+  @override
+  bool get isEnabled => true;
+
+  @override
+  bool get isReady => ready;
+
+  @override
+  bool get isLoading => false;
+
+  @override
+  bool get privacyOptionsRequired => false;
+
+  @override
+  Future<void> initialize() async {}
+
+  @override
+  Future<bool> showRewardedHint({required VoidCallback onRewardEarned}) async {
+    showCount++;
+    ready = false;
+    notifyListeners();
+    if (rewardEarned) onRewardEarned();
+    return rewardEarned;
+  }
+
+  @override
+  Future<void> showPrivacyOptions() async {}
+
+  @override
+  Future<void> retryLoad() async {}
+
+  @override
+  Future<void> close() async => super.dispose();
+}
+
+LevelSpec _copyLevelAs(LevelSpec source, String id) => LevelSpec(
+  id: id,
+  title: source.title,
+  width: source.width,
+  height: source.height,
+  exit: source.exit,
+  roads: source.roads,
+  buses: source.buses,
+  passengers: source.passengers,
+  tutorialPrompt: source.tutorialPrompt,
+  bayCount: source.bayCount,
+  mechanicTags: source.mechanicTags,
+  difficultyBand: source.difficultyBand,
+  seed: source.seed,
+);
 
 Future<void> _tapBus(
   WidgetTester tester,

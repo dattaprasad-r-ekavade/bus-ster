@@ -162,6 +162,40 @@ class GameSession extends ChangeNotifier {
     notifyListeners();
   }
 
+  void recordRewardedHintOffer() {
+    if (_isPaused ||
+        _state.status != GameStatus.playing ||
+        _earnedHints != 0 ||
+        _hintedBusId != null) {
+      return;
+    }
+    _record(GameEventNames.adOffer, {
+      'level_id': level.id,
+      'placement': 'route_tip',
+      'reward': 'one_route_tip',
+    });
+  }
+
+  /// Grants the ad reward only while a playable depot has no free tips.
+  bool grantRewardedHint() {
+    if (_isPaused ||
+        _state.status != GameStatus.playing ||
+        _earnedHints != 0 ||
+        _hintedBusId != null) {
+      return false;
+    }
+    _earnedHints = (_earnedHints + 1)
+        .clamp(0, GameProgress.maxHintCredits)
+        .toInt();
+    _record(GameEventNames.adReward, {
+      'level_id': level.id,
+      'placement': 'route_tip',
+      'reward': 'one_route_tip',
+    });
+    notifyListeners();
+    return true;
+  }
+
   void undo() {
     if (_isPaused || _history.isEmpty) return;
     _hintedBusId = null;
