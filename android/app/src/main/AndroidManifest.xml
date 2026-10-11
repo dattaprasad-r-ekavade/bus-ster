@@ -1,6 +1,4 @@
-<manifest
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
         android:label="Bus-ster"
         android:name="${applicationName}"
@@ -8,13 +6,6 @@
         android:allowBackup="true"
         android:fullBackupContent="@xml/backup_rules"
         android:dataExtractionRules="@xml/data_extraction_rules">
-        <meta-data
-            android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="${bussterAdMobAppId}" />
-        <!-- Consent is checked before Dart initializes Google Mobile Ads. -->
-        <provider
-            android:name="com.google.android.gms.ads.MobileAdsInitProvider"
-            tools:node="remove" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

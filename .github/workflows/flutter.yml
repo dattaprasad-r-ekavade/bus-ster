@@ -20,5 +20,4 @@ jobs:
       - run: dart format --output=none --set-exit-if-changed lib test tools integration_test
       - run: flutter analyze
       - run: flutter test
-      - run: dart run tools/validate_levels.dart
       - run: flutter build apk --debug

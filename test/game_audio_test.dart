@@ -1,21 +1,50 @@
+import 'dart:io';
+
 import 'package:busster/game/game_audio.dart';
-import 'package:busster/game/game_model.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('uses the dispatch cue when no riders board', () {
-    expect(cueForDispatch(GameStatus.playing, 0), GameAudioCue.dispatch);
+  test('every cue maps to a bundled WAV asset with a sane volume', () {
+    for (final cue in GameAudioCue.values) {
+      final asset = AudioplayersGameAudio.assetFor(cue);
+      expect(asset, endsWith('.wav'));
+      expect(File('assets/$asset').existsSync(), isTrue, reason: '$cue');
+      expect(AudioplayersGameAudio.volumeFor(cue), inInclusiveRange(0, 1));
+    }
   });
 
-  test('uses the boarding cue when riders board', () {
-    expect(cueForDispatch(GameStatus.playing, 2), GameAudioCue.boarding);
+  test('convenience methods route to the matching cue', () async {
+    final audio = _RecordingAudio();
+    await audio.playTap();
+    await audio.playBlocked();
+    await audio.playBoard();
+    await audio.playDepart();
+    await audio.playWin();
+    await audio.playLose();
+    expect(audio.cues, GameAudioCue.values);
   });
 
-  test('uses the depot-clear cue on victory', () {
-    expect(cueForDispatch(GameStatus.won, 0), GameAudioCue.depotClear);
+  test('silent audio is a no-op', () async {
+    const audio = SilentGameAudio();
+    await audio.initialize();
+    await audio.playWin();
+    await audio.stopAll();
+    await audio.dispose();
   });
+}
 
-  test('uses the stuck cue when a dispatch leaves no solution', () {
-    expect(cueForDispatch(GameStatus.stuck, 0), GameAudioCue.stuck);
-  });
+class _RecordingAudio extends GameAudio {
+  final List<GameAudioCue> cues = [];
+
+  @override
+  Future<void> initialize() async {}
+
+  @override
+  Future<void> play(GameAudioCue cue) async => cues.add(cue);
+
+  @override
+  Future<void> stopAll() async {}
+
+  @override
+  Future<void> dispose() async {}
 }

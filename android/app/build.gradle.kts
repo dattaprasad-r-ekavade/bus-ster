@@ -28,19 +28,10 @@ android {
         targetSdk = 36
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-        manifestPlaceholders["bussterAdMobAppId"] = ""
     }
 
     buildTypes {
-        getByName("debug") {
-            manifestPlaceholders["bussterAdMobAppId"] =
-                "ca-app-pub-3940256099942544~3347511713"
-        }
         release {
-            manifestPlaceholders["bussterAdMobAppId"] = providers
-                .environmentVariable("BUSSTER_ADMOB_APP_ID")
-                .orElse("")
-                .get()
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.getByName("debug")

@@ -23,9 +23,7 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(
-      BussterApp(levelList: const [], useParkingJamPrototype: true),
-    );
+    await tester.pumpWidget(const BussterApp());
     await tester.pump();
 
     expect(find.text('PASSENGER LOOP'), findsOneWidget);

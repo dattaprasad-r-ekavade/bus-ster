@@ -2,26 +2,28 @@ import 'dart:async';
 
 import 'package:audioplayers/audioplayers.dart';
 
-import 'game_model.dart';
+/// Semantic sound cues for the bus-jam loop. Several cues may share one
+/// bundled WAV asset; see [AudioplayersGameAudio.assetFor].
+enum GameAudioCue { tap, blocked, board, depart, win, lose }
 
-enum GameAudioCue { dispatch, boarding, depotClear, stuck }
+/// Sound effects boundary. Implementations must never throw into gameplay.
+abstract class GameAudio {
+  const GameAudio();
 
-GameAudioCue cueForDispatch(GameStatus status, int boardedRiders) =>
-    switch (status) {
-      GameStatus.won => GameAudioCue.depotClear,
-      GameStatus.stuck => GameAudioCue.stuck,
-      GameStatus.playing when boardedRiders > 0 => GameAudioCue.boarding,
-      GameStatus.playing => GameAudioCue.dispatch,
-    };
-
-abstract interface class GameAudio {
   Future<void> initialize();
   Future<void> play(GameAudioCue cue);
   Future<void> stopAll();
   Future<void> dispose();
+
+  Future<void> playTap() => play(GameAudioCue.tap);
+  Future<void> playBlocked() => play(GameAudioCue.blocked);
+  Future<void> playBoard() => play(GameAudioCue.board);
+  Future<void> playDepart() => play(GameAudioCue.depart);
+  Future<void> playWin() => play(GameAudioCue.win);
+  Future<void> playLose() => play(GameAudioCue.lose);
 }
 
-class SilentGameAudio implements GameAudio {
+class SilentGameAudio extends GameAudio {
   const SilentGameAudio();
 
   @override
@@ -39,43 +41,53 @@ class SilentGameAudio implements GameAudio {
 
 /// Preloads short, locally bundled Bus-ster effects into Android low-latency
 /// pools. Audio errors never interrupt puzzle input or progress saves.
-class AudioplayersGameAudio implements GameAudio {
+class AudioplayersGameAudio extends GameAudio {
   AudioplayersGameAudio();
 
-  static const _paths = <GameAudioCue, String>{
-    GameAudioCue.dispatch: 'audio/dispatch.wav',
-    GameAudioCue.boarding: 'audio/boarding.wav',
-    GameAudioCue.depotClear: 'audio/depot_clear.wav',
-    GameAudioCue.stuck: 'audio/stuck.wav',
+  static const _assets = <GameAudioCue, String>{
+    GameAudioCue.tap: 'audio/dispatch.wav',
+    GameAudioCue.blocked: 'audio/stuck.wav',
+    GameAudioCue.board: 'audio/boarding.wav',
+    GameAudioCue.depart: 'audio/dispatch.wav',
+    GameAudioCue.win: 'audio/depot_clear.wav',
+    GameAudioCue.lose: 'audio/stuck.wav',
   };
   static const _volumes = <GameAudioCue, double>{
-    GameAudioCue.dispatch: 0.48,
-    GameAudioCue.boarding: 0.5,
-    GameAudioCue.depotClear: 0.52,
-    GameAudioCue.stuck: 0.4,
+    GameAudioCue.tap: 0.36,
+    GameAudioCue.blocked: 0.32,
+    GameAudioCue.board: 0.5,
+    GameAudioCue.depart: 0.48,
+    GameAudioCue.win: 0.52,
+    GameAudioCue.lose: 0.42,
   };
 
-  final Map<GameAudioCue, AudioPool> _pools = {};
-  final Map<GameAudioCue, Duration> _durations = {};
+  /// Bundled asset path (relative to `assets/`) played for [cue].
+  static String assetFor(GameAudioCue cue) => _assets[cue]!;
+
+  /// Playback volume for [cue] in the range 0..1.
+  static double volumeFor(GameAudioCue cue) => _volumes[cue]!;
+
+  static Set<String> get assetPaths => _assets.values.toSet();
+
+  final Map<String, AudioPool> _pools = {};
+  final Map<String, Duration> _durations = {};
   final Map<StopFunction, Timer> _activeSounds = {};
   Future<void>? _initialization;
   bool _disposed = false;
   bool _unavailable = false;
 
   bool get isReady =>
-      !_disposed &&
-      !_unavailable &&
-      _pools.length == GameAudioCue.values.length;
+      !_disposed && !_unavailable && _pools.length == assetPaths.length;
 
   @override
   Future<void> initialize() => _initialization ??= _preload();
 
   Future<void> _preload() async {
     try {
-      for (final cue in GameAudioCue.values) {
+      for (final path in assetPaths) {
         if (_disposed) return;
         final pool = await AudioPool.createFromAsset(
-          path: _paths[cue]!,
+          path: path,
           maxPlayers: 2,
           minPlayers: 1,
           playerMode: PlayerMode.lowLatency,
@@ -84,8 +96,8 @@ class AudioplayersGameAudio implements GameAudio {
           await pool.dispose();
           return;
         }
-        _pools[cue] = pool;
-        _durations[cue] =
+        _pools[path] = pool;
+        _durations[path] =
             await pool.getDuration() ?? const Duration(milliseconds: 350);
       }
     } on Object {
@@ -101,10 +113,11 @@ class AudioplayersGameAudio implements GameAudio {
     try {
       await initialize();
       if (_disposed || _unavailable) return;
-      final pool = _pools[cue];
+      final path = assetFor(cue);
+      final pool = _pools[path];
       if (pool == null) return;
-      final stop = await pool.start(volume: _volumes[cue]!);
-      final duration = _durations[cue] ?? const Duration(milliseconds: 350);
+      final stop = await pool.start(volume: volumeFor(cue));
+      final duration = _durations[path] ?? const Duration(milliseconds: 350);
       late final Timer timer;
       timer = Timer(duration + const Duration(milliseconds: 65), () {
         _activeSounds.remove(stop);
