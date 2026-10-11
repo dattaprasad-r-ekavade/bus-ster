@@ -44,5 +44,6 @@ flutter test integration_test/first_dispatch_test.dart -d <device-id>
 - [Level schema and authoring workflow](docs/LEVEL_SCHEMA.md)
 - [Asset and license ledger](docs/ASSET_LEDGER.md)
 - [Level validation tool](tools/validate_levels.dart)
+- [Gameplay analytics event schema](docs/ANALYTICS_EVENT_SCHEMA.md)
 
 The game and all eventual store assets must use original art, level layouts, sounds, and copy. The plan tracks playtest, production, monetization, and release gates.

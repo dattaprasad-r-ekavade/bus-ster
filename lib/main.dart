@@ -12,6 +12,7 @@ import 'game/level_loader.dart';
 import 'game/game_progress.dart';
 import 'game/game_session.dart';
 import 'game/game_settings.dart';
+import 'game/game_telemetry.dart';
 import 'game/progress_store.dart';
 import 'game/route_symbol.dart';
 import 'game/settings_store.dart';
@@ -20,6 +21,7 @@ Future<void> main({
   bool loadSavedProgress = true,
   ProgressFileStore? progressStoreOverride,
   GameSettingsStore? settingsStoreOverride,
+  GameTelemetry? telemetryOverride,
 }) async {
   WidgetsFlutterBinding.ensureInitialized();
   final levelList = await loadBundledLevels();
@@ -29,6 +31,7 @@ Future<void> main({
         levelList: levelList,
         progressStore: progressStoreOverride,
         settingsStore: settingsStoreOverride,
+        telemetry: telemetryOverride,
       ),
     );
     return;
@@ -57,6 +60,7 @@ Future<void> main({
       initialProgress: savedProgress,
       startupWarning: startupWarning,
       settingsStore: settingsStoreOverride,
+      telemetry: telemetryOverride,
     ),
   );
 }
@@ -69,6 +73,7 @@ class BussterApp extends StatelessWidget {
     this.initialProgress,
     this.startupWarning,
     this.settingsStore,
+    this.telemetry,
   });
 
   final List<LevelSpec> levelList;
@@ -76,6 +81,7 @@ class BussterApp extends StatelessWidget {
   final GameProgress? initialProgress;
   final String? startupWarning;
   final GameSettingsStore? settingsStore;
+  final GameTelemetry? telemetry;
 
   @override
   Widget build(BuildContext context) {
@@ -98,6 +104,7 @@ class BussterApp extends StatelessWidget {
         initialProgress: initialProgress,
         startupWarning: startupWarning,
         settingsStore: settingsStore,
+        telemetry: telemetry,
       ),
     );
   }
@@ -111,6 +118,7 @@ class DepotScreen extends StatefulWidget {
     this.initialProgress,
     this.startupWarning,
     this.settingsStore,
+    this.telemetry,
   });
 
   final List<LevelSpec> levelList;
@@ -118,6 +126,7 @@ class DepotScreen extends StatefulWidget {
   final GameProgress? initialProgress;
   final String? startupWarning;
   final GameSettingsStore? settingsStore;
+  final GameTelemetry? telemetry;
 
   @override
   State<DepotScreen> createState() => _DepotScreenState();
@@ -140,7 +149,11 @@ class _DepotScreenState extends State<DepotScreen> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     _settingsStore =
         widget.settingsStore ?? SharedPreferencesGameSettingsStore();
-    _session = GameSession(levelList: widget.levelList);
+    _session = GameSession(
+      levelList: widget.levelList,
+      telemetry: widget.telemetry ?? const NoopGameTelemetry(),
+      logInitialLevelStart: widget.initialProgress == null,
+    );
     _game = DepotGame(
       _session,
       onSuccessfulDispatch: _onSuccessfulDispatch,
