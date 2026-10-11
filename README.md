@@ -40,7 +40,7 @@ dart run tools/preview_levels.dart
 flutter build apk --debug
 ```
 
-Edit `assets/levels/levels.json` to author levels. The validator checks the versioned schema, geometry, passenger capacity, tutorial metadata, and solver path. The preview tool writes an HTML overview to `build/level-preview.html`. To create a solver-checked mirrored candidate, run `dart run tools/level_variants.dart depot-03 x`; generated variants go under `build/level-variants/` and still need human playtesting before release.
+Edit `assets/levels/levels.json` to author levels. The validator checks the versioned schema, geometry, passenger capacity, tutorial metadata, and solver path. The preview tool writes an HTML overview to `build/level-preview.html`. To generate two seeded queue-order candidates from each authored depot, run `dart run tools/generate_level_candidates.dart --seed 20261011 --per-level 2`; candidates go under `build/level-candidates/`, stay outside the shipping pack, and need human review. To create a solver-checked mirrored layout, run `dart run tools/level_variants.dart depot-03 x`; mirrored candidates go under `build/level-variants/` and also need human review before release.
 
 With an Android emulator or device connected, run the first-dispatch smoke test:
 

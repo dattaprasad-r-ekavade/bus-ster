@@ -23,12 +23,15 @@ The top-level object has `schemaVersion: 1` and a non-empty `levels` array. Each
 
 The codec rejects unsupported schema versions and invalid coordinates, duplicate IDs/tiles, missing routes, and malformed metadata. The batch validator also checks that passenger counts match bus capacity for each route and that the bounded solver finds a complete dispatch sequence (up to 100,000 explored states). The preview counts reachable nonterminal states, legal branching states, dead ends, states with no path to a win, and choice points along a shortest solution. These are puzzle-graph properties, not measured player difficulty; they do not replace completion time, solve rate, or usability observations from playtests.
 
+The seeded candidate generator in [`tools/generate_level_candidates.dart`](../tools/generate_level_candidates.dart) shuffles rider order for each authored layout, keeps route totals and bus geometry intact, and writes a separate versioned JSON bundle under `build/level-candidates/`. It uses a small specified PRNG so a seed regenerates the same candidate bundle across runs. Candidates are tagged `queue-order-candidate`, have difficulty `unrated`, and are never loaded by the game unless deliberately copied into the canonical pack. They reuse the source prompt, so revise the prompt after reviewing the new queue. Solver success proves only that a solution exists; it does not prove the layout is fair, distinct, or well taught.
+
 ## Authoring and review
 
 1. Edit the canonical JSON file. Preserve stable level IDs and keep route symbols/colors readable in the board.
 2. Run `dart run tools/validate_levels.dart`. Fix every structural, capacity, tutorial, or solver failure.
 3. Run `dart run tools/preview_levels.dart`. Open `build/level-preview.html` to review geometry, queue, prompt, mechanic tags, shortest solution, reachable/branching/no-win/dead-end states, legal opening buses, and road junction count.
-4. If useful, make a candidate with `dart run tools/level_variants.dart depot-03 x`. The `x` or `y` mirror tool writes one solver-checked JSON candidate under `build/level-variants/`; review its layout and prompt before copying it into the authored pack.
-5. Do not count a solver pass as human QA. Record first-time player confusion, completion time, retries, and observed solve rate before treating a band or tutorial as validated.
+4. Generate more queue variants with `dart run tools/generate_level_candidates.dart --seed 20261011 --per-level 2`. Open the output with `dart run tools/preview_levels.dart build/level-candidates/candidates-seed-20261011.json build/level-candidates/preview.html`. The generator creates solver-checked queue candidates while preserving source geometry; revise their reused prompts and content after review.
+5. If useful, make a mirrored layout with `dart run tools/level_variants.dart depot-03 x`. The `x` or `y` mirror tool writes one solver-checked JSON candidate under `build/level-variants/`.
+6. Copy a candidate into the canonical authored pack only after human review, then assign its stable release ID and a provisional band/tag. Do not count a solver pass as human QA. Record first-time player confusion, completion time, retries, and observed solve rate before treating a band or tutorial as validated.
 
 `build/` is generated and ignored by Git. Keep only reviewed authored levels in the canonical pack.
