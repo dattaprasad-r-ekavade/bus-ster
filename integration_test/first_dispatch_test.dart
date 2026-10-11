@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:busster/game/depot_game.dart';
+import 'package:busster/game/game_audio.dart';
 import 'package:busster/game/game_progress.dart';
 import 'package:busster/game/game_settings.dart';
 import 'package:busster/main.dart' as app;
@@ -26,6 +27,7 @@ void main() {
       ),
     );
     final settingsStore = _MemoryGameSettingsStore();
+    final audio = AudioplayersGameAudio();
     final testFiles = [
       store.file,
       File('${store.file.path}.bak'),
@@ -44,6 +46,7 @@ void main() {
     await app.main(
       progressStoreOverride: store,
       settingsStoreOverride: settingsStore,
+      audioOverride: audio,
     );
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 900));
@@ -112,6 +115,10 @@ void main() {
     await tester.runAsync(
       () => Future<void>.delayed(const Duration(milliseconds: 200)),
     );
+    await tester.runAsync(audio.initialize);
+    expect(audio.isReady, isTrue);
+    await tester.runAsync(() => audio.play(GameAudioCue.dispatch));
+    await tester.runAsync(audio.stopAll);
     final savedProgress = await store.load();
     expect(savedProgress?.currentLevelId, 'depot-01');
     expect(savedProgress?.dispatches, ['blue']);

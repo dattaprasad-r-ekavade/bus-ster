@@ -64,8 +64,8 @@ class GameSession extends ChangeNotifier {
     return prompt.isEmpty ? _defaultStartMessage : prompt;
   }
 
-  void dispatch(String busId) {
-    if (_isPaused) return;
+  DispatchResult? dispatch(String busId) {
+    if (_isPaused) return null;
     _hintedBusId = null;
     final path = GameRules.routeToExit(level, _state, busId);
     final result = GameRules.dispatch(level, _state, busId);
@@ -77,7 +77,7 @@ class GameSession extends ChangeNotifier {
       });
       _message = result.message;
       notifyListeners();
-      return;
+      return result;
     }
 
     _history.add(_state);
@@ -124,6 +124,7 @@ class GameSession extends ChangeNotifier {
       });
     }
     notifyListeners();
+    return result;
   }
 
   void showHint() {

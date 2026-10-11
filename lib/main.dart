@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import 'game/depot_game.dart';
+import 'game/game_audio.dart';
 import 'game/game_model.dart';
 import 'game/level_loader.dart';
 import 'game/game_progress.dart';
@@ -22,6 +23,7 @@ Future<void> main({
   ProgressFileStore? progressStoreOverride,
   GameSettingsStore? settingsStoreOverride,
   GameTelemetry? telemetryOverride,
+  GameAudio? audioOverride,
 }) async {
   WidgetsFlutterBinding.ensureInitialized();
   final levelList = await loadBundledLevels();
@@ -32,6 +34,7 @@ Future<void> main({
         progressStore: progressStoreOverride,
         settingsStore: settingsStoreOverride,
         telemetry: telemetryOverride,
+        audio: audioOverride ?? AudioplayersGameAudio(),
       ),
     );
     return;
@@ -61,6 +64,7 @@ Future<void> main({
       startupWarning: startupWarning,
       settingsStore: settingsStoreOverride,
       telemetry: telemetryOverride,
+      audio: audioOverride ?? AudioplayersGameAudio(),
     ),
   );
 }
@@ -74,6 +78,7 @@ class BussterApp extends StatelessWidget {
     this.startupWarning,
     this.settingsStore,
     this.telemetry,
+    this.audio,
   });
 
   final List<LevelSpec> levelList;
@@ -82,6 +87,7 @@ class BussterApp extends StatelessWidget {
   final String? startupWarning;
   final GameSettingsStore? settingsStore;
   final GameTelemetry? telemetry;
+  final GameAudio? audio;
 
   @override
   Widget build(BuildContext context) {
@@ -105,6 +111,7 @@ class BussterApp extends StatelessWidget {
         startupWarning: startupWarning,
         settingsStore: settingsStore,
         telemetry: telemetry,
+        audio: audio ?? const SilentGameAudio(),
       ),
     );
   }
@@ -119,6 +126,7 @@ class DepotScreen extends StatefulWidget {
     this.startupWarning,
     this.settingsStore,
     this.telemetry,
+    this.audio,
   });
 
   final List<LevelSpec> levelList;
@@ -127,6 +135,7 @@ class DepotScreen extends StatefulWidget {
   final String? startupWarning;
   final GameSettingsStore? settingsStore;
   final GameTelemetry? telemetry;
+  final GameAudio? audio;
 
   @override
   State<DepotScreen> createState() => _DepotScreenState();
@@ -136,6 +145,7 @@ class _DepotScreenState extends State<DepotScreen> with WidgetsBindingObserver {
   late final GameSession _session;
   late final DepotGame _game;
   late final GameSettingsStore _settingsStore;
+  late final GameAudio _audio;
   GameSettings _settings = GameSettings.defaults;
   int _settingsChanges = 0;
   String? _storageNotice;
@@ -149,6 +159,7 @@ class _DepotScreenState extends State<DepotScreen> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     _settingsStore =
         widget.settingsStore ?? SharedPreferencesGameSettingsStore();
+    _audio = widget.audio ?? const SilentGameAudio();
     _session = GameSession(
       levelList: widget.levelList,
       telemetry: widget.telemetry ?? const NoopGameTelemetry(),
@@ -181,12 +192,18 @@ class _DepotScreenState extends State<DepotScreen> with WidgetsBindingObserver {
       if (!mounted || changesBeforeLoad != _settingsChanges) return;
       setState(() => _settings = loaded);
       _game.reduceMotion = loaded.reduceMotion;
+      if (loaded.soundEnabled) unawaited(_audio.initialize());
     } on Object {
       // Settings are optional; the game remains playable with defaults.
     }
   }
 
   Future<void> _updateSettings(GameSettings settings) async {
+    if (_settings.soundEnabled && !settings.soundEnabled) {
+      unawaited(_audio.stopAll());
+    } else if (!_settings.soundEnabled && settings.soundEnabled) {
+      unawaited(_audio.initialize());
+    }
     _settingsChanges++;
     setState(() {
       _settings = settings;
@@ -203,8 +220,15 @@ class _DepotScreenState extends State<DepotScreen> with WidgetsBindingObserver {
     }
   }
 
-  void _onSuccessfulDispatch() {
+  void _onSuccessfulDispatch(DispatchResult result) {
     if (_settings.hapticsEnabled) unawaited(_sendSuccessHaptic());
+    if (_settings.soundEnabled) {
+      final cue = cueForDispatch(
+        _session.state.status,
+        result.boardedRiders.length,
+      );
+      unawaited(_audio.play(cue));
+    }
   }
 
   Future<void> _sendSuccessHaptic() async {
@@ -222,6 +246,7 @@ class _DepotScreenState extends State<DepotScreen> with WidgetsBindingObserver {
     } else {
       _game.pauseEngine();
       _queueProgressSave();
+      unawaited(_audio.stopAll());
     }
   }
 
@@ -230,6 +255,7 @@ class _DepotScreenState extends State<DepotScreen> with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
     _session.removeListener(_queueProgressSave);
     _session.dispose();
+    unawaited(_audio.dispose());
     super.dispose();
   }
 
@@ -265,6 +291,7 @@ class _DepotScreenState extends State<DepotScreen> with WidgetsBindingObserver {
   void _pauseGame() {
     _session.pause();
     _game.pauseEngine();
+    unawaited(_audio.stopAll());
   }
 
   void _resumeGame() {
@@ -526,9 +553,13 @@ class _DepotScreenState extends State<DepotScreen> with WidgetsBindingObserver {
                         child: _PauseOverlay(
                           onResume: _resumeGame,
                           hapticsEnabled: _settings.hapticsEnabled,
+                          soundEnabled: _settings.soundEnabled,
                           reduceMotion: _settings.reduceMotion,
                           onHapticsChanged: (enabled) => _updateSettings(
                             _settings.copyWith(hapticsEnabled: enabled),
+                          ),
+                          onSoundChanged: (enabled) => _updateSettings(
+                            _settings.copyWith(soundEnabled: enabled),
                           ),
                           onReduceMotionChanged: (enabled) => _updateSettings(
                             _settings.copyWith(reduceMotion: enabled),
@@ -586,15 +617,19 @@ class _PauseOverlay extends StatelessWidget {
   const _PauseOverlay({
     required this.onResume,
     required this.hapticsEnabled,
+    required this.soundEnabled,
     required this.reduceMotion,
     required this.onHapticsChanged,
+    required this.onSoundChanged,
     required this.onReduceMotionChanged,
   });
 
   final VoidCallback onResume;
   final bool hapticsEnabled;
+  final bool soundEnabled;
   final bool reduceMotion;
   final ValueChanged<bool> onHapticsChanged;
+  final ValueChanged<bool> onSoundChanged;
   final ValueChanged<bool> onReduceMotionChanged;
 
   @override
@@ -635,6 +670,15 @@ class _PauseOverlay extends StatelessWidget {
                         subtitle: const Text('A light pulse on a valid move'),
                         value: hapticsEnabled,
                         onChanged: onHapticsChanged,
+                      ),
+                      const Divider(height: 1),
+                      SwitchListTile.adaptive(
+                        key: const ValueKey('sound-setting'),
+                        secondary: const Icon(Icons.volume_up_rounded),
+                        title: const Text('Sound effects'),
+                        subtitle: const Text('Short sounds for game events'),
+                        value: soundEnabled,
+                        onChanged: onSoundChanged,
                       ),
                       const Divider(height: 1),
                       SwitchListTile.adaptive(

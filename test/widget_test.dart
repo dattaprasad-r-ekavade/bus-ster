@@ -1,6 +1,8 @@
 import 'dart:io';
+import 'dart:math' as math;
 
 import 'package:busster/game/depot_game.dart';
+import 'package:busster/game/game_audio.dart';
 import 'package:busster/game/game_model.dart';
 import 'package:busster/game/level_bundle.dart';
 import 'package:busster/game/game_progress.dart';
@@ -143,7 +145,11 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     final store = _MemoryGameSettingsStore(
-      const GameSettings(hapticsEnabled: false, reduceMotion: true),
+      const GameSettings(
+        hapticsEnabled: false,
+        soundEnabled: true,
+        reduceMotion: true,
+      ),
     );
     await tester.pumpWidget(
       BussterApp(levelList: levels, settingsStore: store),
@@ -171,15 +177,69 @@ void main() {
           .value,
       isTrue,
     );
+    expect(
+      tester
+          .widget<SwitchListTile>(find.byKey(const ValueKey('sound-setting')))
+          .value,
+      isTrue,
+    );
 
     await tester.tap(find.text('Reduce motion'));
     await tester.pump();
     expect(game.reduceMotion, isFalse);
     await tester.tap(find.text('Haptics'));
     await tester.pump();
+    await tester.tap(find.text('Sound effects'));
+    await tester.pump();
     expect(store.value.hapticsEnabled, isTrue);
+    expect(store.value.soundEnabled, isFalse);
     expect(store.value.reduceMotion, isFalse);
-    expect(store.saveCount, 2);
+    expect(store.saveCount, 3);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('successful dispatch plays its original sound cue', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(430, 932);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final audio = _RecordingGameAudio();
+    await tester.pumpWidget(BussterApp(levelList: levels, audio: audio));
+    await tester.pump(const Duration(milliseconds: 100));
+
+    final board = find.byType(GameWidget<DepotGame>);
+    final game = tester.widget<GameWidget<DepotGame>>(board).game!;
+    await _tapBus(tester, board, game, 'blue');
+
+    expect(audio.played, [GameAudioCue.dispatch]);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('saved sound-off setting prevents dispatch playback', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(430, 932);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final audio = _RecordingGameAudio();
+    final store = _MemoryGameSettingsStore(
+      const GameSettings(soundEnabled: false),
+    );
+    await tester.pumpWidget(
+      BussterApp(levelList: levels, settingsStore: store, audio: audio),
+    );
+    await tester.pump(const Duration(milliseconds: 100));
+
+    final board = find.byType(GameWidget<DepotGame>);
+    final game = tester.widget<GameWidget<DepotGame>>(board).game!;
+    await _tapBus(tester, board, game, 'blue');
+
+    expect(audio.played, isEmpty);
+    expect(store.value.hapticsEnabled, isTrue);
+    expect(store.value.soundEnabled, isFalse);
     expect(tester.takeException(), isNull);
   });
 
@@ -330,4 +390,50 @@ class _MemoryGameSettingsStore implements GameSettingsStore {
     value = settings;
     saveCount++;
   }
+}
+
+class _RecordingGameAudio implements GameAudio {
+  final List<GameAudioCue> played = [];
+
+  @override
+  Future<void> initialize() async {}
+
+  @override
+  Future<void> play(GameAudioCue cue) async {
+    played.add(cue);
+  }
+
+  @override
+  Future<void> stopAll() async {}
+
+  @override
+  Future<void> dispose() async {}
+}
+
+Future<void> _tapBus(
+  WidgetTester tester,
+  Finder board,
+  DepotGame game,
+  String busId,
+) async {
+  final boardRect = tester.getRect(board);
+  final component = game.firstChild<DepotBoard>()!;
+  final level = game.session.level;
+  final cellSize = math.min(
+    (component.size.x - 28) / level.width,
+    (component.size.y - 56) / level.height,
+  );
+  final position = level.busById(busId).position;
+  final target = Offset(
+    boardRect.left +
+        (component.size.x - cellSize * level.width) / 2 +
+        (position.x + 0.5) * cellSize,
+    boardRect.top +
+        (component.size.y - cellSize * level.height) / 2 +
+        12 +
+        (position.y + 0.5) * cellSize,
+  );
+  await tester.tapAt(target);
+  await tester.pump();
+  await tester.pump(const Duration(milliseconds: 500));
 }

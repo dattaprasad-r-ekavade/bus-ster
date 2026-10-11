@@ -4,7 +4,7 @@ import 'dart:ui' as ui;
 import 'package:flame/components.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
-import 'package:flutter/foundation.dart' show VoidCallback;
+import 'package:flutter/foundation.dart' show ValueChanged;
 import 'package:flutter/material.dart' show Color, Colors;
 import 'package:flutter/painting.dart' show TextPainter, TextSpan, TextStyle;
 
@@ -20,7 +20,7 @@ class DepotGame extends FlameGame {
   });
 
   final GameSession session;
-  final VoidCallback? onSuccessfulDispatch;
+  final ValueChanged<DispatchResult>? onSuccessfulDispatch;
   bool reduceMotion;
 
   @override
@@ -147,11 +147,8 @@ class DepotBoard extends PositionComponent with TapCallbacks {
     for (final bus in level.buses) {
       if (bus.position == GridPoint(x, y) &&
           session.state.activeBusIds.contains(bus.id)) {
-        final previousMoveCount = session.state.moveCount;
-        session.dispatch(bus.id);
-        if (session.state.moveCount > previousMoveCount) {
-          _game.onSuccessfulDispatch?.call();
-        }
+        final result = session.dispatch(bus.id);
+        if (result?.changed == true) _game.onSuccessfulDispatch?.call(result!);
         return;
       }
     }

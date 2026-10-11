@@ -17,7 +17,7 @@ Bus-ster does not have an account system or a game server. The gameplay code doe
 The game stores the following in the app's private storage:
 
 - Progress: current depot ID, the sequence of bus dispatches needed to resume an attempt, completed depot IDs, and the Route Tip balance. The validated current save and its last-good recovery copy are stored in Android's private files directory.
-- Preferences: whether haptics are enabled and whether reduced motion is enabled. The current Android `SharedPreferencesAsync` backend uses DataStore Preferences in the app's private `files/datastore/FlutterSharedPreferences.preferences_pb` file.
+- Preferences: whether haptics, sound effects, and reduced motion are enabled. The current Android `SharedPreferencesAsync` backend uses DataStore Preferences in the app's private `files/datastore/FlutterSharedPreferences.preferences_pb` file.
 
 The game does not ask for a name, email address, contacts, location, photos, or other personal information. It does not operate an account or game server.
 
@@ -27,7 +27,7 @@ The game has no server-side gameplay records to delete. A player can remove loca
 
 ## Third-party services in this build
 
-The runtime dependencies are Flutter, Flame, `path_provider`, and `shared_preferences`. They are used for rendering/input and app-local storage. Firebase, Google Mobile Ads, Play Billing, and a crash-reporting SDK are not integrated in this prototype. Recheck the complete dependency and merged-manifest inventory in the release artifact before publication.
+The runtime dependencies are Flutter, Flame, `path_provider`, `shared_preferences`, and `audioplayers`. The audio plugin plays four bundled local WAV effects; the prototype has no streaming, account, analytics, or ad service configured. Firebase, Google Mobile Ads, Play Billing, and a crash-reporting SDK are not integrated. Recheck the complete dependency and merged-manifest inventory in the release artifact before publication.
 
 ## Required release updates
 
