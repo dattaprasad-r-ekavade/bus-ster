@@ -439,6 +439,7 @@ class _DepotScreenState extends State<DepotScreen> with WidgetsBindingObserver {
                             message: _session.message,
                             passengerCount: pending.length,
                             compact: compact,
+                            status: state.status,
                           ),
                           SizedBox(height: sectionGap),
                           _PassengerQueue(
@@ -892,11 +893,25 @@ class _ObjectiveCard extends StatelessWidget {
     required this.message,
     required this.passengerCount,
     required this.compact,
+    required this.status,
   });
 
   final String message;
   final int passengerCount;
   final bool compact;
+  final GameStatus status;
+
+  Color get _statusColor => switch (status) {
+    GameStatus.playing => const Color(0xFFFFC857),
+    GameStatus.won => const Color(0xFF8DE0A7),
+    GameStatus.stuck => const Color(0xFFFF806B),
+  };
+
+  IconData get _statusIcon => switch (status) {
+    GameStatus.playing => Icons.alt_route_rounded,
+    GameStatus.won => Icons.emoji_events_rounded,
+    GameStatus.stuck => Icons.warning_amber_rounded,
+  };
 
   @override
   Widget build(BuildContext context) {
@@ -907,17 +922,21 @@ class _ObjectiveCard extends StatelessWidget {
         vertical: compact ? 8 : 13,
       ),
       decoration: BoxDecoration(
-        color: const Color(0xFF1B2940),
+        color: status == GameStatus.won
+            ? const Color(0xFF1B353B)
+            : status == GameStatus.stuck
+            ? const Color(0xFF3D2B35)
+            : const Color(0xFF1B2940),
         borderRadius: BorderRadius.circular(17),
-        border: Border.all(color: const Color(0xFF2A3A54)),
+        border: Border.all(
+          color: status == GameStatus.playing
+              ? const Color(0xFF2A3A54)
+              : _statusColor.withValues(alpha: 0.72),
+        ),
       ),
       child: Row(
         children: [
-          Icon(
-            Icons.alt_route_rounded,
-            color: Color(0xFFFFC857),
-            size: compact ? 19 : 22,
-          ),
+          Icon(_statusIcon, color: _statusColor, size: compact ? 19 : 22),
           SizedBox(width: compact ? 7 : 10),
           Expanded(
             child: AnimatedSwitcher(
@@ -1166,7 +1185,7 @@ class _ActionBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (isWon || isStuck) {
+    if (isWon) {
       return SizedBox(
         width: double.infinity,
         height: compact ? 46 : 52,
@@ -1186,6 +1205,36 @@ class _ActionBar extends StatelessWidget {
             minimumSize: Size.fromHeight(compact ? 42 : 48),
           ),
         ),
+      );
+    }
+
+    if (isStuck) {
+      return Row(
+        children: [
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: canUndo ? onUndo : null,
+              icon: const Icon(Icons.undo_rounded, size: 19),
+              label: const Text('UNDO'),
+              style: OutlinedButton.styleFrom(
+                minimumSize: Size.fromHeight(compact ? 42 : 48),
+              ),
+            ),
+          ),
+          const SizedBox(width: 9),
+          Expanded(
+            child: FilledButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.replay_rounded),
+              label: const Text('TRY AGAIN'),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFFFFC857),
+                foregroundColor: const Color(0xFF24344B),
+                minimumSize: Size.fromHeight(compact ? 42 : 48),
+              ),
+            ),
+          ),
+        ],
       );
     }
 

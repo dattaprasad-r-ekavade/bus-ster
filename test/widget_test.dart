@@ -63,6 +63,78 @@ void main() {
     expect(find.byTooltip('Pause game'), findsOneWidget);
   });
 
+  testWidgets('stuck feedback offers undo as well as retry', (tester) async {
+    tester.view.physicalSize = const Size(430, 932);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final base = levels.first;
+    final trap = LevelSpec(
+      id: 'one-bay-trap',
+      title: base.title,
+      width: base.width,
+      height: base.height,
+      exit: base.exit,
+      roads: base.roads,
+      buses: base.buses,
+      passengers: base.passengers,
+      bayCount: 1,
+    );
+    await tester.pumpWidget(BussterApp(levelList: [trap]));
+    await tester.pump(const Duration(milliseconds: 100));
+    final game = tester
+        .widget<GameWidget<DepotGame>>(find.byType(GameWidget<DepotGame>))
+        .game!;
+
+    game.session.dispatch('blue');
+    await tester.pump();
+
+    expect(game.session.state.status, GameStatus.stuck);
+    expect(find.byIcon(Icons.warning_amber_rounded), findsOneWidget);
+    expect(
+      find.text('No clear route remains. Undo a dispatch or retry the depot.'),
+      findsOneWidget,
+    );
+    expect(find.text('UNDO'), findsOneWidget);
+    expect(find.text('TRY AGAIN'), findsOneWidget);
+
+    await tester.tap(find.text('UNDO'));
+    await tester.pump();
+
+    expect(game.session.state.status, GameStatus.playing);
+    expect(find.text('TRY AGAIN'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('completed depot shows clear feedback and next action', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(430, 932);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(BussterApp(levelList: levels));
+    await tester.pump(const Duration(milliseconds: 100));
+    final game = tester
+        .widget<GameWidget<DepotGame>>(find.byType(GameWidget<DepotGame>))
+        .game!;
+    game.session
+      ..dispatch('blue')
+      ..dispatch('coral')
+      ..dispatch('mint');
+    await tester.pump();
+
+    expect(find.byIcon(Icons.emoji_events_rounded), findsOneWidget);
+    expect(find.text('NEXT DEPOT'), findsOneWidget);
+    expect(find.textContaining('Depot clear!'), findsOneWidget);
+
+    await tester.tap(find.text('NEXT DEPOT'));
+    await tester.pump();
+
+    expect(find.textContaining('DEPOT 02'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('settings load, save, and update reduced motion live', (
     tester,
   ) async {
