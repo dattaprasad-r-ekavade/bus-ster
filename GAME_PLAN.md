@@ -184,6 +184,7 @@ Estimated elapsed time for a small team: **12–16 weeks**, with art/content run
 - [ ] Replace prototype motion with polished win/lose feedback; add an original, licensed audio mix with separate sound and haptic controls, then check text scaling and audio latency on the device matrix.
 - [x] Replace font glyphs with platform-independent vector route shapes in the bus, rider queue, and bay views; add screen-reader labels to queued riders and parked buses. Widget tests check route shapes and rider labels.
 - [ ] Verify color-vision readability through contrast checks, grayscale screenshots, and player sessions. Confirm every rule-critical object remains distinguishable without color.
+- [x] Check the core controls at 1.5× system text size in the compact 320×568 layout. Repeat the text and layout review on physical Android devices when available.
 - [ ] Build help, settings, privacy link placeholder, support contact, and localization-ready strings; ship at least clear English, then localize only markets that can be QA'd.
 - [ ] Measure frame times, memory, battery/thermal behavior, cold start, and AAB size on the device matrix; optimize overdraw and oversized textures.
 - **Exit:** stable, understandable, accessible build with no placeholder art and no device-specific blocker.

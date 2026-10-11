@@ -181,6 +181,26 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('keeps core controls readable with enlarged system text', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(320, 568);
+    tester.view.devicePixelRatio = 1;
+    tester.binding.platformDispatcher.textScaleFactorTestValue = 1.5;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(
+      tester.binding.platformDispatcher.clearTextScaleFactorTestValue,
+    );
+    await tester.pumpWidget(BussterApp(levelList: levels));
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.byTooltip('Pause game'), findsOneWidget);
+    expect(find.text('UNDO'), findsOneWidget);
+    expect(find.text('HINT 3'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('shows the first depot and rider queue', (tester) async {
     tester.view.physicalSize = const Size(430, 932);
     tester.view.devicePixelRatio = 1;
