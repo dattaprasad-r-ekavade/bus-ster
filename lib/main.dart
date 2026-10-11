@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
-import 'game/parking_jam_screen.dart';
+import 'game/game_audio.dart';
+import 'jam/ui/jam_level_loader.dart';
 import 'l10n/app_localizations.dart';
 
 void main() {
@@ -34,7 +35,7 @@ class BussterApp extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
-      home: const ParkingJamScreen(),
+      home: JamLevelLoader(audioFactory: AudioplayersGameAudio.new),
     );
   }
 }
