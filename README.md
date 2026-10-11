@@ -27,6 +27,8 @@ flutter build apk --debug
 ## Project documents
 
 - [Step-by-step game plan](GAME_PLAN.md)
+- [Stage 0 research and playtest workbook](docs/STAGE_0_FIELDWORK.md)
+- [Asset and license ledger](docs/ASSET_LEDGER.md)
 - [Level validation tool](tools/validate_levels.dart)
 
 The game and all eventual store assets must use original art, level layouts, sounds, and copy. The plan tracks playtest, production, monetization, and release gates.

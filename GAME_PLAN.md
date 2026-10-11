@@ -30,6 +30,8 @@ Snapshot from Google Play listings reviewed on 11 October 2026. Listing install 
 
 **Revenue evidence:** public Play listings do not disclose competitor revenue. The model in Section 2 is an arithmetic scenario, not an estimate for this product. “Decent revenue” depends on finding and retaining a large enough audience at a net contribution margin that exceeds acquisition and operating costs. Validate retention, ad tolerance, conversion, and country-level net revenue in a small test before buying installs.
 
+**Working-title check:** Play currently lists [Busster](https://play.google.com/store/apps/details?id=com.colixsystems.android.busster), a Swedish business workflow app, rather than a bus puzzle game. That is a near-name collision and a discoverability risk, even though the category differs. Keep “Bus-ster” provisional until a proper trademark, domain, and Play title search is done; this listing search is not legal clearance.
+
 ## 1. Product decision
 
 Build a polished, original, single-player, portrait-mode **bus dispatch puzzle** for Android. A player untangles buses, chooses which one can reach a departure bay, and boards the visible passenger queue. Short, readable puzzles and satisfying dispatch animations are the core value. The first release should work offline, start quickly on midrange phones, and be fun without paying or watching ads.
@@ -43,6 +45,10 @@ Build a polished, original, single-player, portrait-mode **bus dispatch puzzle**
 - **Route cards:** optional, limited special objectives (for example, send a bus through a marked depot lane) add planning depth after the basic loop is proven. Keep the launch rule set small.
 - **Fair recovery:** undo and a limited earned hint path exist without a purchase. Rewarded ads only offer extra convenience.
 - **Original presentation:** a small, bright city depot, distinct bus silhouettes, clear movement arcs, and restrained sound/haptics. Avoid the competitor's layouts and visual language.
+
+**Audience hypothesis:** people who enjoy short, one-thumb visual logic puzzles about traffic, ordering, and route planning. Recruit adults unfamiliar with the genre for the first usability rounds; decide age rating and any child-directed features only after content and privacy review.
+
+**Visual directions to compare:** (A) bright, flat transit-map depot with bold route signs; (B) miniature paper-and-enamel bus terminal with subtle depth; (C) high-contrast evening depot with luminous route markings. The current dark board is placeholder rendering, not a final art decision. Measure route and symbol readability before investing in the chosen direction. The first-10 teaching sequence and playtest protocol are in [`docs/STAGE_0_FIELDWORK.md`](docs/STAGE_0_FIELDWORK.md).
 
 ### Current gray-box rules (still a design hypothesis)
 
@@ -102,6 +108,8 @@ For each cohort and geography, track DAU/MAU, sessions/user, level attempts and 
 
 **Local environment checked:** Flutter 3.41.6, Dart 3.11.4, Android SDK 36 and Android Studio are installed. `flutter doctor -v` reports some Android SDK licenses not accepted. The debug APK built successfully, but the developer still needs to review/accept the applicable terms with `flutter doctor --android-licenses` before release work. Check plugin compatibility and select current stable package versions at implementation time; do not pin versions based on this planning snapshot.
 
+The built APK reports `minSdkVersion 24` and `targetSdkVersion 36`. Proposed QA profiles are (1) minimum API 24 for install/start/basic rules compatibility, (2) a low-cost Android 13 / API 33 phone with about 3–4 GB RAM and a 720p display, and (3) a current Android 16 / API 36 phone with about 6–8 GB RAM and a 1080p or higher display. Confirm the final support floor using expected launch-market device data and plugin requirements; run physical touch, background/resume, frame-time, and thermal checks before release. The current generic API 35 emulator covers none of the low-end physical-device risks.
+
 ### Module boundaries
 
 ```text
@@ -140,10 +148,11 @@ Estimated elapsed time for a small team: **12–16 weeks**, with art/content run
 
 - [x] Review current Play listings for Bus Fever Party! and three genre peers; record advertised mechanics, public scale signals, monetization and a small number of review themes in the Market Scan above. This is desk research only.
 - [ ] Install and play the current Bus Fever Party! and at least three genre peers. Record the first 30 minutes, levels 1–20 progression, exact movement/boarding rules, bay behavior, fail states, booster economy, ad placements, shop, accessibility, and store positioning. Keep recordings private as research; copy no assets or levels.
-- [x] Draft the original product decision and provisional rules in Section 1, and add an optional in-game rules-help dialog. The audience, visual direction, final differentiator, and first-10 teaching sequence still need to be settled.
-- [ ] Run 10 rapid gray-box/paper sessions with people unfamiliar with the genre. Note where they misread routes, queue order, and blockers; compare at least one original mechanic candidate.
-- [ ] Make an asset/license ledger and choose a distinctive title/icon direction. Check title and listing for IP/impersonation risk before store investment.
-- [ ] Decide the target device matrix: small/large phone, low/mid/high GPU, Android versions supported by current plugins; establish memory and APK/AAB size budgets. So far only the generic Android 15 / API 35 emulator named above has been used.
+- [x] Draft the original product decision and provisional rules in Section 1, add an optional in-game rules-help dialog, and prepare an audience hypothesis, three visual directions, and a first-10 teaching sequence. The audience, visual direction, and final differentiator still need to be settled through playtests.
+- [x] Prepare the 10-session protocol and anonymized notes table in [`docs/STAGE_0_FIELDWORK.md`](docs/STAGE_0_FIELDWORK.md); the sessions themselves have not run.
+- [x] Start the asset/license ledger in [`docs/ASSET_LEDGER.md`](docs/ASSET_LEDGER.md). Final art and icon provenance are pending.
+- [x] Search Play for title collisions and record the existing Busster business app above. A full trademark/domain check and final icon/title decision remain pending.
+- [ ] Confirm the target device matrix: small/large phone, low/mid/high GPU, Android versions supported by current plugins; establish memory and APK/AAB size budgets. So far only the generic Android 15 / API 35 emulator named above has been used.
 - **Exit:** written final rules and at least one genuinely differentiated mechanic; ≥ 8/10 participants can explain the core objective after the tutorial without coaching. **Not met:** hands-on teardown and external playtests are still open.
 
 ### Stage 1 — playable vertical slice (weeks 2–4)
