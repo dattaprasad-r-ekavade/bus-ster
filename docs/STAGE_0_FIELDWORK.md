@@ -2,6 +2,8 @@
 
 _Prepared 11 October 2026. No hands-on competitor session or external player session has been run yet. The team currently has no physical test phones or adult playtest participants available._
 
+> **Design reset:** this workbook now targets the replacement directional parking-jam slice in the [design review](DESIGN_REVIEW_2026-10-11.md). Its proposed teaching beats remain hypotheses until the owner accepts the slice and first-time players are observed.
+
 Use this workbook to close the Stage 0 evidence gates in [`GAME_PLAN.md`](../GAME_PLAN.md). Store-listing descriptions and review snippets are useful discovery signals, but do not substitute for playing the apps or observing people try Bus-ster.
 
 ## Competitor teardown record
@@ -27,34 +29,34 @@ For each title, record observations from a clean install and first 30 minutes. K
 
 Run one worksheet per title. If an app is unavailable in the test region or cannot be installed on a test device, record that limitation and use its public listing as desk research only.
 
-## Gray-box player session
+## Replacement-slice player session
 
 ### Setup
 
 - Recruit 10 adults who have not played a bus-jam game recently. This is a formative usability sample, not market validation or a representative survey.
-- Test in person with the same Android build and the same starting level. Ask for permission before taking notes or recording; a recording is optional. Do not record names, contact details, or other personal information in this workbook.
-- Prepare two paper variants: the current shared-exit/FIFO/bay rules and one route-switch junction concept. Randomize which concept is shown first across sessions where practical.
+- Test in person with the accepted directional parking-jam Android build and the same starting level. Ask for permission before taking notes or recording; a recording is optional. Do not record names, contact details, or other personal information in this workbook.
+- Prepare a simple first level and one crowded follow-up level. Show the actual build, not the old road-network prototype.
 - Tell each participant: “We are testing the game, not you. Please say what you think as you play.” Do not coach during the first attempt.
 
 ### Session steps (about 15 minutes)
 
 1. Show the opening screen and ask what they think the goal is. Do not explain the controls.
-2. Let them play Depot 01 for up to three minutes. Record time to first move, route misreads, invalid taps, and whether the visible queue is understood.
-3. Ask them to explain what happens to a dispatched bus, how riders board, and what makes the bay fill or clear.
+2. Let them play Level 01 for up to three minutes. Record time to first move, facing-arrow misreads, blocked taps, and whether the passenger group and boarding spaces are understood.
+3. Ask them to explain why a vehicle cannot leave, what space a departing vehicle opens, how matching riders board, and what makes a boarding space fill or clear.
 4. Show the optional “How to play” dialog if they did not understand the loop; let them retry or use Undo/Route Tip without prompting a purchase or ad.
 5. Ask what felt satisfying, what felt unfair or unclear, and whether they would try another depot. Do not ask them to rate hypothetical willingness to pay as evidence of actual revenue.
-6. Show the route-switch paper variant. Ask them to solve one small board, compare it with the baseline, and say what changed. Record confusion as carefully as preference.
+6. Show one crowded follow-up level. Ask what move they would make first and why. Record whether the player predicts which vehicle becomes free after that move.
 
 ### Pass/fail observations
 
-- **Comprehension gate:** at least 8 of 10 participants can explain the objective, route blocker, FIFO order, and matching-bus behavior after the tutorial without coaching.
+- **Comprehension gate:** at least 8 of 10 participants can explain the objective, facing/blocked-path rule, space opened by a departure, and matching-bus behavior after the tutorial without coaching.
 - **Friction gate:** any repeated misunderstanding by three or more participants becomes a design issue, even if the comprehension threshold passes.
-- **Differentiation gate:** participants can describe the route-switch mechanic unaided after play, and prefer its strategic choice to the baseline often enough to justify a second prototype. Do not claim differentiation from one small round of tests.
+- **Spatial-planning gate:** at least 7 of 10 can predict one newly available vehicle after a departure on the crowded follow-up level without coaching. Treat this as an internal usability target, not a market benchmark.
 - **Next step:** summarize counts and observations only. Change one rule or tutorial element at a time, then rerun with new participants.
 
 ### Anonymized notes
 
-| Participant | First move time | Explained goal after tutorial? | Misread or invalid action | Queue/bay understood? | Route-switch variant reaction | Change to test |
+| Participant | First move time | Explained goal after tutorial? | Misread or invalid action | Facing/boarding understood? | Predicted next free vehicle? | Change to test |
 | --- | --- | --- | --- | --- | --- | --- |
 | P01 | | | | | | |
 | P02 | | | | | | |
@@ -67,19 +69,19 @@ Run one worksheet per title. If an app is unavailable in the test region or cann
 | P09 | | | | | | |
 | P10 | | | | | | |
 
-## First 10 teaching beats (proposal)
+## First 10 teaching beats for the replacement slice (proposal)
 
-These prompts are attached to the ten prototype levels as a first pass. They describe intended instruction, not evidence that players learn the rule or that the difficulty curve works. Revise the prompts and level order after the competitor teardown and player sessions.
+These are design targets for new levels, not prompts attached to the current ten road-network depots. They describe intended instruction, not evidence that players learn the rule or that the difficulty curve works. Revise the sequence after direct competitor play, owner review, and player sessions.
 
-| Level | Intended lesson | Current in-game prompt (provisional) | Keep out of this level |
+| Level | Intended lesson | Candidate prompt, to rewrite with the final rules | Keep out of this level |
 | --- | --- | --- | --- |
-| 1 | A clear-route bus can be dispatched; identify the exit and route symbol. | “Tap a bus with a clear road to the EXIT.” | Bay traps, undo dependence, hidden colors |
-| 2 | The visible FIFO queue determines who boards next. | “The first rider in the visible queue boards first.” | Multiple new blockers |
-| 3 | A mismatched bus can wait safely while the player sends a needed bus. | “A mismatched bus can wait in a bay while you serve the next rider.” | New booster or timer |
-| 4 | A bus blocks a road node; opening the road changes which bus can move. | “A bus on the road blocks every route through its tile.” | Tight bay pressure |
-| 5 | Queue order and road access both affect dispatch order. | “Queue order and road access both shape a good dispatch order.” | Extra route colors beyond what is needed |
-| 6 | A full bus leaves and frees a bay for later buses. | “A full bus leaves and opens a bay for the next bus.” | Hard deadlock |
-| 7 | Follow a branch through a junction to the shared exit. | “Branches rejoin the shared road leading to the EXIT.” | Color-only distinctions |
-| 8 | Plan around both queue order and road blocking. | “Think ahead: sending a bus opens road tiles but may fill a bay.” | Randomness |
-| 9 | Use bays for staging while applying the established rules. | “Use the bays to stage buses while following the queue.” | Unvalidated route-switch mechanic or several new rules |
-| 10 | Review the road, queue, and bay lessons in a capstone. | “Depot review: check the road, the next rider, and open bays each move.” | Required ad/purchase or an untested difficulty spike |
+| 1 | Notice the vehicle's facing and release one with a clear forward path. | “Follow the arrow. Tap a bus with room ahead.” | Bay traps, undo dependence, hidden color |
+| 2 | Recognize that a blocker prevents a forward release. | “This bus is blocked. Free the one in front first.” | Multiple colors or capacities |
+| 3 | See that a departure opens the cells it occupied. | “Now the bus behind it can move.” | Bay pressure |
+| 4 | Match one visible passenger group to its bus symbol/color. | “Bring the matching bus to the waiting group.” | Mixed groups |
+| 5 | Compare two possible releases and choose the useful one. | “Which move opens the next bus?” | Timers and boosters |
+| 6 | Understand the selected queue or grouping rule after direct rule validation. | “Watch which riders board next.” | Additional new mechanic |
+| 7 | Understand one waiting bus in a boarding space. | “Leave a space for the bus you need.” | Hard deadlock |
+| 8 | Use Undo after a poor but legal choice. | “Try another order. Undo is free.” | Required ad or purchase |
+| 9 | Plan a short release chain across mixed orientations. | “Clear the vehicle in front, then release the one behind.” | Randomness |
+| 10 | Combine facing, blockers, passengers, and bays. | “Check the lane, the riders, and the open spaces.” | Untested difficulty spike |

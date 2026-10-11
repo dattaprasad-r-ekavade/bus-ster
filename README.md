@@ -1,6 +1,8 @@
 # Bus-ster
 
-Bus-ster is an original portrait-mode Android bus dispatch puzzle built with Flutter and Flame. Players clear a road network, send buses through a shared exit, and board a visible first-in-first-out rider queue.
+Bus-ster is a Flutter/Flame Android game in development. The intended product is an original, bright parking-jam puzzle with direction-marked vehicles, visible passengers, and boarding spaces. **The runnable build below is a superseded road-network technical prototype:** its gameplay and visual style were rejected in the owner review. See the [design review and replacement brief](docs/DESIGN_REVIEW_2026-10-11.md) and the [revised staged plan](GAME_PLAN.md) before adding content or art.
+
+A separate [provisional parking-jam rules spike](lib/game/parking_jam_model.dart) has begun. It is tested in plain Dart but is not yet connected to the runnable Flutter screen.
 
 ## Run the prototype
 
@@ -20,10 +22,10 @@ flutter build appbundle --release
 
 The current Android Gradle release variant uses the debug signing key. These artifacts are for local validation only and must not be uploaded to Play Console.
 
-The first 10 depots are playable. Tap a bus on the road to send it toward the exit. If it cannot board the next riders, it waits in a departure bay. Use **Route Tip** for a solver hint or **Undo** to reverse a dispatch.
+The ten historical depots are playable for technical inspection only. Tap a bus on the road to send it toward the exit. If it cannot board the next riders, it waits in a departure bay. Use **Route Tip** for a solver hint or **Undo** to reverse a dispatch. These mechanics are being replaced and the ten levels do not count toward launch content.
 Open **How to play** in the top bar for the core rules.
 
-The depot board, buses, route markers, rider marks, and bay indicators use original vector artwork drawn in the app. Four short, original synthesized sound effects play offline for dispatch, boarding, depot clear, and stuck feedback. This art and audio direction is still awaiting player review; the asset sources and release checks are tracked in [`docs/ASSET_LEDGER.md`](docs/ASSET_LEDGER.md).
+The technical prototype uses original vector artwork and four original synthesized sound effects. The owner rejected its evening-depot visual direction; the assets are recorded in [`docs/ASSET_LEDGER.md`](docs/ASSET_LEDGER.md) and may be replaced or adapted after the new layout review.
 
 Progress, unlocked depots, and earned Route Tips save locally on Android; the core game works offline. Android system backup can transfer the allow-listed progress and settings files when enabled in the user's device/account settings. Players start with three tips, earn one on each depot’s first clear (up to five), and unlock depots in order. Switching away from an unfinished attempt asks first. The progress format is versioned and tested for migration and recovery.
 
@@ -53,7 +55,7 @@ dart run tools/preview_levels.dart
 flutter build apk --debug
 ```
 
-Edit `assets/levels/levels.json` to author levels. The validator checks the versioned schema, geometry, passenger capacity, tutorial metadata, and solver path. The preview tool writes an HTML overview to `build/level-preview.html`. To generate two seeded queue-order candidates from each authored depot, run `dart run tools/generate_level_candidates.dart --seed 20261011 --per-level 2`; candidates go under `build/level-candidates/`, stay outside the shipping pack, and need human review. To create a solver-checked mirrored layout, run `dart run tools/level_variants.dart depot-03 x`; mirrored candidates go under `build/level-variants/` and also need human review before release.
+The current `assets/levels/levels.json`, validator, HTML preview, queue-order generator, and mirror helper belong to the superseded road-network model. Keep them for regression checks during the redesign; **do not author or generate more old-schema levels**. Replace the schema and tools after the new parking-jam rules are implemented.
 
 With an Android emulator or device connected, run the first-dispatch smoke test:
 
@@ -72,6 +74,8 @@ The JSON report is written under the ignored `build/android-metrics/` folder. `a
 ## Project documents
 
 - [Step-by-step game plan](GAME_PLAN.md)
+- [Design review and replacement acceptance brief](docs/DESIGN_REVIEW_2026-10-11.md)
+- [Preliminary phone-scale screen concepts](docs/concepts/parking-jam-direction.html)
 - [Stage 0 research and playtest workbook](docs/STAGE_0_FIELDWORK.md)
 - [Level schema and authoring workflow](docs/LEVEL_SCHEMA.md)
 - [Asset and license ledger](docs/ASSET_LEDGER.md)

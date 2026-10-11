@@ -1,5 +1,7 @@
 # Level bundle schema
 
+> **Superseded product schema:** this documents the runnable road-network technical prototype. The owner rejected its game loop. Do not create new content with this format for launch. The replacement directional parking-jam schema, solver, and authoring workflow are specified as the next build steps in the [design review](DESIGN_REVIEW_2026-10-11.md). Keep these instructions only to reproduce and test the existing prototype.
+
 The canonical authored level pack is [`assets/levels/levels.json`](../assets/levels/levels.json). The app loads this asset at startup through `LevelBundleCodec`; level rules and solver checks remain in plain Dart.
 
 ## Bundle shape

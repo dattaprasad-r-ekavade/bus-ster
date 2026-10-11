@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bus-ster — replacement screen direction</title>
+<style>
+  :root { font-family: ui-rounded, "Trebuchet MS", system-ui, sans-serif; color: #233047; background: #e7edf0; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 26px; }
+  h1 { font-size: 24px; margin: 0 0 6px; }
+  p { max-width: 760px; margin: 0 0 18px; color: #586778; line-height: 1.45; }
+  .gallery { display: flex; flex-wrap: wrap; gap: 28px; align-items: flex-start; }
+  .caption { font-weight: 800; margin: 0 0 8px; }
+  .phone { position: relative; width: 360px; height: 780px; overflow: hidden; border: 8px solid #26364b; border-radius: 36px; background: #f8f5e8; box-shadow: 0 20px 35px #1b34413a; }
+  .phone:before { content: ""; position: absolute; top: 0; left: 132px; width: 80px; height: 15px; border-radius: 0 0 12px 12px; background: #26364b; z-index: 5; }
+  .sky { height: 25%; padding: 22px 15px 0; background: linear-gradient(#c5eafa 0%, #def3e9 80%, #edeccf 100%); }
+  .topline { display: flex; align-items: center; justify-content: space-between; }
+  .badge { padding: 7px 12px; border-radius: 15px; background: #fffaf0; color: #254663; font-weight: 1000; box-shadow: 0 3px 0 #a5cdd0; }
+  .level { font-size: 14px; font-weight: 1000; color: #28445c; }
+  .goal { margin: 8px 0 3px; font-size: 19px; line-height: 1.05; font-weight: 1000; max-width: 250px; }
+  .hint { font-size: 11px; color: #3c6675; font-weight: 700; }
+  .queue { height: 59px; border: 4px solid #90baa9; border-radius: 35px; margin-top: 8px; display: flex; align-items: center; justify-content: space-evenly; background: #f9f6e6; box-shadow: inset 0 4px #dce9ce; }
+  .rider { width: 27px; height: 38px; display: grid; place-items: end center; position: relative; font-size: 17px; font-weight: 1000; color: #24334b; }
+  .rider:before { content: ""; position: absolute; top: 1px; left: 6px; width: 16px; height: 16px; border-radius: 50%; background: var(--c); box-shadow: 0 1px 0 #345; }
+  .rider:after { content: ""; position: absolute; top: 16px; left: 2px; width: 24px; height: 21px; border-radius: 11px 11px 5px 5px; background: var(--c); box-shadow: 0 2px 0 #4566; }
+  .rider b { z-index: 1; font-size: 13px; line-height: 16px; }
+  .station { height: 15%; padding: 8px 14px 0; position: relative; background: linear-gradient(#e5e4c7,#d7d8b7); border-top: 5px solid #aebc89; border-bottom: 5px solid #9caa84; }
+  .station .label { position: absolute; top: -15px; right: 18px; padding: 4px 12px; border-radius: 20px; background: #fbd35d; font-size: 11px; font-weight: 1000; transform: rotate(2deg); }
+  .bays { display: flex; gap: 7px; margin-top: 10px; }
+  .bay { flex: 1; height: 62px; border: 3px dashed #f9faf2; border-radius: 13px; background: #a8c2b0; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 1000; font-size: 12px; box-shadow: inset 0 0 0 2px #729c85; }
+  .bay.ready { background: #f7bf63; border: 3px solid #fff; color: #25394c; }
+  .lot { height: 52%; position: relative; margin: 0 7px; border: 5px solid #8ea3a0; border-radius: 12px 12px 22px 22px; background-color: #aebfba; background-image: linear-gradient(90deg, #ffffff6b 2px, transparent 2px), linear-gradient(#ffffff6b 2px, transparent 2px); background-size: 56px 56px; box-shadow: inset 0 5px 0 #819a98; }
+  .lot .edge { position: absolute; left: 3px; right: 3px; top: 1px; padding: 2px; text-align: center; background: #fff7; border-radius: 4px; color: #44645f; font-size: 10px; font-weight: 900; letter-spacing: 3px; }
+  .vehicle { position: absolute; border: 3px solid #2e4654; border-radius: 14px; background: var(--c); box-shadow: 0 5px 0 #34495970, inset 0 6px #ffffff87; display: flex; align-items: center; justify-content: center; color: #173247; font-size: 20px; font-weight: 1000; }
+  .vehicle:before, .vehicle:after { content: ""; position: absolute; background: #effbfe; border: 2px solid #33556b; border-radius: 5px; }
+  .vehicle.h:before { left: 22%; right: 22%; top: 4px; height: 13px; }
+  .vehicle.h:after { left: 22%; right: 22%; bottom: 4px; height: 13px; }
+  .vehicle.v:before { top: 22%; bottom: 22%; left: 4px; width: 13px; }
+  .vehicle.v:after { top: 22%; bottom: 22%; right: 4px; width: 13px; }
+  .vehicle span { position: relative; z-index: 1; text-shadow: 0 1px #fff; }
+  .vehicle.blocked { filter: saturate(.85); }
+  .vehicle.select { outline: 5px solid #ffe36a; outline-offset: 1px; }
+  .controls { height: 8%; display: flex; align-items: center; justify-content: space-around; background: #f8f5e8; }
+  .controls div { padding: 9px 16px; border-radius: 18px; background: #fff; border: 2px solid #b9c7c3; color: #385268; font-size: 13px; font-weight: 900; }
+  .controls .tip { background: #fed969; border-color: #e8b753; }
+  .smallnote { margin-top: 10px; max-width: 360px; font-size: 13px; color: #526679; }
+</style>
+<h1>Bus-ster — replacement screen direction</h1>
+<p>Original layout studies for owner review. The crowded parking lot, visible passenger groups, nearby boarding spaces, and facing arrows are the intended hierarchy. These are static compositions; the actual rule and motion prototype is the next gate. No reference-game assets or traced level layouts are used.</p>
+<div class="gallery">
+  <section><div class="caption">A · first lesson</div><div class="phone">
+    <div class="sky"><div class="topline"><div class="badge">BUS·STER</div><div class="level">LEVEL 01</div></div><div class="goal">Free the coral bus</div><div class="hint">Tap the arrow when the lane is clear.</div><div class="queue">
+      <div class="rider" style="--c:#ff806d"><b>●</b></div><div class="rider" style="--c:#ff806d"><b>●</b></div><div class="rider" style="--c:#7acde5"><b>◆</b></div><div class="rider" style="--c:#7acde5"><b>◆</b></div><div class="rider" style="--c:#90d89d"><b>▲</b></div><div class="rider" style="--c:#90d89d"><b>▲</b></div>
+    </div></div><div class="station"><div class="label">BOARDING</div><div class="bays"><div class="bay ready">ARRIVAL</div><div class="bay">BAY 2</div><div class="bay">BAY 3</div></div></div>
+    <div class="lot"><div class="edge">PARKING LOT</div>
+      <div class="vehicle v select" style="--c:#ff806d;left:18px;top:38px;width:49px;height:105px"><span>↑ ●</span></div>
+      <div class="vehicle h" style="--c:#f6cd5f;left:77px;top:38px;width:104px;height:49px"><span>→ ✦</span></div>
+      <div class="vehicle h blocked" style="--c:#7acde5;left:189px;top:38px;width:105px;height:49px"><span>← ◆</span></div>
+      <div class="vehicle v" style="--c:#90d89d;left:77px;top:96px;width:49px;height:105px"><span>↑ ▲</span></div>
+      <div class="vehicle h" style="--c:#bb9ce4;left:136px;top:96px;width:158px;height:49px"><span>→ ◆</span></div>
+      <div class="vehicle v" style="--c:#f6cd5f;left:18px;top:152px;width:49px;height:105px"><span>↓ ✦</span></div>
+      <div class="vehicle h" style="--c:#7acde5;left:77px;top:211px;width:104px;height:49px"><span>→ ◆</span></div>
+      <div class="vehicle h" style="--c:#ff806d;left:189px;top:155px;width:105px;height:49px"><span>← ●</span></div>
+      <div class="vehicle h" style="--c:#90d89d;left:18px;top:274px;width:160px;height:49px"><span>→ ▲</span></div>
+      <div class="vehicle v" style="--c:#bb9ce4;left:190px;top:267px;width:49px;height:106px"><span>↑ ◆</span></div>
+    </div><div class="controls"><div>↶ Undo</div><div>⟳ Retry</div><div class="tip">? Hint</div></div>
+  </div><div class="smallnote">Ten vehicles; one highlighted release teaches facing and clearance. The dense board is a composition target; the tutorial rules may be simpler.</div></section>
+  <section><div class="caption">B · crowded puzzle</div><div class="phone">
+    <div class="sky"><div class="topline"><div class="badge">BUS·STER</div><div class="level">LEVEL 18</div></div><div class="goal">Make room to board</div><div class="hint">Clear blockers. Keep a bay open.</div><div class="queue">
+      <div class="rider" style="--c:#90d89d"><b>▲</b></div><div class="rider" style="--c:#90d89d"><b>▲</b></div><div class="rider" style="--c:#f6cd5f"><b>✦</b></div><div class="rider" style="--c:#ff806d"><b>●</b></div><div class="rider" style="--c:#ff806d"><b>●</b></div><div class="rider" style="--c:#7acde5"><b>◆</b></div>
+    </div></div><div class="station"><div class="label">BOARDING</div><div class="bays"><div class="bay ready">▲ 1/2</div><div class="bay">BAY 2</div><div class="bay">BAY 3</div></div></div>
+    <div class="lot"><div class="edge">PARKING LOT</div>
+      <div class="vehicle h" style="--c:#7acde5;left:18px;top:38px;width:104px;height:49px"><span>← ◆</span></div>
+      <div class="vehicle v" style="--c:#f6cd5f;left:132px;top:38px;width:49px;height:105px"><span>↑ ✦</span></div>
+      <div class="vehicle h" style="--c:#ff806d;left:190px;top:38px;width:104px;height:49px"><span>→ ●</span></div>
+      <div class="vehicle v" style="--c:#90d89d;left:18px;top:96px;width:49px;height:105px"><span>↓ ▲</span></div>
+      <div class="vehicle h" style="--c:#bb9ce4;left:77px;top:96px;width:105px;height:49px"><span>← ◆</span></div>
+      <div class="vehicle v" style="--c:#7acde5;left:190px;top:96px;width:49px;height:105px"><span>↑ ◆</span></div>
+      <div class="vehicle v" style="--c:#f6cd5f;left:247px;top:96px;width:49px;height:105px"><span>↓ ✦</span></div>
+      <div class="vehicle h" style="--c:#ff806d;left:18px;top:210px;width:105px;height:49px"><span>→ ●</span></div>
+      <div class="vehicle h" style="--c:#90d89d;left:132px;top:210px;width:163px;height:49px"><span>← ▲</span></div>
+      <div class="vehicle h" style="--c:#bb9ce4;left:77px;top:153px;width:104px;height:49px"><span>→ ◆</span></div>
+      <div class="vehicle h" style="--c:#f6cd5f;left:18px;top:274px;width:163px;height:49px"><span>→ ✦</span></div>
+      <div class="vehicle v" style="--c:#ff806d;left:247px;top:267px;width:49px;height:106px"><span>↑ ●</span></div>
+    </div><div class="controls"><div>↶ Undo</div><div>⟳ Retry</div><div class="tip">? Hint</div></div>
+  </div><div class="smallnote">Twelve vehicles, mixed orientations, an occupied bay, and a varied waiting group create a more legible planning state.</div></section>
+</div>
+</html>
