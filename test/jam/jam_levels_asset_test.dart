@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:busster/jam/jam_generator.dart';
 import 'package:busster/jam/jam_level_codec.dart';
 import 'package:busster/jam/jam_model.dart';
 import 'package:busster/jam/jam_solver.dart';
@@ -10,10 +11,44 @@ void main() {
     File('assets/levels/jam_levels.json').readAsStringSync(),
   );
 
-  test('bundle holds the three tutorial levels', () {
-    expect(levels.map((l) => l.id), ['tutorial-1', 'tutorial-2', 'tutorial-3']);
-    for (final level in levels) {
+  test('bundle holds the three tutorials first, then 27 generated levels', () {
+    expect(levels, hasLength(30));
+    expect(levels.take(3).map((l) => l.id), [
+      'tutorial-1',
+      'tutorial-2',
+      'tutorial-3',
+    ]);
+    for (final level in levels.take(3)) {
       expect(level.hint, isNotNull, reason: level.id);
+    }
+    expect(levels.skip(3).map((l) => l.id), [
+      for (var n = 4; n <= 30; n++) 'level-${n.toString().padLeft(3, '0')}',
+    ]);
+    expect(levels.map((l) => l.id).toSet(), hasLength(levels.length));
+  });
+
+  test('lots fit 8x10 and bays stay within 3..7', () {
+    for (final level in levels) {
+      expect(level.width, inInclusiveRange(1, 8), reason: level.id);
+      expect(level.height, inInclusiveRange(1, 10), reason: level.id);
+      expect(level.bayCount, inInclusiveRange(3, 7), reason: level.id);
+    }
+  });
+
+  test('generated levels can be lost and offer a choice', () {
+    // Sampled with fewer playouts than the validator to keep tests fast.
+    for (final level in levels.skip(3)) {
+      final rules = JamRules(level);
+      expect(
+        rules.legalTaps(rules.initialState()).length,
+        greaterThanOrEqualTo(2),
+        reason: level.id,
+      );
+      expect(
+        jamPlayoutFailRate(level, playouts: 200),
+        greaterThan(0),
+        reason: level.id,
+      );
     }
   });
 
@@ -32,7 +67,8 @@ void main() {
 
   test('tutorial difficulty ramps as designed', () {
     final byId = {
-      for (final l in levels) l.id: analyzeJam(l, playouts: 1000, seed: 1),
+      for (final l in levels.take(3))
+        l.id: analyzeJam(l, playouts: 1000, seed: 1),
     };
     final t1 = byId['tutorial-1']!;
     final t2 = byId['tutorial-2']!;

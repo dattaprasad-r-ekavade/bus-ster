@@ -44,6 +44,731 @@
         ["red", 2], ["blue", 2], ["red", 2], ["blue", 2],
         ["green", 2], ["yellow", 2], ["green", 2], ["yellow", 2]
       ]
+    },
+    {
+      "id": "level-004",
+      "width": 5,
+      "height": 6,
+      "bays": 5,
+      "vehicles": [
+        {"id": "r1", "color": "red", "facing": "right", "x": 4, "y": 4, "length": 4},
+        {"id": "b1", "color": "blue", "facing": "right", "x": 4, "y": 2, "length": 3},
+        {"id": "r2", "color": "red", "facing": "down", "x": 0, "y": 5, "length": 2},
+        {"id": "b2", "color": "blue", "facing": "left", "x": 1, "y": 0, "length": 3},
+        {"id": "r3", "color": "red", "facing": "down", "x": 0, "y": 3, "length": 3},
+        {"id": "g1", "color": "green", "facing": "up", "x": 4, "y": 0, "length": 2},
+        {"id": "b3", "color": "blue", "facing": "right", "x": 4, "y": 3, "length": 4},
+        {"id": "g2", "color": "green", "facing": "right", "x": 3, "y": 1, "length": 2},
+        {"id": "g3", "color": "green", "facing": "down", "x": 1, "y": 2, "length": 2}
+      ],
+      "passengers": [
+        ["red", 8], ["green", 4], ["blue", 6], ["green", 2],
+        ["red", 3], ["green", 5], ["red", 4], ["blue", 4],
+        ["red", 3], ["blue", 6], ["green", 1], ["blue", 4]
+      ]
+    },
+    {
+      "id": "level-005",
+      "width": 5,
+      "height": 6,
+      "bays": 5,
+      "vehicles": [
+        {"id": "r1", "color": "red", "facing": "left", "x": 0, "y": 1, "length": 2},
+        {"id": "r2", "color": "red", "facing": "up", "x": 2, "y": 0, "length": 2},
+        {"id": "r3", "color": "red", "facing": "left", "x": 0, "y": 2, "length": 3},
+        {"id": "g1", "color": "green", "facing": "right", "x": 4, "y": 5, "length": 3},
+        {"id": "r4", "color": "red", "facing": "right", "x": 4, "y": 0, "length": 2},
+        {"id": "b1", "color": "blue", "facing": "right", "x": 1, "y": 0, "length": 2},
+        {"id": "g2", "color": "green", "facing": "down", "x": 4, "y": 3, "length": 3},
+        {"id": "b2", "color": "blue", "facing": "left", "x": 2, "y": 4, "length": 2},
+        {"id": "g3", "color": "green", "facing": "down", "x": 3, "y": 3, "length": 3},
+        {"id": "b3", "color": "blue", "facing": "left", "x": 0, "y": 3, "length": 3}
+      ],
+      "passengers": [
+        ["red", 4], ["green", 6], ["red", 9], ["green", 6],
+        ["blue", 2], ["red", 4], ["blue", 1], ["red", 1],
+        ["blue", 8], ["green", 6], ["blue", 3]
+      ]
+    },
+    {
+      "id": "level-006",
+      "width": 5,
+      "height": 6,
+      "bays": 5,
+      "vehicles": [
+        {"id": "r1", "color": "red", "facing": "right", "x": 4, "y": 2, "length": 3},
+        {"id": "b1", "color": "blue", "facing": "up", "x": 0, "y": 0, "length": 4},
+        {"id": "r2", "color": "red", "facing": "right", "x": 4, "y": 5, "length": 2},
+        {"id": "b2", "color": "blue", "facing": "right", "x": 2, "y": 5, "length": 3},
+        {"id": "g1", "color": "green", "facing": "down", "x": 2, "y": 4, "length": 2},
+        {"id": "r3", "color": "red", "facing": "left", "x": 1, "y": 0, "length": 2},
+        {"id": "g2", "color": "green", "facing": "left", "x": 0, "y": 4, "length": 2},
+        {"id": "b3", "color": "blue", "facing": "right", "x": 4, "y": 1, "length": 2},
+        {"id": "r4", "color": "red", "facing": "down", "x": 1, "y": 3, "length": 3},
+        {"id": "g3", "color": "green", "facing": "up", "x": 4, "y": 3, "length": 2}
+      ],
+      "passengers": [
+        ["green", 1], ["blue", 6], ["red", 2], ["blue", 4],
+        ["green", 7], ["blue", 4], ["red", 2], ["blue", 4],
+        ["red", 6], ["green", 4], ["red", 10]
+      ]
+    },
+    {
+      "id": "level-007",
+      "width": 5,
+      "height": 6,
+      "bays": 5,
+      "vehicles": [
+        {"id": "b1", "color": "blue", "facing": "down", "x": 3, "y": 5, "length": 3},
+        {"id": "r1", "color": "red", "facing": "left", "x": 1, "y": 1, "length": 3},
+        {"id": "r2", "color": "red", "facing": "down", "x": 0, "y": 5, "length": 2},
+        {"id": "b2", "color": "blue", "facing": "right", "x": 4, "y": 2, "length": 4},
+        {"id": "y1", "color": "yellow", "facing": "left", "x": 1, "y": 4, "length": 2},
+        {"id": "r3", "color": "red", "facing": "right", "x": 3, "y": 0, "length": 2},
+        {"id": "g1", "color": "green", "facing": "right", "x": 1, "y": 0, "length": 2},
+        {"id": "b3", "color": "blue", "facing": "down", "x": 4, "y": 4, "length": 2},
+        {"id": "y2", "color": "yellow", "facing": "down", "x": 0, "y": 3, "length": 2},
+        {"id": "g2", "color": "green", "facing": "left", "x": 1, "y": 5, "length": 2}
+      ],
+      "passengers": [
+        ["red", 3], ["blue", 6], ["red", 3], ["blue", 3],
+        ["red", 2], ["blue", 3], ["red", 2], ["blue", 2],
+        ["yellow", 4], ["red", 3], ["green", 4], ["red", 1],
+        ["green", 4], ["yellow", 4], ["blue", 4]
+      ]
+    },
+    {
+      "id": "level-008",
+      "width": 5,
+      "height": 6,
+      "bays": 5,
+      "vehicles": [
+        {"id": "y1", "color": "yellow", "facing": "right", "x": 3, "y": 0, "length": 3},
+        {"id": "r1", "color": "red", "facing": "up", "x": 4, "y": 1, "length": 4},
+        {"id": "y2", "color": "yellow", "facing": "left", "x": 1, "y": 1, "length": 2},
+        {"id": "g1", "color": "green", "facing": "down", "x": 0, "y": 5, "length": 2},
+        {"id": "r2", "color": "red", "facing": "left", "x": 1, "y": 5, "length": 4},
+        {"id": "g2", "color": "green", "facing": "left", "x": 0, "y": 3, "length": 3},
+        {"id": "b1", "color": "blue", "facing": "left", "x": 1, "y": 4, "length": 3},
+        {"id": "b2", "color": "blue", "facing": "left", "x": 0, "y": 2, "length": 4}
+      ],
+      "passengers": [
+        ["green", 2], ["yellow", 3], ["green", 2], ["yellow", 2],
+        ["green", 3], ["yellow", 5], ["red", 4], ["blue", 2],
+        ["green", 3], ["red", 2], ["blue", 3], ["red", 6],
+        ["blue", 9], ["red", 4]
+      ]
+    },
+    {
+      "id": "level-009",
+      "width": 5,
+      "height": 7,
+      "bays": 5,
+      "vehicles": [
+        {"id": "b1", "color": "blue", "facing": "right", "x": 4, "y": 5, "length": 4},
+        {"id": "g1", "color": "green", "facing": "down", "x": 0, "y": 4, "length": 2},
+        {"id": "r1", "color": "red", "facing": "up", "x": 4, "y": 1, "length": 2},
+        {"id": "g2", "color": "green", "facing": "down", "x": 0, "y": 2, "length": 3},
+        {"id": "r2", "color": "red", "facing": "right", "x": 4, "y": 4, "length": 4},
+        {"id": "b2", "color": "blue", "facing": "up", "x": 2, "y": 0, "length": 3},
+        {"id": "g3", "color": "green", "facing": "up", "x": 1, "y": 0, "length": 3},
+        {"id": "r3", "color": "red", "facing": "left", "x": 1, "y": 3, "length": 4},
+        {"id": "b3", "color": "blue", "facing": "left", "x": 1, "y": 6, "length": 4}
+      ],
+      "passengers": [
+        ["green", 4], ["blue", 12], ["red", 3], ["blue", 2],
+        ["red", 3], ["green", 6], ["blue", 3], ["green", 4],
+        ["red", 6], ["green", 2], ["blue", 5], ["red", 8]
+      ]
+    },
+    {
+      "id": "level-010",
+      "width": 5,
+      "height": 7,
+      "bays": 5,
+      "vehicles": [
+        {"id": "y1", "color": "yellow", "facing": "up", "x": 0, "y": 0, "length": 3},
+        {"id": "g1", "color": "green", "facing": "up", "x": 1, "y": 1, "length": 2},
+        {"id": "r1", "color": "red", "facing": "left", "x": 2, "y": 0, "length": 2},
+        {"id": "b1", "color": "blue", "facing": "up", "x": 3, "y": 1, "length": 2},
+        {"id": "b2", "color": "blue", "facing": "right", "x": 4, "y": 6, "length": 3},
+        {"id": "g2", "color": "green", "facing": "up", "x": 3, "y": 3, "length": 2},
+        {"id": "y2", "color": "yellow", "facing": "down", "x": 2, "y": 5, "length": 4},
+        {"id": "g3", "color": "green", "facing": "right", "x": 1, "y": 6, "length": 2},
+        {"id": "r2", "color": "red", "facing": "down", "x": 4, "y": 2, "length": 2},
+        {"id": "b3", "color": "blue", "facing": "down", "x": 0, "y": 5, "length": 3},
+        {"id": "r3", "color": "red", "facing": "down", "x": 1, "y": 5, "length": 3}
+      ],
+      "passengers": [
+        ["green", 4], ["red", 4], ["yellow", 6], ["blue", 16],
+        ["red", 4], ["yellow", 2], ["green", 2], ["red", 4],
+        ["yellow", 1], ["red", 2], ["yellow", 5], ["green", 6]
+      ]
+    },
+    {
+      "id": "level-011",
+      "width": 6,
+      "height": 7,
+      "bays": 4,
+      "vehicles": [
+        {"id": "g1", "color": "green", "facing": "down", "x": 4, "y": 6, "length": 2},
+        {"id": "r1", "color": "red", "facing": "left", "x": 0, "y": 5, "length": 4},
+        {"id": "r2", "color": "red", "facing": "down", "x": 1, "y": 3, "length": 4},
+        {"id": "r3", "color": "red", "facing": "down", "x": 0, "y": 3, "length": 4},
+        {"id": "g2", "color": "green", "facing": "down", "x": 5, "y": 5, "length": 4},
+        {"id": "b1", "color": "blue", "facing": "right", "x": 4, "y": 4, "length": 3},
+        {"id": "b2", "color": "blue", "facing": "down", "x": 3, "y": 3, "length": 3},
+        {"id": "y1", "color": "yellow", "facing": "down", "x": 4, "y": 3, "length": 3},
+        {"id": "y2", "color": "yellow", "facing": "left", "x": 2, "y": 0, "length": 4},
+        {"id": "b3", "color": "blue", "facing": "down", "x": 2, "y": 3, "length": 3}
+      ],
+      "passengers": [
+        ["green", 4], ["red", 16], ["green", 2], ["red", 4],
+        ["green", 6], ["red", 4], ["blue", 12], ["yellow", 14],
+        ["blue", 6]
+      ]
+    },
+    {
+      "id": "level-012",
+      "width": 6,
+      "height": 7,
+      "bays": 5,
+      "vehicles": [
+        {"id": "y1", "color": "yellow", "facing": "up", "x": 0, "y": 0, "length": 2},
+        {"id": "g1", "color": "green", "facing": "left", "x": 1, "y": 6, "length": 4},
+        {"id": "g2", "color": "green", "facing": "left", "x": 2, "y": 0, "length": 4},
+        {"id": "p1", "color": "purple", "facing": "right", "x": 5, "y": 2, "length": 3},
+        {"id": "b1", "color": "blue", "facing": "down", "x": 5, "y": 6, "length": 4},
+        {"id": "y2", "color": "yellow", "facing": "right", "x": 4, "y": 3, "length": 4},
+        {"id": "b2", "color": "blue", "facing": "left", "x": 2, "y": 1, "length": 4},
+        {"id": "r1", "color": "red", "facing": "up", "x": 0, "y": 3, "length": 3},
+        {"id": "p2", "color": "purple", "facing": "up", "x": 4, "y": 4, "length": 2},
+        {"id": "r2", "color": "red", "facing": "right", "x": 3, "y": 4, "length": 3},
+        {"id": "r3", "color": "red", "facing": "right", "x": 3, "y": 5, "length": 2}
+      ],
+      "passengers": [
+        ["yellow", 2], ["green", 8], ["yellow", 2], ["purple", 1],
+        ["green", 4], ["purple", 5], ["green", 4], ["yellow", 8],
+        ["blue", 3], ["red", 3], ["blue", 4], ["purple", 1],
+        ["blue", 4], ["purple", 3], ["red", 3], ["blue", 5],
+        ["red", 10]
+      ]
+    },
+    {
+      "id": "level-013",
+      "width": 6,
+      "height": 7,
+      "bays": 5,
+      "vehicles": [
+        {"id": "p1", "color": "purple", "facing": "down", "x": 4, "y": 6, "length": 4},
+        {"id": "p2", "color": "purple", "facing": "right", "x": 5, "y": 1, "length": 2},
+        {"id": "g1", "color": "green", "facing": "right", "x": 3, "y": 5, "length": 3},
+        {"id": "b1", "color": "blue", "facing": "right", "x": 2, "y": 6, "length": 3},
+        {"id": "b2", "color": "blue", "facing": "left", "x": 0, "y": 2, "length": 3},
+        {"id": "r1", "color": "red", "facing": "right", "x": 5, "y": 0, "length": 2},
+        {"id": "r2", "color": "red", "facing": "up", "x": 0, "y": 0, "length": 2},
+        {"id": "b3", "color": "blue", "facing": "left", "x": 1, "y": 0, "length": 3},
+        {"id": "y1", "color": "yellow", "facing": "up", "x": 5, "y": 2, "length": 3},
+        {"id": "g2", "color": "green", "facing": "right", "x": 3, "y": 1, "length": 3},
+        {"id": "y2", "color": "yellow", "facing": "up", "x": 3, "y": 2, "length": 3},
+        {"id": "r3", "color": "red", "facing": "right", "x": 2, "y": 3, "length": 3}
+      ],
+      "passengers": [
+        ["green", 6], ["purple", 12], ["red", 3], ["blue", 5],
+        ["red", 1], ["blue", 7], ["yellow", 6], ["red", 4],
+        ["green", 1], ["red", 6], ["yellow", 4], ["blue", 3],
+        ["green", 2], ["blue", 3], ["yellow", 2], ["green", 3]
+      ]
+    },
+    {
+      "id": "level-014",
+      "width": 6,
+      "height": 7,
+      "bays": 5,
+      "vehicles": [
+        {"id": "g1", "color": "green", "facing": "right", "x": 5, "y": 4, "length": 3},
+        {"id": "g2", "color": "green", "facing": "right", "x": 4, "y": 5, "length": 3},
+        {"id": "g3", "color": "green", "facing": "down", "x": 1, "y": 5, "length": 3},
+        {"id": "r1", "color": "red", "facing": "down", "x": 0, "y": 6, "length": 4},
+        {"id": "r2", "color": "red", "facing": "down", "x": 0, "y": 2, "length": 2},
+        {"id": "r3", "color": "red", "facing": "left", "x": 0, "y": 0, "length": 3},
+        {"id": "y1", "color": "yellow", "facing": "left", "x": 1, "y": 2, "length": 3},
+        {"id": "y2", "color": "yellow", "facing": "left", "x": 3, "y": 3, "length": 2},
+        {"id": "b1", "color": "blue", "facing": "left", "x": 3, "y": 0, "length": 3},
+        {"id": "b2", "color": "blue", "facing": "up", "x": 5, "y": 1, "length": 3},
+        {"id": "b3", "color": "blue", "facing": "right", "x": 3, "y": 1, "length": 3}
+      ],
+      "passengers": [["green", 18], ["red", 18], ["yellow", 10], ["blue", 18]]
+    },
+    {
+      "id": "level-015",
+      "width": 6,
+      "height": 7,
+      "bays": 5,
+      "vehicles": [
+        {"id": "p1", "color": "purple", "facing": "up", "x": 0, "y": 2, "length": 3},
+        {"id": "p2", "color": "purple", "facing": "up", "x": 1, "y": 3, "length": 2},
+        {"id": "b1", "color": "blue", "facing": "left", "x": 2, "y": 2, "length": 2},
+        {"id": "g1", "color": "green", "facing": "up", "x": 0, "y": 5, "length": 2},
+        {"id": "g2", "color": "green", "facing": "up", "x": 5, "y": 2, "length": 3},
+        {"id": "g3", "color": "green", "facing": "left", "x": 2, "y": 1, "length": 3},
+        {"id": "b2", "color": "blue", "facing": "right", "x": 4, "y": 3, "length": 2},
+        {"id": "b3", "color": "blue", "facing": "down", "x": 5, "y": 6, "length": 2},
+        {"id": "y1", "color": "yellow", "facing": "right", "x": 4, "y": 6, "length": 2},
+        {"id": "y2", "color": "yellow", "facing": "left", "x": 2, "y": 0, "length": 3},
+        {"id": "r1", "color": "red", "facing": "up", "x": 4, "y": 4, "length": 2},
+        {"id": "r2", "color": "red", "facing": "up", "x": 2, "y": 3, "length": 2},
+        {"id": "r3", "color": "red", "facing": "up", "x": 3, "y": 4, "length": 2},
+        {"id": "y3", "color": "yellow", "facing": "right", "x": 2, "y": 5, "length": 2}
+      ],
+      "passengers": [
+        ["purple", 10], ["blue", 4], ["green", 16], ["blue", 4],
+        ["yellow", 4], ["blue", 4], ["yellow", 6], ["red", 12],
+        ["yellow", 4]
+      ]
+    },
+    {
+      "id": "level-016",
+      "width": 6,
+      "height": 7,
+      "bays": 5,
+      "vehicles": [
+        {"id": "g1", "color": "green", "facing": "down", "x": 0, "y": 5, "length": 3},
+        {"id": "p1", "color": "purple", "facing": "up", "x": 4, "y": 0, "length": 3},
+        {"id": "r1", "color": "red", "facing": "up", "x": 4, "y": 3, "length": 2},
+        {"id": "b1", "color": "blue", "facing": "down", "x": 4, "y": 6, "length": 2},
+        {"id": "b2", "color": "blue", "facing": "up", "x": 5, "y": 3, "length": 2},
+        {"id": "b3", "color": "blue", "facing": "left", "x": 1, "y": 0, "length": 2},
+        {"id": "p2", "color": "purple", "facing": "left", "x": 1, "y": 6, "length": 2},
+        {"id": "r2", "color": "red", "facing": "down", "x": 3, "y": 6, "length": 2},
+        {"id": "g2", "color": "green", "facing": "down", "x": 3, "y": 4, "length": 3},
+        {"id": "g3", "color": "green", "facing": "up", "x": 1, "y": 1, "length": 3},
+        {"id": "r3", "color": "red", "facing": "up", "x": 5, "y": 5, "length": 2},
+        {"id": "y1", "color": "yellow", "facing": "left", "x": 2, "y": 1, "length": 2},
+        {"id": "y2", "color": "yellow", "facing": "up", "x": 2, "y": 2, "length": 2},
+        {"id": "y3", "color": "yellow", "facing": "up", "x": 2, "y": 4, "length": 2}
+      ],
+      "passengers": [
+        ["purple", 6], ["green", 6], ["red", 4], ["blue", 12],
+        ["purple", 4], ["red", 4], ["green", 12], ["yellow", 4],
+        ["red", 4], ["yellow", 8]
+      ]
+    },
+    {
+      "id": "level-017",
+      "width": 6,
+      "height": 8,
+      "bays": 4,
+      "vehicles": [
+        {"id": "b1", "color": "blue", "facing": "right", "x": 5, "y": 2, "length": 3},
+        {"id": "r1", "color": "red", "facing": "left", "x": 0, "y": 6, "length": 4},
+        {"id": "r2", "color": "red", "facing": "right", "x": 4, "y": 0, "length": 4},
+        {"id": "b2", "color": "blue", "facing": "right", "x": 2, "y": 2, "length": 2},
+        {"id": "r3", "color": "red", "facing": "right", "x": 5, "y": 1, "length": 4},
+        {"id": "g1", "color": "green", "facing": "up", "x": 4, "y": 4, "length": 4},
+        {"id": "g2", "color": "green", "facing": "down", "x": 5, "y": 6, "length": 4},
+        {"id": "y1", "color": "yellow", "facing": "right", "x": 2, "y": 5, "length": 3},
+        {"id": "y2", "color": "yellow", "facing": "right", "x": 3, "y": 3, "length": 4},
+        {"id": "p1", "color": "purple", "facing": "down", "x": 0, "y": 2, "length": 3},
+        {"id": "p2", "color": "purple", "facing": "left", "x": 1, "y": 7, "length": 3}
+      ],
+      "passengers": [
+        ["blue", 6], ["red", 16], ["blue", 4], ["green", 5],
+        ["red", 3], ["green", 2], ["red", 5], ["green", 9],
+        ["yellow", 14], ["purple", 12]
+      ]
+    },
+    {
+      "id": "level-018",
+      "width": 6,
+      "height": 8,
+      "bays": 5,
+      "vehicles": [
+        {"id": "b1", "color": "blue", "facing": "left", "x": 0, "y": 7, "length": 4},
+        {"id": "b2", "color": "blue", "facing": "left", "x": 0, "y": 2, "length": 2},
+        {"id": "p1", "color": "purple", "facing": "left", "x": 4, "y": 7, "length": 2},
+        {"id": "p2", "color": "purple", "facing": "left", "x": 0, "y": 6, "length": 2},
+        {"id": "g1", "color": "green", "facing": "up", "x": 0, "y": 0, "length": 2},
+        {"id": "p3", "color": "purple", "facing": "down", "x": 0, "y": 5, "length": 3},
+        {"id": "y1", "color": "yellow", "facing": "down", "x": 1, "y": 5, "length": 3},
+        {"id": "y2", "color": "yellow", "facing": "left", "x": 1, "y": 1, "length": 3},
+        {"id": "y3", "color": "yellow", "facing": "left", "x": 4, "y": 1, "length": 2},
+        {"id": "r1", "color": "red", "facing": "left", "x": 2, "y": 6, "length": 2},
+        {"id": "g2", "color": "green", "facing": "up", "x": 4, "y": 2, "length": 4},
+        {"id": "g3", "color": "green", "facing": "down", "x": 2, "y": 3, "length": 2},
+        {"id": "r2", "color": "red", "facing": "up", "x": 5, "y": 3, "length": 3},
+        {"id": "r3", "color": "red", "facing": "left", "x": 4, "y": 6, "length": 2},
+        {"id": "b3", "color": "blue", "facing": "down", "x": 3, "y": 5, "length": 4}
+      ],
+      "passengers": [
+        ["blue", 12], ["purple", 8], ["green", 4], ["red", 4],
+        ["purple", 2], ["yellow", 6], ["purple", 2], ["yellow", 4],
+        ["purple", 2], ["yellow", 6], ["green", 8], ["blue", 4],
+        ["red", 3], ["green", 3], ["red", 1], ["green", 1],
+        ["red", 3], ["blue", 1], ["red", 3], ["blue", 3]
+      ]
+    },
+    {
+      "id": "level-019",
+      "width": 6,
+      "height": 8,
+      "bays": 5,
+      "vehicles": [
+        {"id": "y1", "color": "yellow", "facing": "left", "x": 1, "y": 7, "length": 2},
+        {"id": "p1", "color": "purple", "facing": "left", "x": 1, "y": 1, "length": 4},
+        {"id": "y2", "color": "yellow", "facing": "down", "x": 4, "y": 7, "length": 2},
+        {"id": "g1", "color": "green", "facing": "up", "x": 5, "y": 0, "length": 3},
+        {"id": "g2", "color": "green", "facing": "right", "x": 4, "y": 2, "length": 4},
+        {"id": "r1", "color": "red", "facing": "left", "x": 0, "y": 6, "length": 4},
+        {"id": "b1", "color": "blue", "facing": "right", "x": 3, "y": 0, "length": 4},
+        {"id": "b2", "color": "blue", "facing": "up", "x": 5, "y": 3, "length": 2},
+        {"id": "b3", "color": "blue", "facing": "up", "x": 1, "y": 3, "length": 3},
+        {"id": "g3", "color": "green", "facing": "up", "x": 5, "y": 5, "length": 3},
+        {"id": "r2", "color": "red", "facing": "down", "x": 0, "y": 4, "length": 3},
+        {"id": "r3", "color": "red", "facing": "left", "x": 2, "y": 3, "length": 2},
+        {"id": "p2", "color": "purple", "facing": "left", "x": 2, "y": 4, "length": 3}
+      ],
+      "passengers": [
+        ["yellow", 4], ["purple", 8], ["yellow", 4], ["green", 14],
+        ["red", 8], ["blue", 18], ["green", 6], ["red", 10],
+        ["purple", 6]
+      ]
+    },
+    {
+      "id": "level-020",
+      "width": 6,
+      "height": 8,
+      "bays": 5,
+      "vehicles": [
+        {"id": "g1", "color": "green", "facing": "left", "x": 0, "y": 1, "length": 2},
+        {"id": "r1", "color": "red", "facing": "right", "x": 5, "y": 3, "length": 2},
+        {"id": "r2", "color": "red", "facing": "down", "x": 4, "y": 7, "length": 3},
+        {"id": "r3", "color": "red", "facing": "down", "x": 0, "y": 6, "length": 3},
+        {"id": "y1", "color": "yellow", "facing": "left", "x": 0, "y": 2, "length": 2},
+        {"id": "g2", "color": "green", "facing": "left", "x": 0, "y": 0, "length": 3},
+        {"id": "b1", "color": "blue", "facing": "left", "x": 4, "y": 2, "length": 2},
+        {"id": "b2", "color": "blue", "facing": "left", "x": 3, "y": 0, "length": 2},
+        {"id": "b3", "color": "blue", "facing": "left", "x": 4, "y": 1, "length": 2},
+        {"id": "y2", "color": "yellow", "facing": "up", "x": 5, "y": 4, "length": 2},
+        {"id": "y3", "color": "yellow", "facing": "down", "x": 1, "y": 7, "length": 2},
+        {"id": "g3", "color": "green", "facing": "left", "x": 2, "y": 7, "length": 2},
+        {"id": "o1", "color": "orange", "facing": "down", "x": 3, "y": 6, "length": 2},
+        {"id": "p1", "color": "purple", "facing": "up", "x": 1, "y": 3, "length": 3},
+        {"id": "o2", "color": "orange", "facing": "right", "x": 4, "y": 4, "length": 3},
+        {"id": "p2", "color": "purple", "facing": "up", "x": 5, "y": 6, "length": 2}
+      ],
+      "passengers": [
+        ["green", 4], ["red", 4], ["green", 6], ["yellow", 4],
+        ["red", 12], ["blue", 12], ["yellow", 8], ["green", 4],
+        ["orange", 4], ["purple", 6], ["orange", 6], ["purple", 4]
+      ]
+    },
+    {
+      "id": "level-021",
+      "width": 6,
+      "height": 8,
+      "bays": 5,
+      "vehicles": [
+        {"id": "r1", "color": "red", "facing": "right", "x": 5, "y": 7, "length": 2},
+        {"id": "p1", "color": "purple", "facing": "right", "x": 3, "y": 7, "length": 3},
+        {"id": "r2", "color": "red", "facing": "right", "x": 2, "y": 1, "length": 2},
+        {"id": "b1", "color": "blue", "facing": "left", "x": 0, "y": 3, "length": 3},
+        {"id": "b2", "color": "blue", "facing": "left", "x": 1, "y": 0, "length": 2},
+        {"id": "b3", "color": "blue", "facing": "down", "x": 0, "y": 7, "length": 2},
+        {"id": "g1", "color": "green", "facing": "left", "x": 3, "y": 0, "length": 3},
+        {"id": "g2", "color": "green", "facing": "right", "x": 5, "y": 2, "length": 3},
+        {"id": "y1", "color": "yellow", "facing": "right", "x": 2, "y": 2, "length": 2},
+        {"id": "o1", "color": "orange", "facing": "up", "x": 5, "y": 4, "length": 3},
+        {"id": "o2", "color": "orange", "facing": "right", "x": 4, "y": 5, "length": 3},
+        {"id": "g3", "color": "green", "facing": "right", "x": 3, "y": 4, "length": 4},
+        {"id": "y2", "color": "yellow", "facing": "right", "x": 1, "y": 5, "length": 2},
+        {"id": "p2", "color": "purple", "facing": "down", "x": 0, "y": 2, "length": 2},
+        {"id": "r3", "color": "red", "facing": "left", "x": 1, "y": 6, "length": 4}
+      ],
+      "passengers": [
+        ["red", 4], ["purple", 6], ["red", 4], ["blue", 10],
+        ["green", 6], ["blue", 4], ["green", 6], ["orange", 6],
+        ["yellow", 4], ["orange", 6], ["green", 8], ["yellow", 4],
+        ["red", 8], ["purple", 4]
+      ]
+    },
+    {
+      "id": "level-022",
+      "width": 6,
+      "height": 8,
+      "bays": 4,
+      "vehicles": [
+        {"id": "b1", "color": "blue", "facing": "up", "x": 2, "y": 0, "length": 2},
+        {"id": "b2", "color": "blue", "facing": "right", "x": 5, "y": 6, "length": 3},
+        {"id": "g1", "color": "green", "facing": "up", "x": 0, "y": 4, "length": 3},
+        {"id": "g2", "color": "green", "facing": "left", "x": 2, "y": 4, "length": 4},
+        {"id": "p1", "color": "purple", "facing": "left", "x": 2, "y": 7, "length": 4},
+        {"id": "p2", "color": "purple", "facing": "right", "x": 5, "y": 0, "length": 3},
+        {"id": "r1", "color": "red", "facing": "right", "x": 2, "y": 6, "length": 2},
+        {"id": "r2", "color": "red", "facing": "left", "x": 1, "y": 5, "length": 2},
+        {"id": "r3", "color": "red", "facing": "down", "x": 1, "y": 3, "length": 4},
+        {"id": "y1", "color": "yellow", "facing": "left", "x": 3, "y": 5, "length": 3},
+        {"id": "y2", "color": "yellow", "facing": "down", "x": 5, "y": 3, "length": 3},
+        {"id": "o1", "color": "orange", "facing": "right", "x": 4, "y": 2, "length": 3},
+        {"id": "o2", "color": "orange", "facing": "right", "x": 4, "y": 3, "length": 3}
+      ],
+      "passengers": [
+        ["blue", 10], ["green", 14], ["purple", 14], ["red", 16],
+        ["yellow", 12], ["orange", 12]
+      ]
+    },
+    {
+      "id": "level-023",
+      "width": 6,
+      "height": 8,
+      "bays": 5,
+      "vehicles": [
+        {"id": "b1", "color": "blue", "facing": "down", "x": 5, "y": 6, "length": 2},
+        {"id": "b2", "color": "blue", "facing": "left", "x": 0, "y": 7, "length": 2},
+        {"id": "b3", "color": "blue", "facing": "down", "x": 5, "y": 4, "length": 2},
+        {"id": "o1", "color": "orange", "facing": "down", "x": 0, "y": 6, "length": 2},
+        {"id": "o2", "color": "orange", "facing": "left", "x": 2, "y": 7, "length": 3},
+        {"id": "y1", "color": "yellow", "facing": "up", "x": 3, "y": 0, "length": 2},
+        {"id": "y2", "color": "yellow", "facing": "up", "x": 3, "y": 2, "length": 2},
+        {"id": "p1", "color": "purple", "facing": "right", "x": 3, "y": 6, "length": 3},
+        {"id": "p2", "color": "purple", "facing": "up", "x": 2, "y": 0, "length": 3},
+        {"id": "g1", "color": "green", "facing": "left", "x": 4, "y": 0, "length": 2},
+        {"id": "y3", "color": "yellow", "facing": "down", "x": 1, "y": 5, "length": 3},
+        {"id": "g2", "color": "green", "facing": "up", "x": 4, "y": 2, "length": 3},
+        {"id": "g3", "color": "green", "facing": "up", "x": 5, "y": 1, "length": 2},
+        {"id": "r1", "color": "red", "facing": "left", "x": 3, "y": 5, "length": 2},
+        {"id": "r2", "color": "red", "facing": "right", "x": 1, "y": 1, "length": 2},
+        {"id": "r3", "color": "red", "facing": "up", "x": 0, "y": 3, "length": 2}
+      ],
+      "passengers": [
+        ["blue", 12], ["orange", 10], ["yellow", 4], ["purple", 6],
+        ["yellow", 4], ["purple", 6], ["green", 4], ["yellow", 6],
+        ["green", 10], ["red", 12]
+      ]
+    },
+    {
+      "id": "level-024",
+      "width": 7,
+      "height": 8,
+      "bays": 5,
+      "vehicles": [
+        {"id": "y1", "color": "yellow", "facing": "up", "x": 2, "y": 0, "length": 3},
+        {"id": "g1", "color": "green", "facing": "right", "x": 6, "y": 7, "length": 3},
+        {"id": "r1", "color": "red", "facing": "down", "x": 3, "y": 7, "length": 3},
+        {"id": "r2", "color": "red", "facing": "up", "x": 0, "y": 0, "length": 4},
+        {"id": "r3", "color": "red", "facing": "right", "x": 6, "y": 1, "length": 4},
+        {"id": "b1", "color": "blue", "facing": "right", "x": 6, "y": 0, "length": 4},
+        {"id": "b2", "color": "blue", "facing": "down", "x": 5, "y": 6, "length": 4},
+        {"id": "y2", "color": "yellow", "facing": "up", "x": 6, "y": 3, "length": 4},
+        {"id": "y3", "color": "yellow", "facing": "right", "x": 1, "y": 7, "length": 2},
+        {"id": "g2", "color": "green", "facing": "right", "x": 2, "y": 6, "length": 3},
+        {"id": "g3", "color": "green", "facing": "down", "x": 4, "y": 4, "length": 3},
+        {"id": "b3", "color": "blue", "facing": "right", "x": 2, "y": 5, "length": 2},
+        {"id": "p1", "color": "purple", "facing": "down", "x": 0, "y": 5, "length": 2},
+        {"id": "p2", "color": "purple", "facing": "right", "x": 3, "y": 4, "length": 3},
+        {"id": "p3", "color": "purple", "facing": "right", "x": 3, "y": 3, "length": 3}
+      ],
+      "passengers": [
+        ["yellow", 6], ["green", 2], ["blue", 8], ["red", 4],
+        ["green", 4], ["red", 18], ["blue", 8], ["yellow", 12],
+        ["green", 12], ["blue", 4], ["purple", 16]
+      ]
+    },
+    {
+      "id": "level-025",
+      "width": 7,
+      "height": 8,
+      "bays": 5,
+      "vehicles": [
+        {"id": "p1", "color": "purple", "facing": "left", "x": 0, "y": 6, "length": 3},
+        {"id": "b1", "color": "blue", "facing": "right", "x": 6, "y": 7, "length": 3},
+        {"id": "r1", "color": "red", "facing": "left", "x": 1, "y": 5, "length": 2},
+        {"id": "o1", "color": "orange", "facing": "left", "x": 0, "y": 0, "length": 2},
+        {"id": "o2", "color": "orange", "facing": "down", "x": 6, "y": 2, "length": 2},
+        {"id": "y1", "color": "yellow", "facing": "left", "x": 0, "y": 1, "length": 2},
+        {"id": "y2", "color": "yellow", "facing": "up", "x": 0, "y": 2, "length": 3},
+        {"id": "g1", "color": "green", "facing": "up", "x": 2, "y": 0, "length": 3},
+        {"id": "b2", "color": "blue", "facing": "up", "x": 2, "y": 3, "length": 2},
+        {"id": "y3", "color": "yellow", "facing": "right", "x": 3, "y": 7, "length": 3},
+        {"id": "p2", "color": "purple", "facing": "left", "x": 3, "y": 0, "length": 4},
+        {"id": "b3", "color": "blue", "facing": "up", "x": 3, "y": 2, "length": 2},
+        {"id": "r2", "color": "red", "facing": "up", "x": 4, "y": 1, "length": 3},
+        {"id": "r3", "color": "red", "facing": "up", "x": 5, "y": 1, "length": 2},
+        {"id": "g2", "color": "green", "facing": "up", "x": 5, "y": 3, "length": 3},
+        {"id": "p3", "color": "purple", "facing": "up", "x": 3, "y": 4, "length": 2},
+        {"id": "g3", "color": "green", "facing": "up", "x": 4, "y": 5, "length": 2}
+      ],
+      "passengers": [
+        ["purple", 6], ["blue", 6], ["orange", 4], ["red", 4],
+        ["yellow", 4], ["orange", 4], ["yellow", 6], ["purple", 5],
+        ["green", 6], ["blue", 4], ["yellow", 6], ["purple", 3],
+        ["blue", 4], ["red", 6], ["green", 2], ["red", 4],
+        ["purple", 4], ["green", 8]
+      ]
+    },
+    {
+      "id": "level-026",
+      "width": 7,
+      "height": 9,
+      "bays": 5,
+      "vehicles": [
+        {"id": "r1", "color": "red", "facing": "up", "x": 6, "y": 0, "length": 4},
+        {"id": "r2", "color": "red", "facing": "down", "x": 0, "y": 7, "length": 4},
+        {"id": "r3", "color": "red", "facing": "right", "x": 6, "y": 8, "length": 2},
+        {"id": "p1", "color": "purple", "facing": "down", "x": 0, "y": 2, "length": 3},
+        {"id": "p2", "color": "purple", "facing": "right", "x": 4, "y": 0, "length": 4},
+        {"id": "p3", "color": "purple", "facing": "left", "x": 1, "y": 5, "length": 3},
+        {"id": "b1", "color": "blue", "facing": "right", "x": 4, "y": 8, "length": 3},
+        {"id": "o1", "color": "orange", "facing": "down", "x": 5, "y": 7, "length": 3},
+        {"id": "o2", "color": "orange", "facing": "up", "x": 6, "y": 5, "length": 3},
+        {"id": "y1", "color": "yellow", "facing": "down", "x": 4, "y": 6, "length": 2},
+        {"id": "y2", "color": "yellow", "facing": "down", "x": 5, "y": 4, "length": 3},
+        {"id": "y3", "color": "yellow", "facing": "right", "x": 3, "y": 6, "length": 2},
+        {"id": "g1", "color": "green", "facing": "right", "x": 3, "y": 7, "length": 3},
+        {"id": "b2", "color": "blue", "facing": "up", "x": 1, "y": 1, "length": 3},
+        {"id": "b3", "color": "blue", "facing": "left", "x": 2, "y": 1, "length": 4},
+        {"id": "g2", "color": "green", "facing": "up", "x": 3, "y": 2, "length": 3},
+        {"id": "g3", "color": "green", "facing": "up", "x": 2, "y": 2, "length": 3}
+      ],
+      "passengers": [
+        ["red", 20], ["purple", 14], ["orange", 6], ["purple", 6],
+        ["blue", 6], ["orange", 6], ["yellow", 14], ["blue", 6],
+        ["green", 12], ["blue", 8], ["green", 6]
+      ]
+    },
+    {
+      "id": "level-027",
+      "width": 7,
+      "height": 9,
+      "bays": 5,
+      "vehicles": [
+        {"id": "p1", "color": "purple", "facing": "right", "x": 6, "y": 7, "length": 3},
+        {"id": "o1", "color": "orange", "facing": "up", "x": 4, "y": 0, "length": 2},
+        {"id": "y1", "color": "yellow", "facing": "up", "x": 3, "y": 0, "length": 2},
+        {"id": "y2", "color": "yellow", "facing": "right", "x": 6, "y": 0, "length": 2},
+        {"id": "p2", "color": "purple", "facing": "left", "x": 1, "y": 8, "length": 2},
+        {"id": "r1", "color": "red", "facing": "left", "x": 5, "y": 1, "length": 2},
+        {"id": "p3", "color": "purple", "facing": "left", "x": 3, "y": 8, "length": 4},
+        {"id": "r2", "color": "red", "facing": "left", "x": 0, "y": 0, "length": 3},
+        {"id": "g1", "color": "green", "facing": "down", "x": 6, "y": 6, "length": 3},
+        {"id": "b1", "color": "blue", "facing": "right", "x": 6, "y": 2, "length": 3},
+        {"id": "o2", "color": "orange", "facing": "down", "x": 5, "y": 6, "length": 4},
+        {"id": "y3", "color": "yellow", "facing": "right", "x": 3, "y": 2, "length": 2},
+        {"id": "g2", "color": "green", "facing": "right", "x": 1, "y": 2, "length": 2},
+        {"id": "g3", "color": "green", "facing": "up", "x": 1, "y": 3, "length": 3},
+        {"id": "o3", "color": "orange", "facing": "left", "x": 2, "y": 5, "length": 3},
+        {"id": "r3", "color": "red", "facing": "left", "x": 2, "y": 4, "length": 3},
+        {"id": "b2", "color": "blue", "facing": "up", "x": 3, "y": 6, "length": 2},
+        {"id": "r4", "color": "red", "facing": "right", "x": 2, "y": 6, "length": 3},
+        {"id": "b3", "color": "blue", "facing": "right", "x": 2, "y": 7, "length": 3}
+      ],
+      "passengers": [
+        ["purple", 6], ["yellow", 4], ["orange", 4], ["red", 4],
+        ["purple", 2], ["yellow", 2], ["purple", 2], ["yellow", 2],
+        ["purple", 8], ["red", 4], ["orange", 4], ["blue", 6],
+        ["green", 6], ["red", 2], ["yellow", 4], ["orange", 4],
+        ["red", 6], ["orange", 4], ["green", 2], ["blue", 4],
+        ["green", 8], ["red", 4], ["orange", 2], ["red", 2],
+        ["blue", 6]
+      ]
+    },
+    {
+      "id": "level-028",
+      "width": 7,
+      "height": 9,
+      "bays": 5,
+      "vehicles": [
+        {"id": "b1", "color": "blue", "facing": "right", "x": 5, "y": 0, "length": 3},
+        {"id": "b2", "color": "blue", "facing": "left", "x": 0, "y": 4, "length": 4},
+        {"id": "p1", "color": "purple", "facing": "right", "x": 6, "y": 1, "length": 2},
+        {"id": "y1", "color": "yellow", "facing": "down", "x": 1, "y": 8, "length": 3},
+        {"id": "y2", "color": "yellow", "facing": "up", "x": 6, "y": 2, "length": 3},
+        {"id": "y3", "color": "yellow", "facing": "down", "x": 6, "y": 8, "length": 4},
+        {"id": "b3", "color": "blue", "facing": "right", "x": 5, "y": 8, "length": 4},
+        {"id": "r1", "color": "red", "facing": "left", "x": 2, "y": 7, "length": 2},
+        {"id": "r2", "color": "red", "facing": "down", "x": 4, "y": 7, "length": 3},
+        {"id": "b4", "color": "blue", "facing": "left", "x": 0, "y": 5, "length": 3},
+        {"id": "g1", "color": "green", "facing": "down", "x": 5, "y": 7, "length": 4},
+        {"id": "g2", "color": "green", "facing": "right", "x": 3, "y": 6, "length": 2},
+        {"id": "g3", "color": "green", "facing": "down", "x": 1, "y": 3, "length": 4},
+        {"id": "r3", "color": "red", "facing": "down", "x": 4, "y": 4, "length": 3},
+        {"id": "p2", "color": "purple", "facing": "down", "x": 5, "y": 3, "length": 2},
+        {"id": "p3", "color": "purple", "facing": "down", "x": 0, "y": 3, "length": 4},
+        {"id": "r4", "color": "red", "facing": "left", "x": 2, "y": 1, "length": 3}
+      ],
+      "passengers": [
+        ["blue", 14], ["yellow", 5], ["purple", 4], ["yellow", 15],
+        ["blue", 8], ["red", 10], ["blue", 6], ["red", 6],
+        ["green", 20], ["purple", 12], ["red", 6]
+      ]
+    },
+    {
+      "id": "level-029",
+      "width": 7,
+      "height": 9,
+      "bays": 5,
+      "vehicles": [
+        {"id": "g1", "color": "green", "facing": "down", "x": 5, "y": 8, "length": 4},
+        {"id": "y1", "color": "yellow", "facing": "left", "x": 0, "y": 4, "length": 2},
+        {"id": "y2", "color": "yellow", "facing": "right", "x": 6, "y": 3, "length": 2},
+        {"id": "g2", "color": "green", "facing": "down", "x": 4, "y": 7, "length": 3},
+        {"id": "g3", "color": "green", "facing": "up", "x": 0, "y": 0, "length": 2},
+        {"id": "b1", "color": "blue", "facing": "left", "x": 1, "y": 8, "length": 3},
+        {"id": "b2", "color": "blue", "facing": "right", "x": 5, "y": 1, "length": 3},
+        {"id": "b3", "color": "blue", "facing": "left", "x": 0, "y": 5, "length": 3},
+        {"id": "r1", "color": "red", "facing": "up", "x": 0, "y": 6, "length": 2},
+        {"id": "o1", "color": "orange", "facing": "left", "x": 1, "y": 0, "length": 2},
+        {"id": "o2", "color": "orange", "facing": "up", "x": 2, "y": 1, "length": 4},
+        {"id": "o3", "color": "orange", "facing": "left", "x": 5, "y": 0, "length": 2},
+        {"id": "r2", "color": "red", "facing": "left", "x": 3, "y": 3, "length": 2},
+        {"id": "y3", "color": "yellow", "facing": "left", "x": 3, "y": 4, "length": 3},
+        {"id": "p1", "color": "purple", "facing": "down", "x": 6, "y": 7, "length": 4},
+        {"id": "p2", "color": "purple", "facing": "left", "x": 3, "y": 2, "length": 4},
+        {"id": "r3", "color": "red", "facing": "right", "x": 3, "y": 7, "length": 3},
+        {"id": "p3", "color": "purple", "facing": "up", "x": 3, "y": 5, "length": 2},
+        {"id": "r4", "color": "red", "facing": "right", "x": 2, "y": 6, "length": 2}
+      ],
+      "passengers": [
+        ["green", 8], ["yellow", 8], ["green", 10], ["blue", 18],
+        ["orange", 4], ["red", 4], ["orange", 8], ["red", 4],
+        ["orange", 4], ["yellow", 6], ["purple", 16], ["red", 6],
+        ["purple", 4], ["red", 4]
+      ]
+    },
+    {
+      "id": "level-030",
+      "width": 7,
+      "height": 9,
+      "bays": 5,
+      "vehicles": [
+        {"id": "o1", "color": "orange", "facing": "right", "x": 6, "y": 0, "length": 2},
+        {"id": "o2", "color": "orange", "facing": "left", "x": 0, "y": 1, "length": 2},
+        {"id": "o3", "color": "orange", "facing": "up", "x": 1, "y": 2, "length": 2},
+        {"id": "g1", "color": "green", "facing": "right", "x": 6, "y": 3, "length": 2},
+        {"id": "g2", "color": "green", "facing": "right", "x": 4, "y": 0, "length": 2},
+        {"id": "b1", "color": "blue", "facing": "up", "x": 0, "y": 2, "length": 2},
+        {"id": "b2", "color": "blue", "facing": "right", "x": 6, "y": 7, "length": 3},
+        {"id": "b3", "color": "blue", "facing": "up", "x": 2, "y": 0, "length": 3},
+        {"id": "b4", "color": "blue", "facing": "right", "x": 4, "y": 3, "length": 2},
+        {"id": "p1", "color": "purple", "facing": "right", "x": 6, "y": 8, "length": 3},
+        {"id": "g3", "color": "green", "facing": "right", "x": 3, "y": 8, "length": 4},
+        {"id": "g4", "color": "green", "facing": "up", "x": 3, "y": 1, "length": 2},
+        {"id": "p2", "color": "purple", "facing": "down", "x": 0, "y": 5, "length": 2},
+        {"id": "r1", "color": "red", "facing": "down", "x": 2, "y": 7, "length": 2},
+        {"id": "r2", "color": "red", "facing": "left", "x": 4, "y": 2, "length": 3},
+        {"id": "y1", "color": "yellow", "facing": "up", "x": 5, "y": 4, "length": 2},
+        {"id": "y2", "color": "yellow", "facing": "left", "x": 1, "y": 5, "length": 2},
+        {"id": "y3", "color": "yellow", "facing": "left", "x": 3, "y": 6, "length": 3},
+        {"id": "p3", "color": "purple", "facing": "up", "x": 3, "y": 4, "length": 2},
+        {"id": "r3", "color": "red", "facing": "up", "x": 6, "y": 4, "length": 3},
+        {"id": "r4", "color": "red", "facing": "right", "x": 2, "y": 4, "length": 2}
+      ],
+      "passengers": [
+        ["orange", 12], ["blue", 4], ["green", 8], ["blue", 16],
+        ["purple", 6], ["green", 12], ["purple", 4], ["red", 4],
+        ["yellow", 4], ["red", 6], ["yellow", 10], ["purple", 4],
+        ["red", 10]
+      ]
     }
   ]
 }
