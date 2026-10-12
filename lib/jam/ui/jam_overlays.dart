@@ -472,10 +472,46 @@ class JamTutorialBubble extends StatelessWidget {
   final Size bounds;
   final bool below;
 
+  static const TextStyle _textStyle = TextStyle(
+    color: JamPalette.hud,
+    fontWeight: FontWeight.w800,
+    fontSize: 15,
+    height: 1.2,
+  );
+
+  static double _widthIn(Size bounds) => math.min(240.0, bounds.width - 24);
+
+  /// The rect the bubble for [text] paints in when anchored at [anchor]
+  /// (its top edge when [below], its bottom edge otherwise) inside [bounds].
+  static Rect rectFor({
+    required String text,
+    required Offset anchor,
+    required bool below,
+    required Size bounds,
+  }) {
+    final width = _widthIn(bounds);
+    // Text wrapped to the bubble's inner width (padding 14 each side, border
+    // 2.5 each side), plus vertical padding 10 each side and the border.
+    final painter = TextPainter(
+      text: TextSpan(text: text, style: _textStyle),
+      textDirection: TextDirection.ltr,
+    )..layout(maxWidth: width - 28 - 5);
+    final height = painter.height + 20 + 5;
+    final left = (anchor.dx - width / 2).clamp(12.0, bounds.width - width - 12);
+    // Above: the anchor is the bubble's bottom edge (see build).
+    final top = below ? anchor.dy : anchor.dy - height;
+    return Rect.fromLTWH(left, top, width, height);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final width = math.min(240.0, bounds.width - 24);
-    final left = (anchor.dx - width / 2).clamp(12.0, bounds.width - width - 12);
+    final width = _widthIn(bounds);
+    final rect = rectFor(
+      text: text,
+      anchor: anchor,
+      below: below,
+      bounds: bounds,
+    );
     final bubble = Container(
       width: width,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -487,19 +523,10 @@ class JamTutorialBubble extends StatelessWidget {
           BoxShadow(color: Color(0x40000000), offset: Offset(0, 3)),
         ],
       ),
-      child: Text(
-        text,
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-          color: JamPalette.hud,
-          fontWeight: FontWeight.w800,
-          fontSize: 15,
-          height: 1.2,
-        ),
-      ),
+      child: Text(text, textAlign: TextAlign.center, style: _textStyle),
     );
     return Positioned(
-      left: left,
+      left: rect.left,
       width: width,
       top: below ? anchor.dy : null,
       bottom: below ? null : bounds.height - anchor.dy,

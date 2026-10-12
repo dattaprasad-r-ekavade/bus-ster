@@ -512,15 +512,49 @@ class JamGameScreenState extends State<JamGameScreen>
       final below = topHits == bottomHits
           ? rect.center.dy > lot.center.dy
           : topHits < bottomHits;
+      final lotEnd = below
+          ? Offset(lot.center.dx, lot.top + 8)
+          : Offset(lot.center.dx, lot.bottom - 8);
+      // Preference order: the grass below the ring road, the lot end, then
+      // just above and just below the target bus. The first spot that stays
+      // on screen and clear of every remaining bus wins.
+      final busRects = [
+        for (final v in level.vehicles)
+          if (state.remaining.contains(v.id)) layout.footprint(v),
+      ];
+      final candidates = <({Offset anchor, bool below})>[
+        (
+          anchor: Offset(
+            lot.center.dx,
+            layout.ringRect.bottom + layout.roadW / 2 + 6,
+          ),
+          below: true,
+        ),
+        (anchor: lotEnd, below: below),
+        (anchor: Offset(rect.center.dx, rect.top - 6), below: false),
+        (anchor: Offset(rect.center.dx, rect.bottom + 6), below: true),
+        // Last resort on cramped screens: the top of the scene, over the
+        // crowd, which never hides a bus.
+        (anchor: Offset(lot.center.dx, 6), below: true),
+      ];
+      final placement = candidates.firstWhere((c) {
+        final box = JamTutorialBubble.rectFor(
+          text: bubbleText,
+          anchor: c.anchor,
+          below: c.below,
+          bounds: size,
+        );
+        return box.top >= 0 &&
+            box.bottom <= size.height &&
+            busRects.every((b) => !b.overlaps(box));
+      }, orElse: () => candidates[1]);
       children.add(
         JamTutorialBubble(
           key: const ValueKey('jam-tutorial-bubble'),
           text: bubbleText,
-          anchor: below
-              ? Offset(layout.lotRect.center.dx, layout.lotRect.top + 8)
-              : Offset(layout.lotRect.center.dx, layout.lotRect.bottom - 8),
+          anchor: placement.anchor,
           bounds: size,
-          below: below,
+          below: placement.below,
         ),
       );
     }

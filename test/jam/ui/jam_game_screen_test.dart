@@ -295,6 +295,26 @@ void main() {
     expect(find.byKey(const ValueKey('jam-tutorial-bubble')), findsOneWidget);
   });
 
+  testWidgets('tutorial bubble never covers a bus', (tester) async {
+    for (final size in [phone, compact]) {
+      for (var i = 0; i < levels.length; i++) {
+        if (levels[i].hint == null) continue;
+        await pumpScreen(tester, size: size, index: i);
+        final bubble = find.byKey(const ValueKey('jam-tutorial-bubble'));
+        expect(bubble, findsOneWidget, reason: '${levels[i].id} at $size');
+        final rect = tester.getRect(bubble);
+        for (final v in levels[i].vehicles) {
+          expect(
+            tester.getRect(bus(v.id)).overlaps(rect),
+            isFalse,
+            reason: '${levels[i].id}/${v.id} at $size covered by bubble $rect',
+          );
+        }
+        expect(tester.takeException(), isNull);
+      }
+    }
+  });
+
   testWidgets('reduced motion applies moves without animating', (tester) async {
     await pumpScreen(
       tester,
