@@ -61,6 +61,17 @@ class JamLayout {
   /// Lot bus width as a fraction of the cell.
   static const double lotWidthFactor = 0.78;
 
+  /// Widest road the ring is ever drawn with, and the widest parked bus. A
+  /// parked bus is kept to 85% of the widest road so it always fits the road
+  /// it drives on, even at the largest size.
+  static const double _maxRoadW = 44.0;
+  static const double _maxParkedW = _maxRoadW * 0.85;
+
+  /// Narrower than this is a compact phone: riders never drop below
+  /// [_compactMinRider] dp there, and extra passengers become the "+N" chip.
+  static const double _compactWidth = 400.0;
+  static const double _compactMinRider = 28.0;
+
   /// Computes the layout for [level] inside a scene of [size] (the area
   /// below the HUD).
   factory JamLayout.compute(Size size, JamLevel level) {
@@ -90,17 +101,28 @@ class JamLayout {
         final lotBusW = cell * lotWidthFactor;
         final parkedW = math.min(
           math.min(lotBusW * ratio, pitchMax / 1.42),
-          44.0,
+          _maxParkedW,
         );
-        final roadW = math.max(parkedW * 1.3, lotBusW * 1.02).clamp(20.0, 44.0);
+        final roadW = math
+            .max(parkedW * 1.3, lotBusW * 1.02)
+            .clamp(20.0, _maxRoadW);
         final pad = math.max(4.0, cell * 0.12);
         final bayH =
             _stallTop +
             _noseGap +
             parkedW * parkedLengthFactor(maxLen) +
             _tailGap;
+        // A bus turning off the lot is still close to its full parked length
+        // as its centre crosses the lot edge, so its nose overhangs the side
+        // road by about half its length: leave that room in the screen margin.
+        final parkedLen = parkedW * parkedLengthFactor(maxLen);
+        final sideRoom = math.max(2 * roadW, roadW + parkedLen);
         final needW =
-            2 * _margin + 2 * roadW + 2 * _kerb + 2 * pad + cols * cell;
+            2 * _margin + sideRoom + 2 * _kerb + 2 * pad + cols * cell;
+        // A bus swinging round the bottom road sweeps its corners down by up
+        // to the half-diagonal of its parked box (the corner rounding is not
+        // counted on, so this is a safe bound).
+        final reach = math.sqrt(parkedLen * parkedLen + parkedW * parkedW) / 2;
         final needH =
             crowdH +
             bayH +
@@ -108,7 +130,8 @@ class JamLayout {
             2 * _kerb +
             2 * pad +
             rows * cell +
-            _margin;
+            _margin +
+            math.max(0.0, reach - roadW / 2);
         if (needW <= w && needH <= p) {
           return _Fit(cell, parkedW, roadW, pad, bayH);
         }
@@ -208,7 +231,11 @@ class JamLayout {
 
   /// Picks the biggest rider size whose serpentine shows [want] riders
   /// within [maxH]; a queue that fits on one row is a short centred row.
+  /// On compact screens riders never go below [_compactMinRider]: when the
+  /// queue is too long for that, the biggest riders that fit are shown and
+  /// the capacity cap leaves the rest to the "+N" chip.
   static _Queue _queueFor(double w, double maxH, int want) {
+    final minS = w < _compactWidth ? _compactMinRider : 14.0;
     _Queue build(double s, int r) {
       final full = w - 2 * _queueSide - s;
       final rowLength = r == 1 ? math.min(full, (want - 1) * s) : full;
@@ -217,19 +244,18 @@ class JamLayout {
       return _Queue(s, r, rowLength, cap, _crowdHeight(s, r), _aisleFor(s));
     }
 
-    for (var s = 40.0; s >= 14; s -= 1) {
+    for (var s = 40.0; s >= minS; s -= 1) {
       for (var r = 1; r <= 5; r++) {
         if (_crowdHeight(s, r) > maxH) break;
         final q = build(s, r);
         if (q.capacity >= want) return q;
       }
     }
-    const s = 14.0;
     var r = 1;
-    while (r < 5 && _crowdHeight(s, r + 1) <= maxH) {
+    while (r < 5 && _crowdHeight(minS, r + 1) <= maxH) {
       r++;
     }
-    return build(s, r);
+    return build(minS, r);
   }
 
   /// Serpentine from the front (bottom row, left end) backwards: the bottom
@@ -506,8 +532,12 @@ class JamLayout {
     return pts;
   }
 
-  /// Distance along [route] (as a polyline) at which the bus centre leaves
-  /// the asphalt, and at which it turns off the street into its stall.
+  /// Distance-along-route window over which a bus shrinks from lot size to
+  /// parked size, returned as (morph start, morph end, route length).
+  ///
+  /// The morph starts as the bus leaves the lot and is complete by the time
+  /// its centre crosses the lot edge onto the road, so the bus is at road-fit
+  /// width for the whole ring drive and the turn into its bay.
   (double, double, double) routeMilestones(List<Offset> route) {
     var total = 0.0;
     for (var i = 1; i < route.length; i++) {
@@ -522,9 +552,7 @@ class JamLayout {
     while (exit < (b - a).distance && lot.contains(a + dir * exit)) {
       exit += 2;
     }
-    final stallLeg =
-        (route[route.length - 1] - route[route.length - 2]).distance;
-    return (exit, total - stallLeg, total);
+    return (0.0, exit, total);
   }
 
   double get cornerRadius => math.max(roadW * 0.9, cell * 0.5);

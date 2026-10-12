@@ -3,7 +3,9 @@ import 'dart:ui';
 
 import 'package:busster/jam/jam_level_codec.dart';
 import 'package:busster/jam/jam_model.dart';
+import 'package:busster/jam/ui/jam_choreographer.dart';
 import 'package:busster/jam/ui/jam_layout.dart';
+import 'package:busster/jam/ui/jam_motion.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 final List<JamLevel> levels = JamLevelCodec.decodeBundle(
@@ -12,6 +14,20 @@ final List<JamLevel> levels = JamLevelCodec.decodeBundle(
 
 // Scene sizes below the HUD on a 412×915 phone and a 320×568 compact phone.
 const sizes = [Size(412, 790), Size(320, 480)];
+
+/// The four corners of a bus drawn at [pose] (nose along [BusPose.angle]).
+List<Offset> _busCorners(BusPose pose) {
+  final nose = pose.noseDirection;
+  final side = Offset(-nose.dy, nose.dx);
+  final a = nose * (pose.length / 2);
+  final b = side * (pose.width / 2);
+  return [
+    pose.center + a + b,
+    pose.center + a - b,
+    pose.center - a + b,
+    pose.center - a - b,
+  ];
+}
 
 void main() {
   for (final size in sizes) {
@@ -90,6 +106,48 @@ void main() {
           for (final item in l.scenery) {
             expect(item.bounds.overlaps(road), isFalse, reason: '$item');
             expect(item.center.dy, greaterThan(l.streetTop + l.roadW));
+          }
+          // Compact screens: riders stay readable; extras go to the +N chip.
+          if (size.width < 400) {
+            expect(l.riderSpacing, greaterThanOrEqualTo(28));
+          }
+          // The whole ring road, kerb to outer edge, is on screen.
+          final outer = l.ringRect.inflate(l.roadW / 2);
+          expect(outer.left, greaterThanOrEqualTo(0));
+          expect(outer.top, greaterThanOrEqualTo(0));
+          expect(outer.right, lessThanOrEqualTo(size.width));
+          expect(outer.bottom, lessThanOrEqualTo(size.height));
+          // Every vehicle's park drive: once the bus is off the lot it is at
+          // road-fit width and its whole box stays on screen.
+          for (final v in level.vehicles) {
+            for (var slot = 0; slot < level.bayCount; slot++) {
+              final choreo = JamChoreographer(level: level, layout: l)
+                ..play([JamPark(v.id, slot)], 0);
+              final leg = choreo.sprites.single.parkLeg!;
+              for (var i = 0; i <= 200; i++) {
+                final t = leg.start + leg.duration * i / 200;
+                final pose = leg.poseAt(t);
+                if (l.lotRect.contains(pose.center)) continue;
+                final where = '${v.id} slot $slot t=$t';
+                expect(
+                  pose.width,
+                  lessThanOrEqualTo(0.9 * l.roadW),
+                  reason: where,
+                );
+                for (final c in _busCorners(pose)) {
+                  expect(
+                    c.dx,
+                    inInclusiveRange(-0.5, size.width + 0.5),
+                    reason: where,
+                  );
+                  expect(
+                    c.dy,
+                    inInclusiveRange(-0.5, size.height + 0.5),
+                    reason: where,
+                  );
+                }
+              }
+            }
           }
         });
       }
