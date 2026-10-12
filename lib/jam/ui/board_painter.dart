@@ -1,6 +1,7 @@
 // Static scenery: plaza, bay stalls, street + road ring, asphalt lot and
 // grass. Painted once per layout behind a RepaintBoundary.
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:flutter/rendering.dart';
 
@@ -60,26 +61,65 @@ class JamBoardPainter extends CustomPainter {
         ..style = PaintingStyle.stroke
         ..strokeWidth = l.roadW,
     );
-    // Kerb on the plaza side of the street.
+    // Fill everything inside the ring's centre line with road too, so the
+    // road always runs right up to the lot kerb: no grass can show between
+    // the kerb and the road at the lot corners.
+    canvas.drawRect(ring, road);
+    // Kerb on the plaza side of the street, with a soft lip shadow.
+    canvas.drawRect(
+      Rect.fromLTRB(0, l.streetTop + 1.5, w, l.streetTop + 3.5),
+      Paint()
+        ..shader = ui.Gradient.linear(
+          Offset(0, l.streetTop + 1.5),
+          Offset(0, l.streetTop + 3.5),
+          const [Color(0x40000000), Color(0x00000000)],
+        ),
+    );
     canvas.drawRect(
       Rect.fromLTRB(0, l.streetTop - 2, w, l.streetTop + 1.5),
       Paint()..color = JamPalette.kerb,
     );
 
-    // Lot asphalt.
+    // Lot: a kerbed island with an asphalt top.
+    const kerb = 3.0;
+    final lotR = math.max(kerb + 2, l.roadW * 0.5);
+    final island = RRect.fromRectAndRadius(
+      l.lotRect.inflate(kerb),
+      Radius.circular(lotR),
+    );
     final lot = RRect.fromRectAndRadius(
-      l.lotRect.inflate(3),
-      Radius.circular(l.roadW * 0.5),
+      l.lotRect,
+      Radius.circular(lotR - kerb),
     );
-    canvas.drawRRect(lot, Paint()..color = JamPalette.kerb);
+    // Kerb shadow on the road (bottom-right), kerb face, then the lot.
     canvas.drawRRect(
-      RRect.fromRectAndRadius(l.lotRect, Radius.circular(l.roadW * 0.4)),
-      Paint()
-        ..shader = const RadialGradient(
-          colors: [JamPalette.asphaltLight, JamPalette.asphalt],
-          radius: 0.9,
-        ).createShader(l.lotRect),
+      island.shift(const Offset(0.8, 1.6)),
+      Paint()..color = const Color(0x38000000),
     );
+    canvas.drawRRect(island, Paint()..color = JamPalette.kerbShadow);
+    canvas.drawRRect(
+      island.deflate(0.6).shift(const Offset(-0.3, -0.6)),
+      Paint()..color = JamPalette.kerb,
+    );
+    canvas.drawRRect(
+      lot,
+      Paint()
+        ..shader = ui.Gradient.linear(
+          l.lotRect.topLeft,
+          l.lotRect.bottomRight,
+          const [JamPalette.asphaltLight, JamPalette.asphalt],
+        ),
+    );
+    canvas.save();
+    canvas.clipRRect(lot);
+    _asphaltGrain(canvas, l.lotRect);
+    // Inner shadow under the kerb's top-left lip.
+    canvas.drawDRRect(
+      lot.inflate(6),
+      lot.shift(const Offset(1.2, 1.8)),
+      Paint()..color = const Color(0x2A000000),
+    );
+    canvas.restore();
     _lotMarkings(canvas);
 
     // Dashed centre lines along street and ring.
@@ -265,18 +305,48 @@ class JamBoardPainter extends CustomPainter {
     final l = layout;
     final c = l.cell;
     final g = l.gridRect;
-    final mark = Paint()
-      ..color = const Color(0x2EFFFFFF)
-      ..strokeWidth = math.max(1.2, c * 0.04)
-      ..strokeCap = StrokeCap.round;
-    final t = c * 0.12;
-    for (var i = 0; i <= l.columns; i++) {
-      for (var j = 0; j <= l.rows; j++) {
-        final p = Offset(g.left + i * c, g.top + j * c);
-        canvas.drawLine(p - Offset(t, 0), p + Offset(t, 0), mark);
-        canvas.drawLine(p - Offset(0, t), p + Offset(0, t), mark);
-      }
+    // Faint painted studs at the interior grid crossings: enough to read
+    // the cells without the noise of full crosses.
+    final pts = <Offset>[
+      for (var i = 1; i < l.columns; i++)
+        for (var j = 1; j < l.rows; j++) Offset(g.left + i * c, g.top + j * c),
+    ];
+    canvas.drawPoints(
+      ui.PointMode.points,
+      pts,
+      Paint()
+        ..color = const Color(0x24FFFFFF)
+        ..strokeWidth = math.max(2.0, c * 0.07)
+        ..strokeCap = StrokeCap.round,
+    );
+  }
+
+  /// Fine deterministic speckle so the lot reads as asphalt.
+  void _asphaltGrain(Canvas canvas, Rect r) {
+    final rnd = math.Random(11);
+    final count = (r.width * r.height / 55).clamp(0, 6000).toInt();
+    final light = <Offset>[];
+    final dark = <Offset>[];
+    for (var i = 0; i < count; i++) {
+      final p = Offset(
+        r.left + rnd.nextDouble() * r.width,
+        r.top + rnd.nextDouble() * r.height,
+      );
+      (i.isEven ? light : dark).add(p);
     }
+    final paint = Paint()
+      ..strokeWidth = 0.9
+      ..strokeCap = StrokeCap.round;
+    canvas.drawPoints(
+      ui.PointMode.points,
+      light,
+      paint..color = const Color(0x12FFFFFF),
+    );
+    canvas.drawPoints(
+      ui.PointMode.points,
+      dark,
+      paint..color = const Color(0x16000000),
+    );
   }
 
   void _grassTufts(Canvas canvas, Size size) {
