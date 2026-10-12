@@ -1,5 +1,6 @@
 // Chunky passenger figures and the serpentine queue they stand in.
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:flutter/painting.dart';
 
@@ -26,14 +27,33 @@ void paintRider(
   final bodyH = k * 0.5;
   final headR = k * 0.2;
 
-  // Ground shadow stays on the ground while the rider hops.
+  final alpha = opacity.clamp(0.0, 1.0);
+  final stroke = math.max(1.0, k * 0.05);
+  final ink = Color.lerp(
+    shade.dark,
+    const Color(0xFF000000),
+    0.3,
+  )!.withValues(alpha: alpha);
+
+  // Ground shadow stays on the ground while the rider hops: a soft core
+  // inside a fainter skirt, nudged toward the bottom-right like the buses.
+  final shadowC = feet + Offset(k * 0.03, 0);
+  final shrink = 1 - (lift / k).clamp(0.0, 0.5) * 0.4;
   canvas.drawOval(
     Rect.fromCenter(
-      center: feet,
-      width: bodyW * (1.05 - lift * 0.01),
-      height: k * 0.16,
+      center: shadowC,
+      width: bodyW * 1.15 * shrink,
+      height: k * 0.2 * shrink,
     ),
-    Paint()..color = Color.fromRGBO(0, 0, 0, 0.22 * opacity),
+    Paint()..color = Color.fromRGBO(0, 0, 0, 0.1 * alpha),
+  );
+  canvas.drawOval(
+    Rect.fromCenter(
+      center: shadowC,
+      width: bodyW * 0.9 * shrink,
+      height: k * 0.13 * shrink,
+    ),
+    Paint()..color = Color.fromRGBO(0, 0, 0, 0.16 * alpha),
   );
 
   final base = feet - Offset(0, lift);
@@ -47,34 +67,44 @@ void paintRider(
     bodyRect,
     topLeft: Radius.circular(bodyW * 0.48),
     topRight: Radius.circular(bodyW * 0.48),
-    bottomLeft: Radius.circular(bodyW * 0.2),
-    bottomRight: Radius.circular(bodyW * 0.2),
+    bottomLeft: Radius.circular(bodyW * 0.22),
+    bottomRight: Radius.circular(bodyW * 0.22),
   );
-  final alpha = opacity.clamp(0.0, 1.0);
   canvas.drawRRect(
     body,
     Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [
+      ..shader = ui.Gradient.radial(
+        bodyRect.topLeft + Offset(bodyW * 0.32, bodyH * 0.28),
+        bodyH * 1.25,
+        [
           shade.light.withValues(alpha: alpha),
           shade.base.withValues(alpha: alpha),
           shade.dark.withValues(alpha: alpha),
         ],
-        stops: const [0.0, 0.45, 1.0],
-      ).createShader(bodyRect),
+        const [0.0, 0.5, 1.0],
+      ),
   );
+  if (k >= 14) {
+    // Soft shoulder highlight.
+    canvas.drawOval(
+      Rect.fromCenter(
+        center: bodyRect.topLeft + Offset(bodyW * 0.3, bodyH * 0.24),
+        width: bodyW * 0.26,
+        height: bodyH * 0.16,
+      ),
+      Paint()..color = Color.fromRGBO(255, 255, 255, 0.45 * alpha),
+    );
+  }
   canvas.drawRRect(
-    body,
+    body.deflate(stroke / 2),
     Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = math.max(0.8, k * 0.035)
-      ..color = shade.dark.withValues(alpha: alpha),
+      ..strokeWidth = stroke
+      ..color = ink,
   );
   // Symbol on the chest.
   if (k >= 12) {
-    final symC = Offset(base.dx, bodyRect.top + bodyH * 0.55);
+    final symC = Offset(base.dx, bodyRect.top + bodyH * 0.56);
     paintJamSymbol(
       canvas,
       JamPalette.symbolOf(color),
@@ -89,10 +119,16 @@ void paintRider(
   final skin = JamPalette.skin[variant % JamPalette.skin.length];
   final hair =
       JamPalette.hair[(variant ~/ 4 + variant) % JamPalette.hair.length];
+  final skinLight = Color.lerp(skin, const Color(0xFFFFFFFF), 0.3)!;
   canvas.drawCircle(
     headC,
     headR,
-    Paint()..color = skin.withValues(alpha: alpha),
+    Paint()
+      ..shader = ui.Gradient.radial(
+        headC + Offset(-headR * 0.3, -headR * 0.1),
+        headR * 1.3,
+        [skinLight.withValues(alpha: alpha), skin.withValues(alpha: alpha)],
+      ),
   );
   // Hair cap.
   canvas.drawArc(
@@ -102,24 +138,38 @@ void paintRider(
     true,
     Paint()..color = hair.withValues(alpha: alpha),
   );
+  if (k >= 14) {
+    canvas.drawArc(
+      Rect.fromCircle(center: headC, radius: headR * 0.7),
+      math.pi * 1.2,
+      math.pi * 0.3,
+      false,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round
+        ..strokeWidth = headR * 0.16
+        ..color = Color.fromRGBO(255, 255, 255, 0.3 * alpha),
+    );
+  }
+  final headStroke = math.max(0.9, k * 0.04);
   canvas.drawCircle(
     headC,
-    headR,
+    headR - headStroke / 2,
     Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = math.max(0.6, k * 0.025)
-      ..color = Color.fromRGBO(60, 40, 30, 0.45 * alpha),
+      ..strokeWidth = headStroke
+      ..color = Color.fromRGBO(70, 42, 28, 0.6 * alpha),
   );
   if (k >= 18) {
     final eye = Paint()..color = Color.fromRGBO(40, 30, 30, alpha);
     canvas.drawCircle(
-      headC + Offset(-headR * 0.36, headR * 0.12),
-      k * 0.022,
+      headC + Offset(-headR * 0.36, headR * 0.14),
+      k * 0.024,
       eye,
     );
     canvas.drawCircle(
-      headC + Offset(headR * 0.36, headR * 0.12),
-      k * 0.022,
+      headC + Offset(headR * 0.36, headR * 0.14),
+      k * 0.024,
       eye,
     );
   }
