@@ -5,6 +5,7 @@
 // lights (back); the symbol badge on the roof is counter-rotated so it is
 // always upright.
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:flutter/painting.dart';
 
@@ -43,7 +44,40 @@ class BusLook {
   final double pop;
 }
 
-final Paint _shadowPaint = Paint()..color = const Color(0x47000000);
+/// Screen-space light direction (from the top-left) shared by the shading,
+/// so every bus is lit the same way whatever its heading.
+const Offset _light = Offset(-0.45, -0.89);
+
+/// Below this body width (logical px) the fine detail (window pillars,
+/// specular strip, light glows) is dropped so small buses stay clean.
+const double _detailWidth = 26;
+
+/// [v] (screen space) expressed in a frame rotated by [angle].
+Offset _toLocal(Offset v, double angle) {
+  final c = math.cos(angle);
+  final s = math.sin(angle);
+  return Offset(v.dx * c + v.dy * s, -v.dx * s + v.dy * c);
+}
+
+/// Soft-edged fill built from a few stacked translucent layers: a cheap
+/// stand-in for a blurred shadow (no mask filter).
+void _softFill(
+  Canvas canvas,
+  RRect r,
+  double spread,
+  Color color, {
+  int steps = 4,
+}) {
+  final paint = Paint()..color = color.withValues(alpha: color.a / steps);
+  for (var i = 0; i < steps; i++) {
+    final grow = spread * (1 - 2 * i / (steps - 1));
+    canvas.drawRRect(r.inflate(grow), paint);
+  }
+}
+
+/// Outline width: about 1/22 of the body width, kept between ~3 and ~6
+/// device pixels on a typical phone.
+double _strokeFor(double w) => (w * 0.045).clamp(1.1, 2.2);
 
 void paintBus(Canvas canvas, BusPose pose, JamColor color, BusLook look) {
   final shade = JamPalette.of(color);
@@ -52,212 +86,314 @@ void paintBus(Canvas canvas, BusPose pose, JamColor color, BusLook look) {
   final w = pose.width * (1 + look.squash) * grow;
   final halfL = l / 2;
   final halfW = w / 2;
+  final detailed = w >= _detailWidth;
+  final light = _toLocal(_light, pose.angle);
+  final outline = Color.lerp(shade.dark, const Color(0xFF000000), 0.28)!;
 
-  // Glow halo (screen space, behind everything).
+  final body = RRect.fromRectAndCorners(
+    Rect.fromCenter(center: Offset.zero, width: l, height: w),
+    topLeft: Radius.circular(w * 0.24),
+    bottomLeft: Radius.circular(w * 0.24),
+    topRight: Radius.circular(w * 0.36),
+    bottomRight: Radius.circular(w * 0.36),
+  );
+
+  // Glow halo (hint / tutorial target), behind everything.
   if (look.glow > 0) {
     canvas.save();
     canvas.translate(pose.center.dx, pose.center.dy);
     canvas.rotate(pose.angle);
-    final halo = RRect.fromRectAndRadius(
-      Rect.fromCenter(
-        center: Offset.zero,
-        width: l + w * 0.55,
-        height: w * 1.55,
-      ),
-      Radius.circular(w * 0.6),
-    );
-    canvas.drawRRect(
-      halo,
-      Paint()
-        ..color = const Color(0xFFFFE066).withValues(alpha: 0.75 * look.glow)
-        ..maskFilter = MaskFilter.blur(BlurStyle.normal, w * 0.22),
+    _softFill(
+      canvas,
+      body.inflate(w * 0.2),
+      w * 0.16,
+      const Color(0xFFFFE066).withValues(alpha: 0.85 * look.glow),
+      steps: 8,
     );
     canvas.restore();
   }
 
-  // Soft drop shadow, offset in screen space (light from the top-left).
+  // Soft contact shadow, offset toward the bottom-right in screen space.
   canvas.save();
-  canvas.translate(pose.center.dx + w * 0.07, pose.center.dy + w * 0.16);
+  canvas.translate(pose.center.dx + w * 0.07, pose.center.dy + w * 0.13);
   canvas.rotate(pose.angle);
-  _shadowPaint.maskFilter = MaskFilter.blur(BlurStyle.normal, w * 0.11);
-  canvas.drawRRect(
-    RRect.fromRectAndRadius(
-      Rect.fromCenter(center: Offset.zero, width: l * 0.98, height: w * 0.96),
-      Radius.circular(w * 0.3),
-    ),
-    _shadowPaint,
-  );
+  _softFill(canvas, body.deflate(w * 0.02), w * 0.07, const Color(0x52000000));
   canvas.restore();
 
   canvas.save();
   canvas.translate(pose.center.dx, pose.center.dy);
   canvas.rotate(pose.angle);
 
-  // Wheels peeking out from under the body.
-  final wheelPaint = Paint()..color = const Color(0xFF22252E);
+  // Tyres tucked under the body: only a rounded sliver shows at the sides.
+  final tyre = Paint()..color = JamPalette.tyre;
   final axles = l > w * 3.6 ? [-0.36, 0.0, 0.34] : [-0.3, 0.3];
+  final tyreW = math.min(w * 0.36, l * 0.15);
   for (final ax in axles) {
-    final cx = ax * l;
     for (final sy in [-1.0, 1.0]) {
       canvas.drawRRect(
         RRect.fromRectAndRadius(
           Rect.fromCenter(
-            center: Offset(cx, sy * (halfW - w * 0.02)),
-            width: math.min(w * 0.42, l * 0.16),
+            center: Offset(ax * l, sy * (halfW - w * 0.075)),
+            width: tyreW,
             height: w * 0.2,
           ),
-          Radius.circular(w * 0.07),
+          Radius.circular(w * 0.09),
         ),
-        wheelPaint,
+        tyre,
       );
     }
   }
 
-  // Body.
-  final bodyRect = Rect.fromCenter(center: Offset.zero, width: l, height: w);
-  final body = RRect.fromRectAndCorners(
-    bodyRect,
-    topLeft: Radius.circular(w * 0.26),
-    bottomLeft: Radius.circular(w * 0.26),
-    topRight: Radius.circular(w * 0.38),
-    bottomRight: Radius.circular(w * 0.38),
-  );
+  // Body: lit from the screen's top-left.
+  final reach = light.dx.abs() * halfL + light.dy.abs() * halfW;
   canvas.drawRRect(
     body,
     Paint()
-      ..shader = LinearGradient(
-        begin: Alignment.topCenter,
-        end: Alignment.bottomCenter,
-        colors: [shade.light, shade.base, shade.base, shade.dark],
-        stops: const [0.0, 0.28, 0.7, 1.0],
-      ).createShader(bodyRect),
+      ..shader = ui.Gradient.linear(
+        light * reach,
+        light * -reach,
+        [shade.light, shade.base, shade.base, shade.dark],
+        const [0.0, 0.3, 0.62, 1.0],
+      ),
   );
-  // Front bumper band.
+
   canvas.save();
   canvas.clipRRect(body);
+  // Bevel: a dark band on the side away from the light and a bright rim on
+  // the lit side give the body some thickness.
+  canvas.drawRRect(
+    body.shift(light * (w * 0.06)),
+    Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = w * 0.1
+      ..color = shade.dark.withValues(alpha: 0.55),
+  );
+  canvas.drawRRect(
+    body.shift(light * (-w * 0.045)),
+    Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = w * 0.05
+      ..color = shade.light.withValues(alpha: 0.75),
+  );
+  // Bumpers.
+  final bumper = Paint()..color = outline.withValues(alpha: 0.35);
   canvas.drawRect(
-    Rect.fromLTRB(halfL - w * 0.08, -halfW, halfL, halfW),
-    Paint()..color = shade.dark.withValues(alpha: 0.55),
+    Rect.fromLTRB(halfL - w * 0.075, -halfW, halfL, halfW),
+    bumper,
   );
   canvas.drawRect(
-    Rect.fromLTRB(-halfL, -halfW, -halfL + w * 0.06, halfW),
-    Paint()..color = shade.dark.withValues(alpha: 0.6),
+    Rect.fromLTRB(-halfL, -halfW, -halfL + w * 0.055, halfW),
+    bumper,
   );
-  canvas.restore();
 
-  // Roof panel (darker), behind the windshield.
-  final roofLeft = -halfL + w * 0.14;
-  final roofRight = halfL - w * 0.44;
-  final roofHalfW = halfW - w * 0.19;
-  final roofRect = Rect.fromLTRB(roofLeft, -roofHalfW, roofRight, roofHalfW);
-  final roof = RRect.fromRectAndRadius(roofRect, Radius.circular(w * 0.16));
-
-  // Side window strips between the roof edge and the body edge.
-  final paneCount = math.max(2, ((roofRight - roofLeft) / (w * 0.62)).floor());
-  final paneGap = w * 0.09;
-  final paneW = (roofRight - roofLeft - paneGap * (paneCount - 1)) / paneCount;
-  final paneT = w * 0.13;
-  final panePaint = Paint()..color = JamPalette.windshield;
+  // Side glass: one continuous rounded strip per side, thin pillars.
+  final gx0 = -halfL + w * 0.15;
+  final gx1 = halfL - w * 0.45;
+  final gOut = halfW - w * 0.085;
+  final gIn = halfW - w * 0.245;
+  final gH = gOut - gIn;
   for (final sy in [-1.0, 1.0]) {
-    for (var i = 0; i < paneCount; i++) {
-      final x0 = roofLeft + i * (paneW + paneGap);
-      final y0 = sy < 0 ? -roofHalfW - paneT - w * 0.02 : roofHalfW + w * 0.02;
-      canvas.drawRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromLTWH(x0, y0, paneW, paneT),
-          Radius.circular(w * 0.04),
+    final strip = Rect.fromLTRB(
+      gx0,
+      sy < 0 ? -gOut : gIn,
+      gx1,
+      sy < 0 ? -gIn : gOut,
+    );
+    final rr = RRect.fromRectAndRadius(strip, Radius.circular(gH * 0.45));
+    canvas.drawRRect(
+      rr,
+      Paint()
+        ..shader = ui.Gradient.linear(
+          Offset(0, sy * gOut),
+          Offset(0, sy * gIn),
+          const [JamPalette.glassDeep, JamPalette.glassMid],
         ),
-        panePaint,
+    );
+    if (detailed) {
+      canvas.save();
+      canvas.clipRRect(rr);
+      // Sky reflection along the inner edge.
+      canvas.drawRect(
+        Rect.fromLTRB(
+          gx0,
+          sy < 0 ? -gIn - gH * 0.38 : gIn,
+          gx1,
+          sy < 0 ? -gIn : gIn + gH * 0.38,
+        ),
+        Paint()..color = JamPalette.glassSky.withValues(alpha: 0.55),
       );
+      final panes = math.max(2, ((gx1 - gx0) / (w * 0.95)).round());
+      final pillar = Paint()..color = shade.base;
+      for (var i = 1; i < panes; i++) {
+        final x = gx0 + (gx1 - gx0) * i / panes;
+        canvas.drawRect(
+          Rect.fromCenter(
+            center: Offset(x, sy * (gIn + gOut) / 2),
+            width: w * 0.045,
+            height: gH + 1,
+          ),
+          pillar,
+        );
+      }
+      canvas.restore();
     }
   }
 
-  canvas.drawRRect(roof, Paint()..color = shade.roof);
-  // Roof gloss.
+  // Roof panel with a soft top-light gradient.
+  final roofLeft = -halfL + w * 0.11;
+  final roofRight = halfL - w * 0.47;
+  final roofHalfW = gIn - w * 0.03;
+  final roofRect = Rect.fromLTRB(roofLeft, -roofHalfW, roofRight, roofHalfW);
+  final roof = RRect.fromRectAndRadius(roofRect, Radius.circular(w * 0.12));
+  final roofReach =
+      light.dx.abs() * roofRect.width / 2 + light.dy.abs() * roofHalfW;
   canvas.drawRRect(
-    RRect.fromRectAndRadius(
-      Rect.fromLTRB(
-        roofLeft + w * 0.08,
-        -roofHalfW + w * 0.05,
-        roofRight - w * 0.08,
-        -roofHalfW + w * 0.13,
+    roof,
+    Paint()
+      ..shader = ui.Gradient.linear(
+        roofRect.center + light * roofReach,
+        roofRect.center - light * roofReach,
+        [Color.lerp(shade.light, shade.base, 0.35)!, shade.base, shade.roof],
+        const [0.0, 0.45, 1.0],
       ),
-      Radius.circular(w * 0.05),
-    ),
-    Paint()..color = const Color(0x40FFFFFF),
   );
+  if (detailed) {
+    canvas.drawRRect(
+      roof,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = w * 0.022
+        ..color = shade.dark.withValues(alpha: 0.35),
+    );
+    // Specular strip along the roof edge facing the light.
+    final side = light.dy < 0 ? -1.0 : 1.0;
+    final y = side * (roofHalfW - w * 0.08);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(
+          center: Offset((roofLeft + roofRight) / 2 + light.dx * w * 0.1, y),
+          width: math.max(0, roofRect.width - w * 0.3),
+          height: w * 0.06,
+        ),
+        Radius.circular(w * 0.03),
+      ),
+      Paint()..color = const Color(0x66FFFFFF),
+    );
+  }
 
-  // Windshield at the nose.
+  // Windshield at the nose, with a reflection streak.
   final wsRect = Rect.fromLTRB(
     halfL - w * 0.4,
-    -halfW + w * 0.12,
-    halfL - w * 0.12,
-    halfW - w * 0.12,
+    -halfW + w * 0.1,
+    halfL - w * 0.15,
+    halfW - w * 0.1,
+  );
+  final ws = RRect.fromRectAndCorners(
+    wsRect,
+    topLeft: Radius.circular(w * 0.06),
+    bottomLeft: Radius.circular(w * 0.06),
+    topRight: Radius.circular(w * 0.2),
+    bottomRight: Radius.circular(w * 0.2),
   );
   canvas.drawRRect(
-    RRect.fromRectAndCorners(
-      wsRect,
-      topLeft: Radius.circular(w * 0.07),
-      bottomLeft: Radius.circular(w * 0.07),
-      topRight: Radius.circular(w * 0.2),
-      bottomRight: Radius.circular(w * 0.2),
-    ),
+    ws,
     Paint()
-      ..shader = const LinearGradient(
-        colors: [JamPalette.windshieldDeep, JamPalette.windshield],
-      ).createShader(wsRect),
+      ..shader = ui.Gradient.linear(
+        wsRect.centerLeft,
+        wsRect.centerRight,
+        const [JamPalette.glassMid, JamPalette.glassDeep],
+      ),
   );
-  // Windshield glint.
-  canvas.drawLine(
-    Offset(wsRect.left + w * 0.08, wsRect.top + w * 0.1),
-    Offset(wsRect.left + w * 0.16, wsRect.top + w * 0.3),
-    Paint()
-      ..color = const Color(0xCCFFFFFF)
-      ..strokeWidth = w * 0.05
-      ..strokeCap = StrokeCap.round,
+  canvas.save();
+  canvas.clipRRect(ws);
+  final wl = wsRect.left;
+  final ww = wsRect.width;
+  canvas.drawPath(
+    Path()
+      ..moveTo(wl + ww * 0.42, wsRect.top)
+      ..lineTo(wl + ww * 0.78, wsRect.top)
+      ..lineTo(wl + ww * 0.3, wsRect.bottom)
+      ..lineTo(wl - ww * 0.06, wsRect.bottom)
+      ..close(),
+    Paint()..color = const Color(0x55FFFFFF),
   );
+  if (detailed) {
+    canvas.drawPath(
+      Path()
+        ..moveTo(wl + ww * 0.9, wsRect.top)
+        ..lineTo(wl + ww * 1.02, wsRect.top)
+        ..lineTo(wl + ww * 0.54, wsRect.bottom)
+        ..lineTo(wl + ww * 0.42, wsRect.bottom)
+        ..close(),
+      Paint()..color = const Color(0x33FFFFFF),
+    );
+  }
+  canvas.restore();
 
-  // Headlights and tail lights.
+  // Head and tail lights, inset inside the outline.
+  final stroke = _strokeFor(w);
   final headPaint = Paint()..color = JamPalette.headlight;
-  final headR = w * 0.085;
+  final tailPaint = Paint()..color = JamPalette.taillight;
   for (final sy in [-1.0, 1.0]) {
-    canvas.drawCircle(
-      Offset(halfL - w * 0.06, sy * w * 0.31),
-      headR,
+    final hc = Offset(halfL - stroke - w * 0.045, sy * w * 0.29);
+    final tc = Offset(-halfL + stroke + w * 0.035, sy * w * 0.29);
+    if (detailed) {
+      canvas.drawCircle(
+        hc,
+        w * 0.14,
+        Paint()
+          ..shader = ui.Gradient.radial(hc, w * 0.14, [
+            JamPalette.headlight.withValues(alpha: 0.7),
+            JamPalette.headlight.withValues(alpha: 0),
+          ]),
+      );
+      canvas.drawCircle(
+        tc,
+        w * 0.11,
+        Paint()
+          ..shader = ui.Gradient.radial(tc, w * 0.11, [
+            JamPalette.taillight.withValues(alpha: 0.55),
+            JamPalette.taillight.withValues(alpha: 0),
+          ]),
+      );
+    }
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromCenter(center: hc, width: w * 0.07, height: w * 0.16),
+        Radius.circular(w * 0.035),
+      ),
       headPaint,
     );
     canvas.drawRRect(
       RRect.fromRectAndRadius(
-        Rect.fromCenter(
-          center: Offset(-halfL + w * 0.035, sy * w * 0.3),
-          width: w * 0.07,
-          height: w * 0.18,
-        ),
-        Radius.circular(w * 0.03),
+        Rect.fromCenter(center: tc, width: w * 0.05, height: w * 0.13),
+        Radius.circular(w * 0.025),
       ),
-      Paint()..color = JamPalette.taillight,
+      tailPaint,
     );
   }
+  canvas.restore(); // body clip
 
-  // Outline.
+  // One continuous outline around the whole silhouette.
   canvas.drawRRect(
-    body,
+    body.deflate(stroke / 2),
     Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = math.max(1.0, w * 0.05)
-      ..color = shade.dark,
+      ..strokeWidth = stroke
+      ..color = outline,
   );
 
   final symbol = JamPalette.symbolOf(color);
   final cap = look.capacity;
+  final seatRect = Rect.fromLTRB(roofLeft, -w * 0.31, roofRight, w * 0.31);
   if (look.seatsFilled != null && cap != null) {
-    _paintSeats(canvas, roofRect, w, look.seatsFilled!, cap, shade);
+    _paintSeats(canvas, seatRect, w, look.seatsFilled!, cap, shade);
     // Small badge on the tail end of the roof.
     final badgeC = Offset(roofLeft + w * 0.26, 0);
     _paintBadge(canvas, badgeC, w * 0.22, symbol, shade, pose.angle);
   } else {
     final roofLen = roofRight - roofLeft;
-    final r = math.min(roofHalfW * 0.95, roofLen * 0.42);
+    final r = math.min(w * 0.3, roofLen * 0.42);
     _paintBadge(
       canvas,
       Offset((roofLeft + roofRight) / 2, 0),
