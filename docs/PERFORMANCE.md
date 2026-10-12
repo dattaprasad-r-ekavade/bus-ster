@@ -195,3 +195,18 @@ pixel grid. The two emulator screenshots of the idle scene match by eye.
 - In the benchmark the semantics tree is on and costs about 0.5 ms of UI
   time per frame. A phone with no accessibility service running does not
   pay this.
+
+## After merging the art polish (2026-10-13, emulator, profile build, 1 run)
+
+The art pass added heavier bus and rider drawing; the sprite cache absorbs it.
+
+| Phase | fps | Dropped frames | UI build p90 (ms) | Sprites cached |
+|---|---|---|---|---|
+| tutorial | 59.2 | 5 | 2.11 | 19 (5.5 MB) |
+| level12_opening | 58.2 | 14 | 2.23 | 65 (8.6 MB) |
+| level12 | 59.6 | 5 | 1.89 | 80 (9.8 MB) |
+| densest_rapid | 59.8 | 3 | 2.38 | 111 (12.5 MB) |
+| idle | 59.7 | 1 | 0.94 | – |
+
+Next step: pre-warm the sprite cache when a level loads, so the opening
+frames don't pay for cache misses (the drops in `level12_opening`).
