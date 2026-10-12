@@ -3,7 +3,7 @@
     <item>
         <shape android:shape="rectangle">
             <corners android:radius="24dp" />
-            <solid android:color="#101A2A" />
+            <solid android:color="@color/ic_launcher_background" />
         </shape>
     </item>
     <item android:drawable="@drawable/ic_launcher_foreground" />

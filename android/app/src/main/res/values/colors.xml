@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#101A2A</color>
+    <!-- Launcher icon background: grass green from the game palette. -->
+    <color name="ic_launcher_background">#7DCB5A</color>
+    <!-- Launch splash background: cream plaza colour from the game palette. -->
+    <color name="splash_background">#FBE9C6</color>
 </resources>

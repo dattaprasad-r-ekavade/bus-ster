@@ -1,34 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Front-view toy bus. Kept inside the 66dp adaptive-icon safe circle
+     (centre 54,54, radius 33). Palette: yellow FFC928, outline 2B3550,
+     windshield 8CC3FF, cream FBE9C6. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
+    <!-- Body outline -->
     <path
-        android:fillColor="#FFC857"
-        android:pathData="M35,40 C35,31.7 41.7,25 50,25 H58 C66.3,25 73,31.7 73,40 V72 C73,78.6 67.6,84 61,84 H47 C40.4,84 35,78.6 35,72 Z" />
+        android:fillColor="#FF2B3550"
+        android:pathData="M45,29 H63 A10,10 0 0 1 73,39 V65 A10,10 0 0 1 63,75 H45 A10,10 0 0 1 35,65 V39 A10,10 0 0 1 45,29 Z" />
+    <!-- Body -->
     <path
-        android:fillColor="#20324A"
-        android:pathData="M41,38 C41,35.8 42.8,34 45,34 H63 C65.2,34 67,35.8 67,38 V51 H41 Z" />
+        android:fillColor="#FFFFC928"
+        android:pathData="M45,31 H63 A8,8 0 0 1 71,39 V65 A8,8 0 0 1 63,73 H45 A8,8 0 0 1 37,65 V39 A8,8 0 0 1 45,31 Z" />
+    <!-- Windshield -->
     <path
-        android:fillColor="#67D8F2"
-        android:pathData="M54,57 L61,64 L54,71 L47,64 Z" />
+        android:fillColor="#FF8CC3FF"
+        android:pathData="M44,37 H64 A3,3 0 0 1 67,40 V46 A3,3 0 0 1 64,49 H44 A3,3 0 0 1 41,46 V40 A3,3 0 0 1 44,37 Z" />
+    <!-- Belt stripe -->
     <path
-        android:fillColor="#FF806B"
-        android:pathData="M39,72 C39,70.3 40.3,69 42,69 H45 V75 H42 C40.3,75 39,73.7 39,72 Z" />
+        android:fillColor="#FF2B3550"
+        android:pathData="M37,53 H71 V55 H37 Z" />
+    <!-- Headlights -->
     <path
-        android:fillColor="#FF806B"
-        android:pathData="M63,69 H66 C67.7,69 69,70.3 69,72 C69,73.7 67.7,75 66,75 H63 Z" />
+        android:fillColor="#FFFBE9C6"
+        android:pathData="M43,62 A2.5,2.5 0 1 1 43,67 A2.5,2.5 0 1 1 43,62 Z" />
     <path
-        android:fillColor="#20324A"
-        android:pathData="M39,78 C39,74.7 41.7,72 45,72 C48.3,72 51,74.7 51,78 C51,81.3 48.3,84 45,84 C41.7,84 39,81.3 39,78 Z" />
+        android:fillColor="#FFFBE9C6"
+        android:pathData="M65,62 A2.5,2.5 0 1 1 65,67 A2.5,2.5 0 1 1 65,62 Z" />
+    <!-- Wheels: outline then hub -->
     <path
-        android:fillColor="#20324A"
-        android:pathData="M57,78 C57,74.7 59.7,72 63,72 C66.3,72 69,74.7 69,78 C69,81.3 66.3,84 63,84 C59.7,84 57,81.3 57,78 Z" />
+        android:fillColor="#FF2B3550"
+        android:pathData="M45,71 A6,6 0 1 1 45,83 A6,6 0 1 1 45,71 Z" />
     <path
-        android:fillColor="#91A2B7"
-        android:pathData="M43,78 C43,76.9 43.9,76 45,76 C46.1,76 47,76.9 47,78 C47,79.1 46.1,80 45,80 C43.9,80 43,79.1 43,78 Z" />
+        android:fillColor="#FF2B3550"
+        android:pathData="M63,71 A6,6 0 1 1 63,83 A6,6 0 1 1 63,71 Z" />
     <path
-        android:fillColor="#91A2B7"
-        android:pathData="M61,78 C61,76.9 61.9,76 63,76 C64.1,76 65,76.9 65,78 C65,79.1 64.1,80 63,80 C61.9,80 61,79.1 61,78 Z" />
+        android:fillColor="#FFFBE9C6"
+        android:pathData="M45,74.5 A2.5,2.5 0 1 1 45,79.5 A2.5,2.5 0 1 1 45,74.5 Z" />
+    <path
+        android:fillColor="#FFFBE9C6"
+        android:pathData="M63,74.5 A2.5,2.5 0 1 1 63,79.5 A2.5,2.5 0 1 1 63,74.5 Z" />
 </vector>
