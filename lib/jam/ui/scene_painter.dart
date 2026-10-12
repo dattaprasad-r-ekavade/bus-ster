@@ -1,5 +1,10 @@
 // Per-frame painter: lot buses, the crowd, bay buses, walking riders and
 // pointer effects, all evaluated from the choreographer at the clock time.
+//
+// Buses, grounded riders, the "+N" chip and the tutorial hand are drawn from
+// a [SpriteCache] (rasterised once, then placed with a transform), so a
+// frame costs a few dozen textured quads on the raster thread rather than
+// every sprite's paths, gradients and blurred shadows.
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
@@ -8,10 +13,11 @@ import 'package:flutter/rendering.dart';
 import '../jam_model.dart';
 import 'bay_painter.dart';
 import 'bus_painter.dart';
-import 'crowd_painter.dart';
 import 'jam_choreographer.dart';
 import 'jam_layout.dart';
+import 'jam_sprites.dart';
 import 'jam_theme.dart';
+import 'sprite_cache.dart';
 
 class JamScenePainter extends CustomPainter {
   JamScenePainter({
@@ -19,6 +25,8 @@ class JamScenePainter extends CustomPainter {
     required this.layout,
     required this.state,
     required this.clock,
+    required this.sprites,
+    required this.devicePixelRatio,
     this.tutorialTarget,
     this.tutorialStart = 0,
   }) : super(repaint: clock);
@@ -29,13 +37,25 @@ class JamScenePainter extends CustomPainter {
   final ValueListenable<double> clock;
   final String? tutorialTarget;
   final double tutorialStart;
+  final SpriteCache sprites;
+  final double devicePixelRatio;
 
   static const double handBobTime = 3.6;
 
+  /// Number of scene paints so far; lets tests and benchmarks check that
+  /// nothing repaints while the scene is idle.
+  static int paintCount = 0;
+
+  // Bay buses split by whether they move at the clock time (reused).
+  final List<BusSprite> _resting = [];
+  final List<BusSprite> _moving = [];
+
   @override
   void paint(Canvas canvas, Size size) {
+    paintCount++;
     final t = clock.value;
     final level = chor.level;
+    final dpr = devicePixelRatio;
 
     for (var i = 0; i < level.bayCount; i++) {
       paintStallPulse(
@@ -61,26 +81,34 @@ class JamScenePainter extends CustomPainter {
         chor.hintGlowAt(v.id, t),
         tutorialTarget == v.id ? 0.55 : 0.0,
       );
-      paintBus(
+      drawCachedBus(
+        sprites,
         canvas,
+        dpr,
         pose,
         v.color,
         BusLook(flash: chor.flashAt(v.id, t), glow: glow),
+        length: v.length,
       );
     }
 
     _paintQueue(canvas, t);
 
     // Bay buses: resting ones first, moving ones on top.
-    final active = chor.sprites.where((s) => t < s.goneAt).toList();
-    for (final moving in [false, true]) {
-      for (final s in active) {
-        if (s.isMovingAt(t) != moving) continue;
+    _resting.clear();
+    _moving.clear();
+    for (final s in chor.sprites) {
+      if (t >= s.goneAt) continue;
+      (s.isMovingAt(t) ? _moving : _resting).add(s);
+    }
+    for (final group in [_resting, _moving]) {
+      for (final s in group) {
+        // Bay buses are few and change every frame (motion, boarding
+        // bounce, seat count), so they are painted directly.
         final seats = t >= s.arriveAt - 0.12;
-        final pose = s.poseAt(t);
         paintBus(
           canvas,
-          pose,
+          s.poseAt(t),
           s.vehicle.color,
           BusLook(
             seatsFilled: seats ? s.loadedAt(t) : null,
@@ -93,19 +121,24 @@ class JamScenePainter extends CustomPainter {
     }
 
     // Sparkle bursts over freshly filled buses (they stay put while the
-    // burst plays, so it is drawn at the parked pose).
-    for (final s in active) {
-      final k = s.sparkleAt(t);
-      if (k == null) continue;
-      paintSparkles(canvas, s.parked, k, s.vehicle.color, s.slot + 1);
+    // burst plays, so it is drawn at the parked pose). Bus order does not
+    // matter here, so walk both groups.
+    for (final group in [_resting, _moving]) {
+      for (final s in group) {
+        final k = s.sparkleAt(t);
+        if (k == null) continue;
+        paintSparkles(canvas, s.parked, k, s.vehicle.color, s.slot + 1);
+      }
     }
 
     // Walking riders.
     for (final w in chor.walks) {
       if (t < w.start || t >= w.end) continue;
       final (pos, lift, scale, opacity) = chor.walkPose(w, t);
-      paintRider(
+      drawCachedRider(
+        sprites,
         canvas,
+        dpr,
         pos,
         layout.riderSpacing,
         w.color,
@@ -125,11 +158,17 @@ class JamScenePainter extends CustomPainter {
       final bob = d >= 0 && d < handBobTime
           ? (math.sin(d * math.pi * 2 / 0.9)).abs()
           : 0.0;
-      paintPointerHand(
+      final tip = pose.center + Offset(pose.width * 0.3, pose.width * 0.55);
+      final cell = layout.cell;
+      final u = cell.clamp(30.0, 52.0);
+      drawCachedStatic(
+        sprites,
         canvas,
-        pose.center + Offset(pose.width * 0.3, pose.width * 0.55),
-        layout.cell,
-        bob,
+        dpr,
+        SpriteKey('hand', a: (u * 64).round(), dpr: (dpr * 100).round()),
+        Rect.fromLTRB(-u, -u * 0.6, u * 1.2, u * 1.5),
+        tip - Offset(0, bob * u * 0.28),
+        (c) => paintPointerHand(c, Offset.zero, cell, 0),
       );
     }
   }
@@ -158,8 +197,10 @@ class JamScenePainter extends CustomPainter {
       final fadeIn = (limit - u).clamp(0.0, 1.0);
       final front = (1 - u.abs()).clamp(0.0, 1.0);
       final bob = live * front * (math.sin(t * math.pi * 2 / 0.7)).abs();
-      paintRider(
+      drawCachedRider(
+        sprites,
         canvas,
+        devicePixelRatio,
         layout.queuePoint(u),
         s,
         passengers[i],
@@ -173,7 +214,7 @@ class JamScenePainter extends CustomPainter {
       final shown = visible.length;
       final rest = waiting - shown;
       if (rest > 0) {
-        paintMoreChip(
+        drawCachedMoreChip(
           canvas,
           layout.queuePoint(limit.toDouble() + 0.15) - Offset(0, s * 0.4),
           s,
@@ -188,6 +229,8 @@ class JamScenePainter extends CustomPainter {
       old.chor != chor ||
       old.layout != layout ||
       old.state != state ||
+      old.sprites != sprites ||
+      old.devicePixelRatio != devicePixelRatio ||
       old.tutorialTarget != tutorialTarget ||
       old.tutorialStart != tutorialStart;
 }

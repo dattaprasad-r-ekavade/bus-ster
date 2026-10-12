@@ -16,7 +16,7 @@ import '../../game/game_audio.dart';
 import '../../game/game_telemetry.dart';
 import '../jam_model.dart';
 import '../jam_solver.dart';
-import 'board_painter.dart';
+import 'board_layer.dart';
 import 'jam_choreographer.dart';
 import 'jam_hud.dart';
 import 'jam_layout.dart';
@@ -24,6 +24,7 @@ import 'jam_overlays.dart';
 import 'jam_strings.dart';
 import 'jam_theme.dart';
 import 'scene_painter.dart';
+import 'sprite_cache.dart';
 
 /// Runs the solver for hints; injectable so tests can stay synchronous.
 typedef JamSolver = Future<SolveResult> Function(JamSolveRequest request);
@@ -78,6 +79,7 @@ class JamGameScreenState extends State<JamGameScreen>
   JamChoreographer? _chor;
   final ValueNotifier<double> _clock = ValueNotifier(0);
   final ValueNotifier<int> _passengersLeft = ValueNotifier(0);
+  final SpriteCache _sprites = SpriteCache();
   late final Ticker _ticker;
   Duration _lastElapsed = Duration.zero;
 
@@ -95,6 +97,10 @@ class JamGameScreenState extends State<JamGameScreen>
   JamLevel get level => _session.level;
   JamSession get session => _session;
   int get levelIndex => _levelIndex;
+
+  /// Bitmap cache behind the play scene (exposed for tests and benchmarks).
+  @visibleForTesting
+  SpriteCache get spriteCache => _sprites;
 
   /// Whether the visual layer is still playing out moves.
   bool get isAnimating => _choreoBusy;
@@ -132,6 +138,7 @@ class JamGameScreenState extends State<JamGameScreen>
     _ticker.dispose();
     _clock.dispose();
     _passengersLeft.dispose();
+    _sprites.clear();
     super.dispose();
   }
 
@@ -449,9 +456,7 @@ class JamGameScreenState extends State<JamGameScreen>
     final layout = _layout!;
     final children = <Widget>[
       Positioned.fill(
-        child: RepaintBoundary(
-          child: CustomPaint(painter: JamBoardPainter(layout, level.bayCount)),
-        ),
+        child: JamBoardLayer(layout: layout, bayCount: level.bayCount),
       ),
       Positioned.fill(
         child: RepaintBoundary(
@@ -461,6 +466,8 @@ class JamGameScreenState extends State<JamGameScreen>
               layout: layout,
               state: state,
               clock: _clock,
+              sprites: _sprites,
+              devicePixelRatio: MediaQuery.devicePixelRatioOf(context),
               tutorialTarget: _tutorialTarget,
               tutorialStart: _tutorialStart,
             ),
