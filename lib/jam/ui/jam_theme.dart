@@ -91,8 +91,14 @@ abstract final class JamPalette {
   static const laneMark = Color(0xFFFFFFFF);
   static const roadDash = Color(0xFFFFD54A);
   static const stallFloor = Color(0xFF576178);
+  static const stallFloorDeep = Color(0xFF454E63);
   static const windshield = Color(0xFFBFE6FF);
   static const windshieldDeep = Color(0xFF7EC3EE);
+  // Tinted bus glass: deep at the frame, brighter where the sky reflects.
+  static const glassDeep = Color(0xFF27476E);
+  static const glassMid = Color(0xFF4F86BE);
+  static const glassSky = Color(0xFF9BD3F7);
+  static const tyre = Color(0xFF1E2129);
   static const headlight = Color(0xFFFFF4C2);
   static const taillight = Color(0xFFFF3B3B);
   static const skin = [
@@ -110,6 +116,7 @@ abstract final class JamPalette {
   static const hud = Color(0xFF2B3550);
   static const hudText = Color(0xFFFFFFFF);
   static const accent = Color(0xFFFFC928);
+  static const accentDark = Color(0xFFC28A00);
 }
 
 /// Builds the outline of [symbol] centred on the origin, fitting a circle of
