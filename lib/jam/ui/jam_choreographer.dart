@@ -60,11 +60,20 @@ class BusSprite {
     return pose;
   }
 
-  bool isMovingAt(double t) =>
-      legs.any((leg) => t >= leg.start - 1e-6 && t <= leg.end);
+  bool isMovingAt(double t) {
+    for (final leg in legs) {
+      if (t >= leg.start - 1e-6 && t <= leg.end) return true;
+    }
+    return false;
+  }
 
-  int loadedAt(double t) =>
-      baseLoaded + boardArrivals.where((a) => a <= t).length;
+  int loadedAt(double t) {
+    var n = baseLoaded;
+    for (final a in boardArrivals) {
+      if (a <= t) n++;
+    }
+    return n;
+  }
 
   /// When the last free seat was taken (null while seats remain).
   double? get fullAt {
@@ -119,6 +128,12 @@ class RiderWalk {
   final double start;
   final double end;
   final BusSprite bus;
+
+  // Route from the rider's queue spot to the door, and its length. Fixed
+  // once the walk is scheduled (later starts never move an earlier
+  // rider's starting spot), so it is built on first use.
+  List<Offset>? _route;
+  double _length = 0;
 }
 
 enum ChoreoCueKind { board, depart, park }
@@ -405,6 +420,7 @@ class JamChoreographer {
 
   /// Removes and returns cues due at or before [t], in time order.
   List<ChoreoCue> takeCues(double t) {
+    if (!_cues.any((c) => c.time <= t)) return const [];
     final due = _cues.where((c) => c.time <= t).toList()
       ..sort((a, b) => a.time.compareTo(b.time));
     _cues.removeWhere((c) => c.time <= t);
@@ -423,8 +439,13 @@ class JamChoreographer {
   }
 
   /// First passenger index still standing in the queue at [t].
-  int firstQueuedAt(double t) =>
-      queueBase + _boardStarts.where((s) => s <= t).length;
+  int firstQueuedAt(double t) {
+    var n = queueBase;
+    for (final s in _boardStarts) {
+      if (s <= t) n++;
+    }
+    return n;
+  }
 
   /// Where [walk]'s rider is at [t] (feet), plus hop lift and scale.
   ///
@@ -432,15 +453,19 @@ class JamChoreographer {
   /// airborne and lands on a short pause, so the motion reads as a series of
   /// little arcs rather than a slide.
   (Offset, double, double, double) walkPose(RiderWalk walk, double t) {
-    final from = layout.queuePoint(walk.index - frontAt(walk.start));
-    final route = layout.riderRoute(
-      from,
-      walk.bus.slot,
-      walk.bus.vehicle.length,
-    );
+    var route = walk._route;
+    if (route == null) {
+      final from = layout.queuePoint(walk.index - frontAt(walk.start));
+      route = walk._route = layout.riderRoute(
+        from,
+        walk.bus.slot,
+        walk.bus.vehicle.length,
+      );
+      walk._length = _polyLength(route);
+    }
     final p = ((t - walk.start) / (walk.end - walk.start)).clamp(0.0, 1.0);
     final s = layout.riderSpacing;
-    final length = _polyLength(route);
+    final length = walk._length;
     final hops = math.max(2, (length / (s * 1.3)).round());
     final h = (p * hops).clamp(0.0, hops - 1e-9);
     final i = h.floor();
