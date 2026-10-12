@@ -139,6 +139,19 @@ class JamChoreographer {
 
   // Tunables (seconds).
   static const double boardStagger = 0.13;
+
+  /// Walking riders keep at least this many rider widths between them.
+  static const double minRiderGap = 1.1;
+
+  /// Latest a boarding rider may start after the previous one. Keeps a full
+  /// 8-seat bus boarding in about 2 s.
+  static const double maxBoardGap = 0.22;
+
+  /// Step while searching for a non-overlapping boarding start, and the
+  /// sampling interval used to check walker clearance.
+  static const double _startStep = 0.01;
+  static const double _clearanceSample = 1 / 240;
+
   static const double shuffleTime = 0.3;
   static const double lurchTime = 0.5;
   static const double hintTime = 2.6;
@@ -274,34 +287,70 @@ class JamChoreographer {
   void _board(int index, String vehicleId, double now) {
     final sprite = _byVehicle[vehicleId];
     if (sprite == null) return;
-    final start = [
-      now,
-      sprite.arriveAt + 0.04,
-      _lastBoardStart + boardStagger,
-    ].reduce(math.max);
     final route = layout.riderRoute(
       layout.queuePoint(0),
       sprite.slot,
       sprite.vehicle.length,
     );
-    var dist = 0.0;
-    for (var i = 1; i < route.length; i++) {
-      dist += (route[i] - route[i - 1]).distance;
+    final duration = (0.22 + _polyLength(route) / 1150).clamp(0.28, 0.5);
+    // Earliest start keeps the queue order and the stagger. Walkers start
+    // from the moving queue front, so a fixed time gap cannot guarantee
+    // spacing; instead take the first start (within [maxBoardGap] of the
+    // previous rider) whose path keeps [minRiderGap] widths clear of every
+    // walker already scheduled. Poses only depend on earlier starts, so
+    // this is deterministic.
+    final earliest = [
+      now,
+      sprite.arriveAt + 0.04,
+      _lastBoardStart + boardStagger,
+    ].reduce(math.max);
+    final limit = math.max(earliest, _lastBoardStart + maxBoardGap);
+    final minDist = minRiderGap * layout.riderSpacing;
+    var start = earliest;
+    var bestClear = double.negativeInfinity;
+    for (var s = earliest; s <= limit + 1e-9; s += _startStep) {
+      final clear = _clearance(_walkAt(index, sprite, s, duration));
+      if (clear > bestClear) {
+        bestClear = clear;
+        start = s;
+      }
+      if (clear >= minDist) break;
     }
-    final duration = (0.22 + dist / 1150).clamp(0.28, 0.5);
-    final walk = RiderWalk(
-      index: index,
-      color: level.passengers[index],
-      start: start,
-      end: start + duration,
-      bus: sprite,
-    );
+    final walk = _walkAt(index, sprite, start, duration);
     walks.add(walk);
     _boardStarts.add(start);
     _lastBoardStart = start;
     sprite.boardArrivals.add(walk.end);
     _cues.add(ChoreoCue(walk.end, ChoreoCueKind.board));
     _extend(math.max(walk.end + 0.25, start + shuffleTime));
+  }
+
+  RiderWalk _walkAt(
+    int index,
+    BusSprite sprite,
+    double start,
+    double duration,
+  ) => RiderWalk(
+    index: index,
+    color: level.passengers[index],
+    start: start,
+    end: start + duration,
+    bus: sprite,
+  );
+
+  /// Smallest distance between the candidate's rider and any already
+  /// scheduled walker, sampled while both are on the walkway.
+  double _clearance(RiderWalk candidate) {
+    var clear = double.infinity;
+    for (final other in walks) {
+      final from = math.max(candidate.start, other.start);
+      final to = math.min(candidate.end, other.end);
+      for (var t = from; t <= to; t += _clearanceSample) {
+        final d = (walkPose(candidate, t).$1 - walkPose(other, t).$1).distance;
+        if (d < clear) clear = d;
+      }
+    }
+    return clear;
   }
 
   void _depart(String vehicleId, int slot, double now) {
