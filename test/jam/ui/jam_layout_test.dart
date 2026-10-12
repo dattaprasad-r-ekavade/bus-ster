@@ -129,6 +129,15 @@ void main() {
                 final pose = leg.poseAt(t);
                 if (l.lotRect.contains(pose.center)) continue;
                 final where = '${v.id} slot $slot t=$t';
+                final f = trapezoidProgress(
+                  (t - leg.start) / leg.duration,
+                  accel: leg.accel,
+                  decel: leg.decel,
+                );
+                // Once the short post-exit morph is done the bus fits the
+                // road and stays fully on screen (a long bus may briefly
+                // swing past the screen edge while it is still shrinking).
+                if (f < leg.sizeTo) continue;
                 expect(
                   pose.width,
                   lessThanOrEqualTo(0.9 * l.roadW),

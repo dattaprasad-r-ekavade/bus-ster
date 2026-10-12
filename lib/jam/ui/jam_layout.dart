@@ -112,11 +112,11 @@ class JamLayout {
             _noseGap +
             parkedW * parkedLengthFactor(maxLen) +
             _tailGap;
-        // A bus turning off the lot is still close to its full parked length
-        // as its centre crosses the lot edge, so its nose overhangs the side
-        // road by about half its length: leave that room in the screen margin.
+        // A bus turning onto a side road overhangs it a little before its
+        // morph finishes; a small extra margin keeps its corners on screen
+        // without shrinking the lot.
         final parkedLen = parkedW * parkedLengthFactor(maxLen);
-        final sideRoom = math.max(2 * roadW, roadW + parkedLen);
+        final sideRoom = 2 * roadW + parkedW * 0.5 + 12;
         final needW =
             2 * _margin + sideRoom + 2 * _kerb + 2 * pad + cols * cell;
         // A bus swinging round the bottom road sweeps its corners down by up
@@ -532,12 +532,15 @@ class JamLayout {
     return pts;
   }
 
+  /// Road widths of travel past the lot edge over which a bus morphs.
+  static const double morphRoadLengths = 1.5;
+
   /// Distance-along-route window over which a bus shrinks from lot size to
   /// parked size, returned as (morph start, morph end, route length).
   ///
-  /// The morph starts as the bus leaves the lot and is complete by the time
-  /// its centre crosses the lot edge onto the road, so the bus is at road-fit
-  /// width for the whole ring drive and the turn into its bay.
+  /// The morph starts as the bus centre crosses the lot edge (so buses never
+  /// shrink while still on the asphalt) and completes within a short stretch
+  /// of road, so the bus is at road-fit width for the rest of the ring.
   (double, double, double) routeMilestones(List<Offset> route) {
     var total = 0.0;
     for (var i = 1; i < route.length; i++) {
@@ -552,7 +555,7 @@ class JamLayout {
     while (exit < (b - a).distance && lot.contains(a + dir * exit)) {
       exit += 2;
     }
-    return (0.0, exit, total);
+    return (exit, math.min(exit + morphRoadLengths * roadW, total), total);
   }
 
   double get cornerRadius => math.max(roadW * 0.9, cell * 0.5);

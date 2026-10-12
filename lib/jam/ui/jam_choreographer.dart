@@ -256,8 +256,8 @@ class JamChoreographer {
     final start = math.max(now, _slotFreeAt[slot] - duration + 0.12);
     final parked = layout.parkedPose(slot, v.length);
     final sprite = BusSprite(vehicle: v, slot: slot, parked: parked);
-    // Shrink progressively from the moment the bus leaves the asphalt until
-    // it turns off the street, so the change is spread over the whole ring.
+    // Shrink over a short stretch of road just past the lot edge, so the bus
+    // never shrinks on the asphalt and fits the road for the rest of the ring.
     final (exit, turn, total) = layout.routeMilestones(route);
     final scale = probe.length / math.max(1e-6, total);
     final sizeFrom = (exit * scale / probe.length).clamp(0.0, 0.6);
