@@ -1,0 +1,36 @@
+{
+  "enabledPlugins": {
+    "context7@claude-plugins-official": true,
+    "commit-commands@claude-plugins-official": true,
+    "pr-review-toolkit@claude-plugins-official": true,
+    "claude-code-setup@claude-plugins-official": true
+  },
+  "enabledMcpjsonServers": ["dart"],
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/guard_generated.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python \"$CLAUDE_PROJECT_DIR/.claude/hooks/format_dart.py\"",
+            "timeout": 30,
+            "statusMessage": "dart format"
+          }
+        ]
+      }
+    ]
+  }
+}
